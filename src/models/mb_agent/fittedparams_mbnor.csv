@@ -1,0 +1,8 @@
+﻿Parameter;Value;Error
+epsilon;2,00E-04;9,00E-05  
+k_leak;0,5;0    
+lambda_R;0,97;0,01            
+lambda_N;0,7;0,05
+beta_1;4,7;0,2           
+beta_N1;0,145;0,006
+T_PS;100;1

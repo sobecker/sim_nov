@@ -1,0 +1,7 @@
+﻿Parameter;Value;Error
+epsilon;1,00E-05;9,00E-05       # small number bec. det. env.
+lambda_R;0,97;0,01              # or use from MF 
+lambda_N;0,7;0,05
+beta_1;4,7;0,2                  # use beta_R and beta_N instead of beta_1 and beta_N1, fine-tune manually (probably too small now)
+beta_N1;0,145;0,006             # 0,7
+T_PS;50;1                       # high value because we want perfect planning # 100 

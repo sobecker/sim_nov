@@ -1,0 +1,1 @@
+{"data_type": "mice", "data_folder": "./ext_data/Rosenberg2021/", "data_path_type": "manual", "comb_type": "sep", "var_name": ["lambda_N", "beta_1"], "kwargs": {"x0": [0.5, 5], "bounds": [[0.0, 0.999], [0.1, 30]], "opt_method": "SLSQP"}, "alg_type": "nor", "save_name": "mle_nor-mice", "verbose": true}

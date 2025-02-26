@@ -1,0 +1,1 @@
+{"data_type": "opt", "data_folder": "nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r", "data_path_type": "auto", "comb_type": "app", "var_name": ["lambda_N", "beta_1"], "kwargs": {"x0": [0.5, 5], "bounds": [[0.0, 0.999], [0.1, 30]], "opt_method": "Nelder-Mead"}, "alg_type": "nor", "save_name": "mle_nor-opt", "verbose": true, "seed": 12345, "rand_start": 10}

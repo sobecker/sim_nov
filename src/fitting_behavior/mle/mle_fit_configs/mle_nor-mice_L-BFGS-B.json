@@ -1,0 +1,1 @@
+{"data_type": "mice", "data_folder": "./ext_data/Rosenberg2021/", "data_path_type": "manual", "comb_type": "", "var_name": ["lambda_N", "beta_1", "epsilon", "k_leak"], "kwargs": {"x0": [0.5, 5, 0.0002, 0.5], "bounds": [[0.0, 0.999], [0.1, 30], [0.001, 1], [0.001, 0.999]], "opt_method": "L-BFGS-B"}, "alg_type": "nor", "save_name": "mle_nor-mice", "verbose": true}
