@@ -10,52 +10,53 @@ sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
 import src.utils.saveload as sl
 import src.models.snov.run_gabor_knov as gknov
 import src.models.snov.run_gabor_knov2 as gknov2
+import src.fitting_neural.load_homann_data as load_homann
 
-def load_exp_data(h_type,path_load_exp,filter_emerge=True):
-    emu = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_mean.csv'))
-    lstd = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_lowerstd.csv'))
-    ustd = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_upperstd.csv'))
-    if ' y' in emu.columns: emu = emu.rename(columns={' y':'y'})
-    if ' y' in lstd.columns: lstd = lstd.rename(columns={' y':'y'})
-    if ' y' in ustd.columns: ustd = ustd.rename(columns={' y':'y'})
-    edata = emu.rename(columns={'y':'y_mean'})
-    edata['lstd'] = np.round(lstd['y'],4)
-    edata['ustd'] = np.round(ustd['y'],4)
-    if h_type=='steadystate':
-        edata['x']   = [3,6,9,12]
-    edata = edata.sort_values('x')
-    if h_type=='tau_emerge' and filter_emerge:
-        edata = edata.iloc[::2]
-    edata['x'] = np.round(edata['x'].values)
-    edata['y_mean'] = np.round(edata['y_mean'].values,4)
-    return edata
+# def load_exp_data(h_type,path_load_exp,filter_emerge=True):
+#     emu = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_mean.csv'))
+#     lstd = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_lowerstd.csv'))
+#     ustd = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_upperstd.csv'))
+#     if ' y' in emu.columns: emu = emu.rename(columns={' y':'y'})
+#     if ' y' in lstd.columns: lstd = lstd.rename(columns={' y':'y'})
+#     if ' y' in ustd.columns: ustd = ustd.rename(columns={' y':'y'})
+#     edata = emu.rename(columns={'y':'y_mean'})
+#     edata['lstd'] = np.round(lstd['y'],4)
+#     edata['ustd'] = np.round(ustd['y'],4)
+#     if h_type=='steadystate':
+#         edata['x']   = [3,6,9,12]
+#     edata = edata.sort_values('x')
+#     if h_type=='tau_emerge' and filter_emerge:
+#         edata = edata.iloc[::2]
+#     edata['x'] = np.round(edata['x'].values)
+#     edata['y_mean'] = np.round(edata['y_mean'].values,4)
+#     return edata
 
-def load_exp_data2(h_type,filter_emerge=True):
-    # Load experimental data (for fitting measure computation)
-    if h_type=='tau_memory':
-        # Load novelty responses
-        path1  = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_{h_type}_mean.csv')
-        edata1 = pd.read_csv(path1)
-        edata1 = edata1.sort_values('x')
-        edx    = list(map(lambda x: int(np.round(x)),edata1['x']))
-        edy1   = np.array(list(map(lambda x: np.round(x,4),edata1[' y'])))
-        # Load steady state responses
-        path2  = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_steadystate_mean.csv')
-        edata2 = pd.read_csv(path2)
-        edata2 = edata2.rename(columns={'y':' y'})
-        edy2   = np.array(list(map(lambda x: np.round(x,4),edata2[' y'])))
-        # Combine
-        edy    = [edy1,edy2]
-    else:
-        # Load novelty responses
-        path = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_{h_type}_mean.csv')
-        edata = pd.read_csv(path)
-        edata = edata.sort_values('x')
-        if h_type=='tau_emerge' and filter_emerge:
-            edata = edata.iloc[::2]
-        edx   = list(map(lambda x: int(np.round(x)),edata['x']))
-        edy   = np.array(list(map(lambda x: np.round(x,4),edata[' y'])))
-    return edx,edy
+# def load_exp_data2(h_type,filter_emerge=True):
+#     # Load experimental data (for fitting measure computation)
+#     if h_type=='tau_memory':
+#         # Load novelty responses
+#         path1  = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_{h_type}_mean.csv')
+#         edata1 = pd.read_csv(path1)
+#         edata1 = edata1.sort_values('x')
+#         edx    = list(map(lambda x: int(np.round(x)),edata1['x']))
+#         edy1   = np.array(list(map(lambda x: np.round(x,4),edata1[' y'])))
+#         # Load steady state responses
+#         path2  = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_steadystate_mean.csv')
+#         edata2 = pd.read_csv(path2)
+#         edata2 = edata2.rename(columns={'y':' y'})
+#         edy2   = np.array(list(map(lambda x: np.round(x,4),edata2[' y'])))
+#         # Combine
+#         edy    = [edy1,edy2]
+#     else:
+#         # Load novelty responses
+#         path = os.path.join(sl.get_datapath().replace('data','ext_data'),f'Homann2022/Homann2022_{h_type}_mean.csv')
+#         edata = pd.read_csv(path)
+#         edata = edata.sort_values('x')
+#         if h_type=='tau_emerge' and filter_emerge:
+#             edata = edata.iloc[::2]
+#         edx   = list(map(lambda x: int(np.round(x)),edata['x']))
+#         edy   = np.array(list(map(lambda x: np.round(x,4),edata[' y'])))
+#     return edx,edy
 
 def plot_fits(edx,stats_nov,tr_name,edata,mu,xl,yl,title,savename,savepath,plot_fitted=True,pfit=[]):
         f,ax = plt.subplots(1,1)
@@ -558,7 +559,7 @@ if __name__=='__main__':
             file_stats = [file_stats,file_stats_steady]    
         
         # Load experimental data (for fitting measure computation)
-        edx,edy = load_exp_data2(h_type)
+        edx,edy = load_homann.load_exp_data2(h_type,cluster=False)
 
         # Run grid search simulations and compute fitting measure
         tau         = [] 

@@ -18,55 +18,9 @@ import src.fitting_neural.simulate_data as sd
 import src.models.snov.run_gabor_knov as gknov
 import src.models.snov.run_gabor_knov_complex as gknovc
 import src.fitting_neural.create_homann_input as h_in
+import src.fitting_neural.load_homann_data as load_homann
 
 ## This script runs a grid search over the parameters of the simple cell kernel novelty model, simulating several samples of the Homann experiments for each parameter combination. ##
-
-############################################################################################################
-#               Function to load experimental data for Homann experiments                                  #
-############################################################################################################
-def load_exp_data2(h_type,filter_emerge=True,cluster=True,type='mean'):
-    # Load experimental data (for fitting measure computation)
-    print(f'Current path:{os.getcwd()}')
-    if cluster:
-        path_cluster = '/lcncluster/becker/RL_reward_novelty/ext_data/Homann2022'
-    else:
-        path_cluster = '/Users/sbecker/Projects/RL_reward_novelty/ext_data/Homann2022'
-    if h_type=='tau_memory':
-        # Load novelty responses
-        path1  = os.path.join(path_cluster,f'Homann2022_{h_type}_{type}.csv')
-        edata1 = pd.read_csv(path1)
-        edata1 = edata1.sort_values('x')
-        edx    = list(map(lambda x: int(np.round(x)),edata1['x']))
-        edy1   = np.array(list(map(lambda x: np.round(x,4),edata1[' y'])))
-        # Load steady state responses
-        path2  = os.path.join(path_cluster,f'Homann2022_steadystate_{type}.csv')
-        edata2 = pd.read_csv(path2)
-        edata2 = edata2.rename(columns={'y':' y'})
-        edy2   = np.array(list(map(lambda x: np.round(x,4),edata2[' y'])))
-        # Combine
-        edy    = [edy1,edy2]
-    else:
-        # Load novelty responses
-        path = os.path.join(path_cluster,f'Homann2022_{h_type}_{type}.csv')
-        edata = pd.read_csv(path)
-        edata = edata.sort_values('x')
-        if h_type=='tau_emerge' and filter_emerge:
-            edata = edata.iloc[::2]
-        edx   = list(map(lambda x: int(np.round(x)),edata['x']))
-        edy   = np.array(list(map(lambda x: np.round(x,4),edata[' y'])))
-    return edx,edy
-
-def load_exp_homann(cluster=True,type='mean'):
-    htypes = ['tau_emerge','tau_recovery','tau_memory']
-    all_data = []
-    for i in range(len(htypes)):
-        edx,edy = load_exp_data2(htypes[i],cluster=cluster,type=type)
-        if htypes[i] == 'tau_memory':   
-            all_data.append((edx,edy[0]))
-            all_data.append((edx,edy[1]))
-        else:
-            all_data.append((edx,edy)) 
-    return all_data
 
 ############################################################################################################
 #               Function to simulate single L-experiment (tau emerge)                                      #
@@ -478,7 +432,7 @@ def simulate_grid_point(i,k_params_ext,k_params_def,grid_df,grid_keys,save_path,
 
     if comp_fit or comp_corr:
         # Load experimental data
-        homann_data = load_exp_homann(cluster=cluster)
+        homann_data = load_homann.load_exp_homann(cluster=cluster)
 
         if comp_fit:
             # Fit simulated data to experimental data
