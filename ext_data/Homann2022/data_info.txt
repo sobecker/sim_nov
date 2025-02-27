@@ -1,0 +1,1 @@
+Data in csv files was extracted from figures in Homann et al. (see png files in this directory) using WebPlotDigitizer (https://apps.automeris.io/wpd/).
