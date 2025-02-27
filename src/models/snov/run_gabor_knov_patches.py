@@ -3,9 +3,9 @@ rng = np.random.default_rng(seed=12345)
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-import src.models.snov.kernel_nov_vec as knov_vec  
-import src.models.snov.run_gabor_knov2 as rgk2
-import src.models.snov.gabor_stimuli as gs
+import models.snov.kernel_nov_vec as knov_vec  
+import models.snov.run_gabor_knov2 as rgk2
+import models.snov.gabor_stimuli as gs
 
 ### This file contains functions to simulate Gabor novelty with separate novelty models per image patch ###
 

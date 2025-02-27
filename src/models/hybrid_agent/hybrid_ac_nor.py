@@ -8,13 +8,11 @@ import pickle
 from scipy.special import softmax
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.ac as ac
-import src.models.mf_agent.experiment as exp
-import src.models.mb_agent.mb_surnor as nor
-import src.utils.saveload as sl
+import models.mf_agent.ac as ac
+import models.mf_agent.experiment as exp
+import models.mb_agent.mb_surnor as nor
+import utils.saveload as sl
 
 def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,returnData=False,dirData='',rec_init=True):
 

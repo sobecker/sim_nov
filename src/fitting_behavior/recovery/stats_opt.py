@@ -5,9 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/Volumes/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 base_path   = '/Volumes/lcncluster/becker/RL_reward_novelty/data/'
 alg_type    = 'hhybrid2'

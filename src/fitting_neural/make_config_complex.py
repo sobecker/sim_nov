@@ -2,9 +2,7 @@ import json
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 import os
 
 # Path variables

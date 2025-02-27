@@ -1,8 +1,6 @@
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-from src.fitting_behavior.model_comparison.compute_bic import compute_bic, plot_bic_bar
+import utils.saveload as sl
+from fitting_behavior.model_comparison.compute_bic import compute_bic, plot_bic_bar
 
 if __name__=="__main__":
 

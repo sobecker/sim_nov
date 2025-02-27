@@ -4,12 +4,10 @@ from argparse import ArgumentParser
 import multiprocessing as mp
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.fitting_behavior.optimization.auxiliary_opt as auxo
-import src.fitting_behavior.optimization.base_params_opt as bpo
-import src.utils.saveload as sl
-from src.fitting_behavior.mle.mle_fit import run_mle_fit
+import fitting_behavior.optimization.auxiliary_opt as auxo
+import fitting_behavior.optimization.base_params_opt as bpo
+import utils.saveload as sl
+from fitting_behavior.mle.mle_fit import run_mle_fit
 
 def run_single_parallel(config,dataset):
     config['data_folder'] = dataset # set path to sim data (to be fitted)    

@@ -4,12 +4,10 @@ import timeit
 import multiprocessing as mp
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.ac as ac
-import src.utils.saveload as sl 
-import src.models.mf_agent.experiment as exp
+import models.mf_agent.ac as ac
+import utils.saveload as sl 
+import models.mf_agent.experiment as exp
 
 def run_ac_exp(params,verbose=False,saveData=False,dirData='',returnData=False,rec_init=False):
     # Create folder to save data

@@ -3,9 +3,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 if __name__=="__main__":
     # Specify list of candidate models

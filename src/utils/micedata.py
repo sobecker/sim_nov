@@ -4,10 +4,8 @@ import pandas as pd
 
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/sim_nov/')
-sys.path.append('/Users/sbecker/Projects/Rosenberg-2021-Repository/code')
 
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 ###############################################################################################################
 def get_UnrewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_save=''):

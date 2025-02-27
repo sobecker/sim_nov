@@ -4,13 +4,11 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.utils.visualization as vis
-from src.fitting_behavior.ppc.steps_to_goal_ppc import plot_steps_to_goal_all
-from src.fitting_behavior.ppc.node_ratio_ppc import plot_node_ratio_all, plot_N32_all, plot_N32_all_singlestat, plot_integral_diff_all
-from src.fitting_behavior.ppc.dur_per_partition_ppc import plot_dur_per_partition_all
+import utils.saveload as sl
+import utils.visualization as vis
+from fitting_behavior.ppc.steps_to_goal_ppc import plot_steps_to_goal_all
+from fitting_behavior.ppc.node_ratio_ppc import plot_node_ratio_all, plot_N32_all, plot_N32_all_singlestat, plot_integral_diff_all
+from fitting_behavior.ppc.dur_per_partition_ppc import plot_dur_per_partition_all
 
 if __name__=="__main__":
     # Load style file

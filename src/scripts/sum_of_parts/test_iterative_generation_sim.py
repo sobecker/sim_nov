@@ -5,15 +5,14 @@ import scipy.stats as stats
 import os
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.models.snov.gabor_stimuli as gs
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.fitting_neural.create_homann_input as h_in
-import src.utils.saveload as sl
-import src.fitting_neural.simulate_data as sd
-import src.utils.visualization as vis
-import src.scripts.sum_of_parts.test_parent_child_sim as tpcs
+import models.snov.gabor_stimuli as gs
+import models.snov.run_gabor_knov2 as gknov2
+import fitting_neural.create_homann_input as h_in
+import utils.saveload as sl
+import fitting_neural.simulate_data as sd
+import utils.visualization as vis
+import scripts.sum_of_parts.test_parent_child_sim as tpcs
 
 
 ############################################################################################################################

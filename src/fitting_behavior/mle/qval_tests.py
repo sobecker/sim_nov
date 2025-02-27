@@ -1,14 +1,12 @@
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.utils.saveload as sl
-import src.fitting_behavior.optimization.base_params_opt as bpo
+import utils.saveload as sl
+import fitting_behavior.optimization.base_params_opt as bpo
 
-from src.fitting_behavior.mle.LL_nor import ll_nor
-from src.fitting_behavior.mle.LL_nAC import ll_nac
-from src.fitting_behavior.mle.LL_hybrid import ll_hybrid
-from src.fitting_behavior.mle.LL_hybrid2 import ll_hybrid2
+from fitting_behavior.mle.LL_nor import ll_nor
+from fitting_behavior.mle.LL_nAC import ll_nac
+from fitting_behavior.mle.LL_hybrid import ll_hybrid
+from fitting_behavior.mle.LL_hybrid2 import ll_hybrid2
 
 test_ll_nor = False
 test_ll_nac = False

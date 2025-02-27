@@ -1,7 +1,5 @@
 import os
 import sys
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
 
 import numpy as np
 import pandas as pd
@@ -12,10 +10,10 @@ import matplotlib.colors as colors
 from matplotlib import cm
 from scipy.stats import sem
 
-import src.utils.saveload as sl
-import src.fitting_neural.grid_search_complex_cells as gsc
-import src.fitting_neural.simulate_data as sd
-import src.utils.visualization as vis
+import utils.saveload as sl
+import fitting_neural.grid_search_complex_cells as gsc
+import fitting_neural.simulate_data as sd
+import utils.visualization as vis
 
 ################################################################################################################################################
 # Helper functions 

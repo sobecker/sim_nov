@@ -3,9 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.models.snov.kernel_nov_vec as knov_vec
+import models.snov.kernel_nov_vec as knov_vec
 
 def get_random_seed(length,n,init_seed=None):
     if not init_seed: 

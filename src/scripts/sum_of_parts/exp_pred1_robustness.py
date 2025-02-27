@@ -3,17 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.models.snov.gabor_stimuli as gs
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.models.snov.run_gabor_knov_complex as gknovc
+import models.snov.gabor_stimuli as gs
+import models.snov.run_gabor_knov2 as gknov2
+import models.snov.run_gabor_knov_complex as gknovc
 
-import src.utils.saveload as sl
-import src.utils.visualization as vis
-import src.scripts.sum_of_parts.test_parent_child_sim as tpcs
-import src.scripts.sum_of_parts.plot_similarity_modulation_homann as smh
-import src.scripts.sum_of_parts.exp_pred_helpers as eph
+import utils.saveload as sl
+import utils.visualization as vis
+import scripts.sum_of_parts.test_parent_child_sim as tpcs
+import scripts.sum_of_parts.plot_similarity_modulation_homann as smh
+import scripts.sum_of_parts.exp_pred_helpers as eph
 
 def run_perm_withalph(alph_k,rotate,unit_orient=0,plot_stim=False,permute_all=True,num_perm=20,seed_parent=12345,save_stats=True,save_path='',save_name='',exp_type='m',cell_type='simple'):
     # Set parameters according to experiment type

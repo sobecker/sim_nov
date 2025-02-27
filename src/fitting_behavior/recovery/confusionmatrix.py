@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors, cm
 import sys
 import pandas as pd
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def plot_corrs(path_true,path_fit,path_save):
     sl.make_long_dir(path_save)

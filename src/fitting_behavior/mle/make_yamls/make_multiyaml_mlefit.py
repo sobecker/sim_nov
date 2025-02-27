@@ -1,10 +1,8 @@
 import numpy as np
 import sys
 import os
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 # alg_type    = ['nac','nor']
 # opt_type    = 'mice' # opt, naive

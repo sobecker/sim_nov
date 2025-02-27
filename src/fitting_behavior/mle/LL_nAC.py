@@ -1,9 +1,7 @@
 import numpy as np
 import scipy
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.models.mf_agent.ac as ac
+import models.mf_agent.ac as ac
 
 def ll_nac(params,data,qvals=[]):
     # Create environment

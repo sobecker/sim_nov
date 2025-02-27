@@ -7,9 +7,7 @@ from scipy import stats
 from scipy.optimize import curve_fit
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/Volumes/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 from scipy.stats import multivariate_normal 
 
 #####################################################################################################################

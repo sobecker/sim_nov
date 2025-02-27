@@ -4,10 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colors, cm
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-from src.fitting_behavior.model_comparison.compute_bic import compute_bic
+import utils.saveload as sl
+from fitting_behavior.model_comparison.compute_bic import compute_bic
 
 my_ceil = lambda num, prec: (10**(-prec))*np.ceil(num*10**(prec))
 my_floor = lambda num, prec: (10**(-prec))*np.floor(num*10**(prec))

@@ -1,6 +1,6 @@
 import numpy as np
-import src.models.snov.kernel_nov as knov
-import src.models.snov.kernel_nov_2d as knov_2d
+import models.snov.kernel_nov as knov
+import models.snov.kernel_nov_2d as knov_2d
 
 #############################################################################################################################################################################################################
 # Map stimulus onto separate feature dimensions

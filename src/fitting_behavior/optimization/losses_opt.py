@@ -4,10 +4,8 @@ import base_params_opt as bpo
 import opt_params_opt as opo
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.experiment as e
+import models.mf_agent.experiment as e
 
 ##############################################################################
 # rAC: single-sim, no OI, loss = steps in epi 2-5                            #

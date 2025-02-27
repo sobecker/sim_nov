@@ -3,9 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit,n_app=None,n_sep=None):
     # Get number of data points from underlying mice data (see compute_sizemicedata.py)

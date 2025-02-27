@@ -1,11 +1,9 @@
 import sys
 import numpy as np
 import pandas as pd
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.fitting_behavior.optimization.base_params_opt as bpo
-from src.fitting_behavior.mle.mle_fit import preprocess_micedata
+import utils.saveload as sl
+import fitting_behavior.optimization.base_params_opt as bpo
+from fitting_behavior.mle.mle_fit import preprocess_micedata
 
 
 UnrewNames  = ['B5','B6','B7','D3','D4','D5','D6','D7','D8','D9']

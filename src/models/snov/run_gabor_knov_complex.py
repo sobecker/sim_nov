@@ -4,9 +4,9 @@ import pandas as pd
 import os
 import itertools
 import matplotlib.pyplot as plt
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.models.snov.kernel_nov_vec as knov_vec  
-import src.models.snov.gabor_stimuli as gs
+import models.snov.run_gabor_knov2 as gknov2
+import models.snov.kernel_nov_vec as knov_vec  
+import models.snov.gabor_stimuli as gs
 
 ### This file contains functions to simulate Gabor novelty using convolutional or non-convolutional kernels (simple + complex cells) ###
 

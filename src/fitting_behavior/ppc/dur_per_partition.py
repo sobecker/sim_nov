@@ -6,11 +6,9 @@ import multiprocessing as mp
 import os
 import sys
 import glob
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.utils.tree_env as tree
-import src.utils.hnov as hn
+import utils.saveload as sl
+import utils.tree_env as tree
+import utils.hnov as hn
 
 ##################################################################################################################
 # Functions for computing stats                                                                                  #

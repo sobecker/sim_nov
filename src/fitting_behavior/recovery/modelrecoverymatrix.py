@@ -5,9 +5,7 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def get_n_recov(levels,sims,alg_type,uniparam=False):
     for ll in levels:

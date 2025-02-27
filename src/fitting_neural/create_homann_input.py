@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.snov.gabor_stimuli as gs
+import models.snov.gabor_stimuli as gs
 
 def get_random_seed(length,n,init_seed=None):
     if not init_seed: 

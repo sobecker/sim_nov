@@ -9,11 +9,9 @@ import csv
 import subprocess
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.ac as ac
-import src.utils.saveload as sl
+import models.mf_agent.ac as ac
+import utils.saveload as sl
 
 ### Helper functions ########################################################################################
 def all_zero_x0(trials,epi):

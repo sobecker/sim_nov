@@ -1,11 +1,13 @@
+from pathlib import Path
 import pandas as pd
 import pickle
-import os
-import sys
-sys.path.append('/Users/sbecker/Projects/sim_nov/')
-import src.utils.micedata as mice
+import utils.micedata as mice
 
 ### Script to preprocess mouse data by Rosenberg et al. (2021) ###
+
+project_root = Path(__file__).resolve().parent
+
+dir_load = project_root / 'outdata'
 
 # Requirements: 
 # Before running this script, clone into Rosenberg-2021-Repository: https://github.com/markusmeister/Rosenberg-2021-Repository.

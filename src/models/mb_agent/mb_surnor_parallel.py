@@ -5,12 +5,10 @@ import datetime
 import multiprocessing as mp
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.ac as ac
-import src.models.mb_agent.mb_surnor as nor_seq
-import src.utils.saveload as sl
+import models.mf_agent.ac as ac
+import models.mb_agent.mb_surnor as nor_seq
+import utils.saveload as sl
 
 def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnData=False,dirData='',rec_init=False):
     # Create folder to save data

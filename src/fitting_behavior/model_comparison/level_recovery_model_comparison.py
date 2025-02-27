@@ -4,10 +4,8 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-from src.fitting_behavior.recovery.modelrecoverymatrix import get_n_recov, compute_bic_recov
+import utils.saveload as sl
+from fitting_behavior.recovery.modelrecoverymatrix import get_n_recov, compute_bic_recov
 
 def plot_modelrecov_levels(alg_type,measure_type,comb_type,opt_method,data_gen,candidates,sims,f_comp,save_plot,path_save_plot,name_save_plot,figshape,uniparam=True,title='',show_n=False):
     name_save_data  = f'modelrecov-{alg_type}'

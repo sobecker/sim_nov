@@ -1,8 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty')
-import src.models.snov.kernel_nov as knov
+import models.snov.kernel_nov as knov
 
 ### Functions to compute simple 1D novelty for vector of k (potentially different) kernel functions ###
 

@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def plot_bic_matrix(comb_type,measure_type,alg_types,alg_labels,figshape,path_load,title,save_plot,path_save,save_name):
     plot_col    = measure_type if comb_type=='app' else ('sum_LL' if measure_type=='LL' else 'sum_bic')

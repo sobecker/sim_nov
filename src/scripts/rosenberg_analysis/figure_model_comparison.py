@@ -2,14 +2,12 @@ import numpy as np
 import os
 import sys
 import matplotlib.pyplot as plt
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.utils.visualization as vis
+import utils.saveload as sl
+import utils.visualization as vis
 
-from src.fitting_behavior.model_comparison.bestworst_model_comparison import plot_scenario_schwartz_approx, plot_schwartz_approx_per_level
-from src.fitting_behavior.model_comparison.bicmatrix_model_comparison import plot_bic_matrix
-from src.fitting_behavior.model_comparison.level_recovery_model_comparison import plot_modelrecov_levels
+from fitting_behavior.model_comparison.bestworst_model_comparison import plot_scenario_schwartz_approx, plot_schwartz_approx_per_level
+from fitting_behavior.model_comparison.bicmatrix_model_comparison import plot_bic_matrix
+from fitting_behavior.model_comparison.level_recovery_model_comparison import plot_modelrecov_levels
 
 
 if __name__=="__main__":

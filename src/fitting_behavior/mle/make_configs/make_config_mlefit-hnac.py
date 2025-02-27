@@ -1,9 +1,7 @@
 import json
 import pandas as pd
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 alg_type = ['leaky_hnac-gn'] #hnac-gn_center-triangle', 'hnac-gn_notrace_center-box','hnac-gn-gv_notrace','hnac-gn-goi_notrace','hnac-gn-gv-goi_notrace'] #['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi']
 levels   = [0,1,2,3,4,5,6]

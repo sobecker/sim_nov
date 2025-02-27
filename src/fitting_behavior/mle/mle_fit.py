@@ -6,13 +6,11 @@ import pandas as pd
 import timeit
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.fitting_behavior.optimization.base_params_opt as bpo
-from src.models.mb_agent.mb_surnor import import_params_surnor
-from src.fitting_behavior.mle.mle_fit_sequential import mle_fit, preprocess_micedata
-from src.fitting_behavior.mle.mle_fit_parallel import mle_fit_parallel
+import utils.saveload as sl
+import fitting_behavior.optimization.base_params_opt as bpo
+from models.mb_agent.mb_surnor import import_params_surnor
+from fitting_behavior.mle.mle_fit_sequential import mle_fit, preprocess_micedata
+from fitting_behavior.mle.mle_fit_parallel import mle_fit_parallel
 
 ### Run test function for different test cases ###
 def run_mle_fit(config):

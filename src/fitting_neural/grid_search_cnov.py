@@ -3,12 +3,10 @@ import pandas as pd
 
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/Volumes/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.cnov.count_nov as cnov
-import src.utils.saveload as sl
-import src.fitting_neural.grid_search_complex_cells as gsc
+import models.cnov.count_nov as cnov
+import utils.saveload as sl
+import fitting_neural.grid_search_complex_cells as gsc
 
 # Save path for data
 leaky = True

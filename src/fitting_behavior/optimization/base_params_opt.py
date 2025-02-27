@@ -1,12 +1,10 @@
 import numpy as np
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.utils.tree_env as tree
-import src.utils.hnov as hn
-import src.models.mb_agent.mb_surnor as nor
+import utils.tree_env as tree
+import utils.hnov as hn
+import models.mb_agent.mb_surnor as nor
 
 ##############################################################################
 # Auxiliary functions for parameters                                         #

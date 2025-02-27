@@ -1,9 +1,7 @@
 import json
 import pandas as pd
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 alg_type = ['nac','nac-nooi','nac-kpop','nac-kpop-t','nac-kmix','nac-kmix-t','nac-oi-only']
 

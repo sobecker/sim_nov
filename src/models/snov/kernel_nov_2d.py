@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import src.models.snov.kernel_nov_multidim as knov_md
+import models.snov.kernel_nov_multidim as knov_md
 
 #############################################################################################################################################################################################################
 # Define kernels

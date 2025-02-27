@@ -4,9 +4,8 @@ import pandas as pd
 from scipy.stats import sem, bootstrap
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
 import glob
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def filter_expl(df):
     df_sub_ll = []

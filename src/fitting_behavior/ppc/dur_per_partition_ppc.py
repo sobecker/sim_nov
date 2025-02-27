@@ -2,10 +2,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import sem
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.fitting_behavior.ppc.dur_per_partition as dpp
+import utils.saveload as sl
+import fitting_behavior.ppc.dur_per_partition as dpp
 
 def plot_dur_per_partition_all(plot_type, path_data_save, path_fig_save, maxit, no_rew, paths_load, legendstr, savename, cols, plot_dp=False, recomp=False, recomp_stats=False, dpp_level=6, plot_medians=False, axl=None, lw=1):
 

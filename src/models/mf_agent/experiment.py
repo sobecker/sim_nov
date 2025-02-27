@@ -18,11 +18,9 @@ import pickle
 import subprocess
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-from src.models.mf_agent.ac import *
-import src.utils.saveload as sl 
+from models.mf_agent.ac import *
+import utils.saveload as sl 
 
 
 class recorder():

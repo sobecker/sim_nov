@@ -5,15 +5,13 @@ from skopt import load
 from skopt.plots import plot_evaluations, plot_convergence, plot_objective
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.experiment as e
+import models.mf_agent.experiment as e
 
-import src.fitting_behavior.optimization.base_params_opt as bpo
-from src.models.mb_agent.mb_surnor import *
-# import src.hybrid.hybrid_ac_nor_parallel as hyb
-import src.models.hybrid_agent.hybrid_ac_nor as hyb
+import fitting_behavior.optimization.base_params_opt as bpo
+from models.mb_agent.mb_surnor import *
+# import hybrid.hybrid_ac_nor_parallel as hyb
+import models.hybrid_agent.hybrid_ac_nor as hyb
 
 # Load optimization results
 def load_opt(folder_data, name_data):

@@ -3,11 +3,9 @@ from argparse import ArgumentParser
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.fitting_behavior.optimization.auxiliary_opt as auxo
-import src.fitting_behavior.optimization.base_params_opt as bpo
-import src.utils.saveload as sl
+import fitting_behavior.optimization.auxiliary_opt as auxo
+import fitting_behavior.optimization.base_params_opt as bpo
+import utils.saveload as sl
 
 def run_multisim(config):
     seed        = config['seed'] # 12345

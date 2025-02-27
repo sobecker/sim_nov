@@ -3,9 +3,7 @@ import glob
 import os
 import numpy as np
 import pandas as pd
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def make_overview_fits(data_path,sim_subset=[]):
     # Load list of data sets to be fitted

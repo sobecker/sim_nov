@@ -4,11 +4,9 @@ import numpy as np
 import pandas as pd
 import sys
 import os
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.fitting_behavior.optimization.auxiliary_opt as auxo
-import src.fitting_behavior.optimization.base_params_opt as bpo
-import src.utils.saveload as sl
+import fitting_behavior.optimization.auxiliary_opt as auxo
+import fitting_behavior.optimization.base_params_opt as bpo
+import utils.saveload as sl
 
 # Create random parameters within range (app) or use all sep param combinations
 def get_rand_params(comb_type, num_sim, seed, var_name, kwargs, dir_save, res):

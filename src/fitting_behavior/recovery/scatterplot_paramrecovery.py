@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 def plot_true_vs_mle(path_true,path_fit,path_save):
     sl.make_long_dir(path_save)

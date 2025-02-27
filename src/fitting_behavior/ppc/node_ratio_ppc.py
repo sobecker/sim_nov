@@ -1,13 +1,12 @@
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import sem, bootstrap
-import src.utils.saveload as sl
-import src.utils.visualization as vis
+import utils.saveload as sl
+import utils.visualization as vis
 
 def get_bootstrap_matrix(data,stat_type,R=100):
     subs     = data.subID.unique()

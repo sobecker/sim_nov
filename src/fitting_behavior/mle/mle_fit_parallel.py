@@ -4,13 +4,11 @@ import pandas as pd
 from scipy.optimize import minimize
 import timeit
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
-from src.fitting_behavior.mle.LL_nor import ll_nor
-from src.fitting_behavior.mle.LL_nAC import ll_nac
-from src.fitting_behavior.mle.LL_hybrid import ll_hybrid
-from src.fitting_behavior.mle.LL_hybrid2 import ll_hybrid2
+import utils.saveload as sl
+from fitting_behavior.mle.LL_nor import ll_nor
+from fitting_behavior.mle.LL_nAC import ll_nac
+from fitting_behavior.mle.LL_hybrid import ll_hybrid
+from fitting_behavior.mle.LL_hybrid2 import ll_hybrid2
     
 ### Helper ###
 def mle_opt_summary(res,var_names,log_file=None):

@@ -3,10 +3,10 @@ rng = np.random.default_rng(seed=12345)
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-import src.models.snov.kernel_nov as knov
-import src.models.snov.kernel_nov_2d as knov2d
-import src.models.snov.kernel_nov_multidim as knov_md
-import src.models.snov.gabor_stimuli as gs
+import models.snov.kernel_nov as knov
+import models.snov.kernel_nov_2d as knov2d
+import models.snov.kernel_nov_multidim as knov_md
+import models.snov.gabor_stimuli as gs
 
 ####################################################################################################################################################################
 # Compute similarity of stimulus with given Gabor kernel

@@ -3,9 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 if __name__=="__main__":
     algs_basic   = []#['nac-oi-only','nac','nac-kpop','nac-kmix','nac-nooi','nor','hybrid']

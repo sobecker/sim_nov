@@ -5,15 +5,14 @@ from matplotlib import colors
 import os
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.models.snov.gabor_stimuli as gs
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.models.snov.kernel_nov_vec as knov_vec
-import src.fitting_neural.create_homann_input as h_in
-import src.utils.saveload as sl
-import src.fitting_neural.simulate_data as sd
-import src.utils.visualization as vis
+import models.snov.gabor_stimuli as gs
+import models.snov.run_gabor_knov2 as gknov2
+import models.snov.kernel_nov_vec as knov_vec
+import fitting_neural.create_homann_input as h_in
+import utils.saveload as sl
+import fitting_neural.simulate_data as sd
+import utils.visualization as vis
 
 ############################################################################################################################
 def cosine_sim(a,b):

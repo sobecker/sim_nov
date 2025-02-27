@@ -1,9 +1,7 @@
 import numpy as np
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 path            = '/Users/sbecker/yaml_files/yaml_rlnet/ModelRecovery/Fits/'; sl.make_long_dir(path)
 comb_type       = 'app' # 'app','sep'

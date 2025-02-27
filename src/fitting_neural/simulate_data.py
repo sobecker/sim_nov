@@ -5,12 +5,10 @@ from scipy import stats
 import os
 import matplotlib.pyplot as plt
 import sys
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-import src.utils.saveload as sl
-import src.models.snov.run_gabor_knov as gknov
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.fitting_neural.load_homann_data as load_homann
+import utils.saveload as sl
+import models.snov.run_gabor_knov as gknov
+import models.snov.run_gabor_knov2 as gknov2
+import fitting_neural.load_homann_data as load_homann
 
 # def load_exp_data(h_type,path_load_exp,filter_emerge=True):
 #     emu = pd.read_csv(os.path.join(path_load_exp,f'Homann2022_{h_type}_mean.csv'))

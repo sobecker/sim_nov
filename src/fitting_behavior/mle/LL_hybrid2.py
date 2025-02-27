@@ -1,20 +1,16 @@
 import numpy as np
 import scipy
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.models.hybrid_agent.hybrid_ac_nor as hyb
+import models.hybrid_agent.hybrid_ac_nor as hyb
 
 import numpy as np
 import scipy
 from scipy.special import softmax
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
-import src.models.mf_agent.ac as ac
-import src.models.mb_agent.mb_surnor as nor
+import models.mf_agent.ac as ac
+import models.mb_agent.mb_surnor as nor
 
 def ll_hybrid2(params,data,mb_qvals=[],mf_qvals=[],verbose=False):
     # Create environment

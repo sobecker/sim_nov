@@ -3,11 +3,9 @@ import pandas as pd
 from scipy.stats import sem
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty')
 # sys.path.append('/Volumes/lcncluster/becker/RL_reward_novelty')
-sys.path.append('/lcncluster/becker/RL_reward_novelty')
-import src.fitting_neural.grid_search_complex_cells as gscc #import fit_homann_exp, corr_homann_exp, load_exp_homann  
-import src.utils.saveload as sl
+import fitting_neural.grid_search_complex_cells as gscc #import fit_homann_exp, corr_homann_exp, load_exp_homann  
+import utils.saveload as sl
 
 def fit_homann_exp_jackknife(sim_data,homann_data,coef_steady=True,regr_meas='score',save_path='',save_name=''):
     ## Fit linear regression ##

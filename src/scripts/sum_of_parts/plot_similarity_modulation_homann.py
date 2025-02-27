@@ -3,15 +3,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.models.snov.gabor_stimuli as gs
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.fitting_neural.create_homann_input as h_in
-import src.utils.saveload as sl
-import src.utils.visualization as vis
+import models.snov.gabor_stimuli as gs
+import models.snov.run_gabor_knov2 as gknov2
+import fitting_neural.create_homann_input as h_in
+import utils.saveload as sl
+import utils.visualization as vis
 
-import src.scripts.sum_of_parts.test_parent_child_sim as tpcs
+import scripts.sum_of_parts.test_parent_child_sim as tpcs
 
 def generate_inputs_allexp(gen_sim=False,gen_rand=False,p_rotate=np.round(np.arange(0.1,1,0.1),2),sim_kwargs=None,rand_kwargs=None,k_params=None,max_len_fam=12,plot_exp=[False,False,False]):
     label     = []

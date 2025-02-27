@@ -1,7 +1,5 @@
 import os
 import sys
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
 
 import numpy as np
 import pandas as pd
@@ -12,12 +10,12 @@ import itertools
 import json
 from argparse import ArgumentParser
 
-import src.utils.saveload as sl
-import src.fitting_neural.simulate_data as sd
-import src.models.snov.run_gabor_knov as gknov
-import src.models.snov.run_gabor_knov2 as gknov2
-import src.fitting_neural.create_homann_input as h_in
-import src.fitting_neural.load_homann_data as load_homann
+import utils.saveload as sl
+import fitting_neural.simulate_data as sd
+import models.snov.run_gabor_knov as gknov
+import models.snov.run_gabor_knov2 as gknov2
+import fitting_neural.create_homann_input as h_in
+import fitting_neural.load_homann_data as load_homann
 
 ## This script runs a grid search over the parameters of the simple cell kernel novelty model, simulating several samples of the Homann experiments for each parameter combination. ##
 

@@ -5,10 +5,8 @@ import matplotlib.colors as colors
 from matplotlib import cm
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.utils.tree_env as tree
-import src.utils.saveload as sl
+import utils.tree_env as tree
+import utils.saveload as sl
 
 # Function to assign Euclidean coordinates to every state in the binary tree env
 def assign_coor_eucl(mytree):

@@ -4,10 +4,9 @@ import matplotlib.pyplot as plt
 import os
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/') 
 
-import src.utils.saveload as sl
-import src.utils.visualization as vis
+import utils.saveload as sl
+import utils.visualization as vis
 
 if __name__=="__main__":
     plt.style.use('/Users/sbecker/Projects/RL_reward_novelty/src/scripts/Figures_Paper/paper.mplstyle')

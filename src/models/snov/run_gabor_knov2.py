@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from scipy import ndimage as ndi
 from scipy.special import softmax
 import multiprocessing as mp
-import src.models.snov.kernel_nov_vec as knov_vec  
-import src.models.snov.gabor_stimuli as gs
+import models.snov.kernel_nov_vec as knov_vec  
+import models.snov.gabor_stimuli as gs
 
 ### This file contains functions to simulate Gabor novelty using a new approach (non-negative kernel functions, more similar to 1D model) ###
 

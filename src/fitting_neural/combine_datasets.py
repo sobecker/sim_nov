@@ -1,11 +1,9 @@
 import os
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')   
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
 
 import numpy as np
 import pandas as pd
-import src.utils.saveload as sl
+import utils.saveload as sl
 
 base_path_data = '/Volumes/lcncluster/becker/RL_reward_novelty/data/2024-08_grid_search_manual_corr/'
 
