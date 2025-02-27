@@ -115,7 +115,7 @@ def run_mle_fit(config):
             for i in range(len(AllNames)):
                 # dir = sl.get_datapath().replace('data','ext_data')+'Rosenberg2021/'
                 dir = f'{base_path}ext_data/Rosenberg2021/'
-                file=f'{AllNames[i]}-stateseq.pickle'
+                file=f'{AllNames[i]}-stateseq_UntilG.pickle'
                 df_i = preprocess_micedata(dir,file,P,subID=AllNames[i],epi=0)
                 d.append(df_i)
             all_data = pd.concat(d,ignore_index=True)

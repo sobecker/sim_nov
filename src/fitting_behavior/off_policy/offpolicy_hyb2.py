@@ -1,21 +1,14 @@
 import numpy as np
 import pandas as pd
 import scipy
-import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-import src.hybrid.hybrid_ac_nor as hyb
-
-import numpy as np
-import scipy
 from scipy.special import softmax
 
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-
+sys.path.append('/Users/sbecker/Projects/sim_nov/')
 import src.models.mf_agent.ac as ac
 import src.models.mb_agent.mb_surnor as nor
+import src.models.hybrid_agent.hybrid_ac_nor as hyb
+
 
 def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 

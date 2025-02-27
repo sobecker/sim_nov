@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
-
+sys.path.append('/Users/sbecker/Projects/sim_nov/')
 from src.models.mb_agent.mb_surnor import prioritized_sweeping, compute_hnov2, compute_hnov3, update_hnov_fixedrate, update_hnov_varrate
 import src.models.mf_agent.ac as ac
 

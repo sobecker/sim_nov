@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import sys
-sys.path.append('/Users/sbecker/Projects/RL_reward_novelty/')
-sys.path.append('/lcncluster/becker/RL_reward_novelty/')
+sys.path.append('/Users/sbecker/Projects/sim_nov/')
 import src.models.mf_agent.ac as ac
 
 def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
