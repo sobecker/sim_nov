@@ -44,8 +44,8 @@ def plot_bic_matrix(comb_type,measure_type,alg_types,alg_labels,figshape,path_lo
     if save_plot:
         fig_name = f'{save_name}_{measure_type}_{comb_type}'
         sl.make_long_dir(path_save)
-        plt.savefig(os.path.join(path_save,fig_name+'.eps'))
-        plt.savefig(os.path.join(path_save,fig_name+'.svg'))
+        plt.savefig(path_save / fig_name+'.eps')
+        plt.savefig(path_save / fig_name+'.svg')
 
 if __name__=="__main__":
     # Specify list of candidate models
@@ -60,7 +60,7 @@ if __name__=="__main__":
     save_plot    = True
     save_name    = 'bic-matrix2'
     path_load    = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/ModelSelection/BIC/'
-    path_save    = os.path.join(sl.get_datapath().replace('data','output'),f'Figures_Paper/Fig_model_comparison/')
+    path_save    = sl.get_datapath().replace('data','output') / f'Figures_Paper/Fig_model_comparison/'
     figshape     = (6,6)
 
 

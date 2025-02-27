@@ -4,49 +4,77 @@ import os
 import pickle
 import csv
 import subprocess
+from pathlib import Path
 
 ##############################################################################
 #       PATHS / DIRECTORIES                                                  #
 ##############################################################################
-def get_datapath():
-    path  = os.getcwd()
-    spath = path.split('/')
-    lpath = ''
-    for i in range(1,len(spath)):
-        if 'RL_reward_novelty' in spath[-i]:
-            break
-        else:
-            lpath = lpath+'../'
-    if not lpath:
-        lpath='./'
-    lpath = lpath+'data/'
-    return lpath
+def get_rootpath(target_name='sim_nov', start_path=Path(__file__).resolve()):
+    """Get the root path of a project by searching for a target directory name.
 
-def make_dir(dir,folder=''):
-    if not folder:
-        full_dir = dir
-    else:
-        if dir[-1]=='/': full_dir = dir+folder
-        else: full_dir = dir+'/'+folder
+    Args:
+        target_name (str): The name of the target directory.
+        start_path (Path): The starting path to search from.
 
-    if not os.path.isdir(full_dir):
-        os.mkdir(full_dir) 
-    return full_dir
+    Returns:
+        parent (Path): The root path of the project (if it exists, else None).
+
+    """
+    for parent in start_path.parents:
+        if parent.name==target_name:
+            return parent
+    return None
+
+# def get_datapath():
+#     path  = os.getcwd()
+#     spath = path.split('/')
+#     lpath = ''
+#     for i in range(1,len(spath)):
+#         if 'RL_reward_novelty' in spath[-i]:
+#             break
+#         else:
+#             lpath = lpath+'../'
+#     if not lpath:
+#         lpath='./'
+#     lpath = lpath+'data/'
+#     return lpath
+
+# def make_dir(dir,folder=''):
+#     if not folder:
+#         full_dir = dir
+#     else:
+#         if dir[-1]=='/': full_dir = dir+folder
+#         else: full_dir = dir+'/'+folder
+
+#     if not os.path.isdir(full_dir):
+#         os.mkdir(full_dir) 
+#     return full_dir
 
 def make_long_dir(path):
+    """
+    Create a directory and all its parent directories if they do not exist.
+    """
     max_depth = 10
     c = 0
     made_path = None
-    path_list = path.split('/')
-    if path_list[0]=='': path_list[0]='/'
-    if not os.path.exists(os.path.join(*path_list[:1])):
+    path_obj = Path(path)
+
+    # Check for valid initial path
+    if not path_obj.parts[0] == '/' and not path_obj.parts[0]: 
         raise ValueError('Invalid path.')
-    else:
-        for i in range(2,len(path_list)+1):
-            if not os.path.exists(os.path.join(*path_list[:i])):
-                made_path = make_dir(os.path.join(*path_list[:i]))
-                c+=1
-            if c>= max_depth: break
+
+    # Iterate over path parts, starting from the second part
+    for i in range(2, len(path_obj.parts) + 1):
+        sub_path = path_obj.parts[:i]
+        current_path = Path(*sub_path)
+
+        if not current_path.exists():
+            made_path = make_dir(current_path)
+            c += 1
+        
+        if c >= max_depth:
+            break
+
     return made_path
 
 ##############################################################################
@@ -55,7 +83,7 @@ def make_long_dir(path):
 def load_sim_data(dir_data,file_data='data_basic.pickle',auto_path=False):
     if auto_path:
         if 'data/' in dir_data:
-            path_data = os.path.join(dir_data,file_data)
+            path_data = dir_data / file_data
         elif 'src/' in os.getcwd():
             path_data = os.path.join('..','..','data',dir_data,file_data)
         else:
@@ -85,7 +113,7 @@ def load_sim_data(dir_data,file_data='data_basic.pickle',auto_path=False):
 def load_sim_params(dir_params,file_params='params.pickle',auto_path=False):
     if auto_path:
         if 'data' in dir_params:
-            path_params = os.path.join(dir_params,file_params)
+            path_params = dir_params / file_params
         elif 'src/' in os.getcwd():
             path_params = os.path.join('..','..','data',dir_params,file_params)
         else: 
@@ -94,7 +122,7 @@ def load_sim_params(dir_params,file_params='params.pickle',auto_path=False):
         if dir_params[-1]=='/': path_params = dir_params+file_params
         else: path_params = dir_params+'/'+file_params 
 
-    path_params = os.path.join(dir_params,file_params)
+    path_params = dir_params / file_params
     type_data = file_params.split('.')[-1]
     if type_data=='pickle' or type_data=='pkl':
         params = pd.read_pickle(path_params)
@@ -120,7 +148,7 @@ def load_df_stateseq(dir='',file='load_df_stateseq.pickle'):
         else: 
             path = os.path.join('.','ext_data','Rosenberg2021',file)
     else:
-        path = os.path.join(dir,file)
+        path = dir / file
     
     with open(path,'rb') as f:
         df_stateseq = pickle.load(f)
@@ -249,7 +277,7 @@ def saveCodeVersion(dir_cv,dir_git='/lcncluster/becker/RL_reward_novelty/',file_
     
     os.chdir(dir_git)
         
-    with open(os.path.join(dir_cv,file_cv),'w') as f:
+    with open(dir_cv / file_cv,'w') as f:
         cv = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
         f.write(cv)
 

@@ -140,7 +140,7 @@ def make_dir(dir,folder):
 def load_sim_data(dir_data,file_data='all_data.pickle',auto_path=True):
     if auto_path:
         if 'data' in dir_data:
-            with open(os.path.join(dir_data,file_data), 'rb') as f:
+            with open(dir_data / file_data, 'rb') as f:
                 all_data = pickle.load(f)  
         else:
             if 'src/' in os.getcwd():
@@ -156,7 +156,7 @@ def load_sim_data(dir_data,file_data='all_data.pickle',auto_path=True):
 
 def load_sim_params(dir_params,file_params='params.pickle'):
     if 'data' in dir_params:
-        with open(os.path.join(dir_params,file_params), 'rb') as f:
+        with open(dir_params / file_params, 'rb') as f:
             params = pickle.load(f)
     else:
         if 'src/' in os.getcwd():

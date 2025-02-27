@@ -23,11 +23,11 @@ def plot_modelrecov_levels(alg_type,measure_type,comb_type,opt_method,data_gen,c
             for jj in range(len(candidates)):
                 if data_gen[ii]==candidates[jj]:
                     if alg_type=='hnor' and not uniparam:
-                        path_candidates.append(os.path.join(path_model,f'{alg_type}_{comb_type}_{opt_method}/{alg_type}_{comb_type}_{opt_method}_{data_gen[ii]}/'))
+                        path_candidates.append(path_model / f'{alg_type}_{comb_type}_{opt_method}/{alg_type}_{comb_type}_{opt_method}_{data_gen[ii]}/')
                     else:
-                        path_candidates.append(os.path.join(path_model,f'sim-{alg_type}-{comb_type}_fit-{alg_type}-{comb_type}_{opt_method}/mle-recov_sim-{alg_type}_fit-{alg_type}_{comb_type}_{opt_method}_{candidates[jj]}/'))
+                        path_candidates.append(path_model / f'sim-{alg_type}-{comb_type}_fit-{alg_type}-{comb_type}_{opt_method}/mle-recov_sim-{alg_type}_fit-{alg_type}_{comb_type}_{opt_method}_{candidates[jj]}/')
                 else:
-                    path_candidates.append(os.path.join(path_model,f'sim-{alg_type}-{comb_type}_fit-{alg_type}-{comb_type}_{opt_method}/sim-{alg_type}-{comb_type}-{data_gen[ii]}_{alg_type}-{comb_type}-{candidates[jj]}_{opt_method}/'))
+                    path_candidates.append(path_model / f'sim-{alg_type}-{comb_type}_fit-{alg_type}-{comb_type}_{opt_method}/sim-{alg_type}-{comb_type}-{data_gen[ii]}_{alg_type}-{comb_type}-{candidates[jj]}_{opt_method}/')
             
             sl.make_long_dir(path_save_data)
             sl.make_long_dir(path_save_plot)
@@ -49,8 +49,8 @@ def plot_modelrecov_levels(alg_type,measure_type,comb_type,opt_method,data_gen,c
             list_bic_df.append(bic_df_ii)
 
         all_bic_df = pd.concat(list_bic_df)
-        all_bic_df.to_csv(os.path.join(path_save_data,f'bic_{name_save_data}_{comb_type}.csv'))
-        all_bic_df.to_pickle(os.path.join(path_save_data,f'bic_{name_save_data}_{comb_type}.pickle'))
+        all_bic_df.to_csv(path_save_data / f'bic_{name_save_data}_{comb_type}.csv')
+        all_bic_df.to_pickle(path_save_data / f'bic_{name_save_data}_{comb_type}.pickle')
 
     if f_plot:
         if not f_comp: 
@@ -85,7 +85,7 @@ def plot_modelrecov_levels(alg_type,measure_type,comb_type,opt_method,data_gen,c
         f.tight_layout()
 
         if save_plot:
-            plt.savefig(os.path.join(path_save_plot,f'{name_save_plot}.eps'),bbox_inches='tight')
+            plt.savefig(path_save_plot,f'{name_save_plot}.eps') / bbox_inches='tight'
             plt.savefig(os.path.join(path_save_plot,f'{name_save_plot}.svg'),bbox_inches='tight')
 
 

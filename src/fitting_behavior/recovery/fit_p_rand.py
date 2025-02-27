@@ -24,7 +24,7 @@ def run_multifit_single_parallel(config):
         #data_path = '/Volumes/lcncluster/becker/RL_reward_novelty/data/'+data_path
         data_path = sl.get_datapath()+config['data_path']
     regex = '*_sim*'
-    datasets = glob.glob(os.path.join(data_path,regex))
+    datasets = glob.glob(data_path / regex)
     datasets.sort(key=lambda x: int(x.split('_sim')[-1]))
 
     config_new = config.copy()
@@ -51,7 +51,7 @@ def run_multifit_single_sequential(config):
         #data_path = '/Volumes/lcncluster/becker/RL_reward_novelty/data/'+data_path
         data_path = sl.get_datapath()+config['data_path']
     regex = '*_sim*'
-    datasets = glob.glob(os.path.join(data_path,regex))
+    datasets = glob.glob(data_path / regex)
     datasets.sort(key=lambda x: int(x.split('_sim')[-1]))
 
     startID = config['startID'] if 'startID' in config.keys() else 0

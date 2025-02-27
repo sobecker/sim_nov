@@ -8,7 +8,7 @@ import utils.saveload as sl
 def make_overview_fits(data_path,sim_subset=[]):
     # Load list of data sets to be fitted
     regex = '*_sim*'
-    datasets = glob.glob(os.path.join(data_path,regex))
+    datasets = glob.glob(data_path / regex)
     datasets.sort(key=lambda x: int(x.split('_')[-2].split('sim')[-1]))
     if len(sim_subset)>0:
         datasets = list(filter(lambda x: int(x.split('_')[-2].split('sim')[-1]) in sim_subset,datasets))
@@ -54,6 +54,6 @@ if __name__=="__main__":
     #data_path   = '/Volumes/lcncluster/becker/RL_reward_novelty/data/ParameterRecovery/FitData/nor_allparams_Nelder-Mead/'
     data_path   = '/Volumes/lcncluster/becker/RL_reward_novelty/data/ParameterRecovery/FitData/nac_Nelder-Mead/'
     regex       = '*_sim*'
-    datasets    = glob.glob(os.path.join(data_path,regex))
+    datasets    = glob.glob(data_path / regex)
     fitIDs      = [int(x.split('_')[-2].split('sim')[-1]) for x in datasets]
     make_overview_fits(data_path,sim_subset=fitIDs)

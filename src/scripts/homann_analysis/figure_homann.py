@@ -604,7 +604,7 @@ def plot_single_var(plot_meas,plot_var,ll_c_type,ll_k_type,ll_color,xl,yl,xt,yt,
     figname = f'{plot_meas}_{plot_var}' + str_types + add_name + '.svg'
     if set_figtight:
         fig.tight_layout()
-        fig.savefig(os.path.join(savepath,figname))
+        fig.savefig(savepath / figname)
     else:
         return savepath, figname
 
@@ -1538,11 +1538,11 @@ if __name__=="__main__":
                 best_params = plot_average_sim_sepfit(ll_c_type=ll_c_type,ll_k_type=ll_k_type,ll_color=ll_color,ll_names=ll_names, plot_homann=True, inset=True, corr=True, stat_type='min', plot_samples=True, ll_set_names=ll_set_names, plot_meas=plot_meas, plot_vars=plot_var, bootstrap=False, jackknife=True, ylim=ylim, legend_pos=legend_pos, plain_mse=plain_mse)
 
                 sl.make_long_dir(savepath_bestparams)
-                with open(os.path.join(savepath_bestparams,savename_bestparams), 'w') as fout:
+                with open(savepath_bestparams / savename_bestparams, 'w') as fout:
                     json.dump(best_params, fout)
             else:
                 savepath = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/2024-08_grid_search_manual_corr/data_for_figures/'
-                with open(os.path.join(savepath_bestparams,savename_bestparams), 'r') as fin:
+                with open(savepath_bestparams / savename_bestparams, 'r') as fin:
                     best_params = json.load(fin)
 
         # Plot error panels knov
@@ -1602,7 +1602,7 @@ if __name__=="__main__":
                 [ax[i].set_ylabel('') for i in range(1,len(plot_var_rob[j]))]
                 fig.legend(ncol=5+len(ll_c_type)-1,loc='upper center',bbox_to_anchor=(0.52,1.07),fontsize=10,frameon=False,handlelength=1.2,handletextpad=0.4,columnspacing=0.8)
                 fig.tight_layout()
-                fig.savefig(os.path.join(savepath,figname), bbox_inches='tight')
+                fig.savefig(savepath / figname, bbox_inches='tight')
 
             # Plot error panels knov (simple) into single figure
             # fig,ax = plt.subplots(1,len(plot_var_rob[1]),figsize=(2*len(plot_var_rob[1]),2)) #figsize=(2.25,1.9)
@@ -1611,7 +1611,7 @@ if __name__=="__main__":
             # [ax[i].set_ylabel('') for i in range(1,len(plot_var_rob[1]))]
             # fig.legend(ncol=5+len(ll_c_type)-1,loc='upper center',bbox_to_anchor=(0.52,1.07),fontsize=10,frameon=False,handlelength=1.2,handletextpad=0.4,columnspacing=0.8)
             # fig.tight_layout()
-            # fig.savefig(os.path.join(savepath,figname), bbox_inches='tight') 
+            # fig.savefig(savepath / figname, bbox_inches='tight') 
 
         # Plot error panels knov and cnov into single figure
         if plot_case1:
@@ -1653,7 +1653,7 @@ if __name__=="__main__":
             savepath = '/Volumes/lcncluster/becker/RL_reward_novelty/output/2024-08_grid_search_manual_corr/figures'
             savename = f'{save_str}_mse-bars{add_name}.svg'
             fig.tight_layout()
-            fig.savefig(os.path.join(savepath,savename))
+            fig.savefig(savepath / savename)
                 
         elif plot_case2:
             num_panels = np.sum([len(plot_var[i]) for i in range(len(plot_var))])
@@ -1685,7 +1685,7 @@ if __name__=="__main__":
             axl[-1].set_xticks([]); axl[-1].set_yticks([])
             fig.legend(ncol=1,loc='center right',bbox_to_anchor=(1.01,0.5),fontsize=10,frameon=False,handlelength=1.2,handletextpad=0.4,columnspacing=0.8)
             fig.tight_layout()
-            fig.savefig(os.path.join(savepath,figname), bbox_inches='tight')
+            fig.savefig(savepath / figname, bbox_inches='tight')
 
         elif plot_case2a:
             num_panels = np.sum([len(plot_var[i]) for i in range(len(plot_var))])
@@ -1726,7 +1726,7 @@ if __name__=="__main__":
             savepath = f'/Volumes/lcncluster/becker/RL_reward_novelty/output/2024-08_grid_search_manual_corr/figures/'
             figname = f'{save_str}adj_w3_G-40{add_name}.svg'
             sl.make_long_dir(savepath)
-            fig.savefig(os.path.join(savepath,figname), bbox_inches='tight')
+            fig.savefig(savepath / figname, bbox_inches='tight')
         
         elif plot_case3:
             num_panels = len(plot_meas_ll)
@@ -1744,7 +1744,7 @@ if __name__=="__main__":
             sl.make_long_dir(savepath)
             [axl[i].set_ylabel('') for i in range(1,num_panels)]
             fig.tight_layout()
-            fig.savefig(os.path.join(savepath,figname), bbox_inches='tight')
+            fig.savefig(savepath / figname, bbox_inches='tight')
 
         # else:
         #     num_panels      = len(plot_var[1])+len(plot_var[0])

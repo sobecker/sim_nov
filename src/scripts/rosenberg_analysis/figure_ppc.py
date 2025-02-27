@@ -45,8 +45,8 @@ if __name__=="__main__":
         maxit       = 3000          # number of steps included (only relevant for node discovery plots)
         figsize     = (2.05,2.05)
         
-        # paths_load  = [os.path.join(path_sim,'hybrid2_app_norew')] 
-        paths_load  = [path_exp,os.path.join(path_sim,'hybrid2_app_norew')]
+        # paths_load  = [path_sim / 'hybrid2_app_norew'] 
+        paths_load  = [path_exp,path_sim / 'hybrid2_app_norew']
         # legendstr   = ['c-Hyb']
         legendstr   = ['Mice','c-Hyb']
         # savename    = ['hyb2']
@@ -144,7 +144,7 @@ if __name__=="__main__":
         maxit       = 3000          # number of steps included (only relevant for node discovery plots)
         figsize     = (2.05,2.05)
         
-        paths_load  = [path_exp,os.path.join(path_sim,'nor_app_norew')]
+        paths_load  = [path_exp,path_sim / 'nor_app_norew']
         legendstr   = ['Mice','c-MB']
         savename    = ['mice_full','nor']
         cols        = ['k','r']

@@ -70,8 +70,8 @@ def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,
     bic_df['best'] = best
     print(f'The winning model is: {bic_df.loc[bic_df.best,"model"].unique()}.')
 
-    bic_df.to_csv(os.path.join(path_save,f'bic_{name_save}_{comb_type}.csv'))
-    bic_df.to_pickle(os.path.join(path_save,f'bic_{name_save}_{comb_type}.pickle'))
+    bic_df.to_csv(path_save / f'bic_{name_save}_{comb_type}.csv')
+    bic_df.to_pickle(path_save / f'bic_{name_save}_{comb_type}.pickle')
 
     return bic_df
 

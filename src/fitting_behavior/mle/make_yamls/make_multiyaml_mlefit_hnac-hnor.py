@@ -45,7 +45,7 @@ spec:
   command:
     value: "/bin/bash" # bash commands as args below, e.g. using a custom conda installation on the lcncluster
   arguments: 
-    value: {os.path.join(path_exps1,f'{save_name2}{clink}{comb_type[cc]}.sh')}
+    value: {path_exps1 / f'{save_name2}{clink}{comb_type[cc]}.sh'}
   environment:
     items:
       HOME:

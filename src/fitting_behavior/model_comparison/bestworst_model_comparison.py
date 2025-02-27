@@ -125,8 +125,8 @@ def plot_best_worst(algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_lo
     if save_plot:
         save_name        = f'{save_name}_{comb_type}2{"_bic-only" if bic_only else ""}'
         sl.make_long_dir(path_save)
-        plt.savefig(os.path.join(path_save,save_name+'.eps'))
-        plt.savefig(os.path.join(path_save,save_name+'.svg'))
+        plt.savefig(path_save / save_name+'.eps')
+        plt.savefig(path_save / save_name+'.svg')
 
 def plot_scenario(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,ax=None):
     # Compute BIC and LL
@@ -190,8 +190,8 @@ def plot_scenario(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,
     if save_plot:
         save_name        = f'{save_name}_{plot_col[0]}_{comb_type}'
         sl.make_long_dir(path_save)
-        plt.savefig(os.path.join(path_save,save_name+'.eps'))
-        plt.savefig(os.path.join(path_save,save_name+'.svg'))
+        plt.savefig(path_save / save_name+'.eps')
+        plt.savefig(path_save / save_name+'.svg')
 
 def plot_scenario_schwartz_approx(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,bar_pattern=None,ax=None,plot_legend=False,ylim=None,col_bic=None,col_LL=None):
     # Compute BIC and LL
@@ -403,7 +403,7 @@ if __name__=="__main__":
     recomp_bic      = False 
 
     path_bicdata    = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/ModelSelection/BIC/'
-    path_save       = os.path.join(sl.get_datapath().replace('data','output'),f'Figures_Paper/Fig_model_comparison/')
+    path_save       = sl.get_datapath().replace('data','output') / f'Figures_Paper/Fig_model_comparison/'
 
     if recomp_bic:
         for i_alg in range(len(algs_basic)):

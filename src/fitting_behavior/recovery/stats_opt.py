@@ -15,7 +15,7 @@ data_path   = f'ParameterRecovery/FitData{"_uniparam" if uniparam else ""}/sim-{
 f_comp      = True
 
 # Get all folders (=comb of levels) that we need to analyze
-d         = os.path.join(base_path,data_path)
+d         = base_path / data_path
 dl        = glob.glob(os.path.join(d,f'*sim-{alg_type}*'))
 
 if f_comp:
@@ -40,7 +40,7 @@ if f_comp:
         for ii in range(len(ddl_i)):
             folder = ddl_df.loc[ddl_df['simID']==ddl_i[ii],'folder'].values[0]
             file   = f'{os.path.normpath(folder).split("/")[-1]}_{comb_type}.pickle'
-            if os.path.exists(os.path.join(folder,file)):
+            if os.path.exists(folder / file):
                 data = sl.load_sim_data(folder,file_data=file)
                 fitcomb_all.append(fitcomb)
                 simID_all.append(ddl_i[ii])

@@ -56,8 +56,8 @@ def run_mle_fit(config):
     fit_sep = True
     fit_app = True
     if os.path.isdir(dir_save) and not overwrite:
-        if os.path.isfile(os.path.join(dir_save,f'{save_folder}_sep.csv')): fit_sep = False
-        if os.path.isfile(os.path.join(dir_save,f'{save_folder}_app.csv')): fit_app = False
+        if os.path.isfile(dir_save / f'{save_folder}_sep.csv'): fit_sep = False
+        if os.path.isfile(dir_save / f'{save_folder}_app.csv'): fit_app = False
     if comb_type=='' and not fit_sep and fit_app:   comb_type = 'app'
     elif comb_type=='' and not fit_app and fit_sep: comb_type = 'sep'
     # Check if we need to fit any

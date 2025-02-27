@@ -1,11 +1,11 @@
 import pickle
 import numpy as np
 import pandas as pd
-
-import os
-import sys
-
+from pathlib import Path
 import utils.saveload as sl
+import sys
+sys.path.append('/Users/sbecker/Projects/Rosenberg-2021-Repository/code')
+# from MM_Maze_Utils import *
 
 ###############################################################################################################
 def get_UnrewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_save=''):
@@ -27,7 +27,7 @@ def get_UnrewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_sav
 
     for subID in AllNames: # iterate over subjects
         states = []
-        with open(os.path.join(dir_load, f'{subID}-tf'), 'rb') as f:
+        with open(dir_load / f'{subID}-tf', 'rb') as f:
             tf = pickle.load(f) # filter only exploration episode!!! - get reward for tf.?? and only go until there
             # tf has the following structure:
             # fr: start and end frame for each bout; (n,2) ndarray 
@@ -54,11 +54,11 @@ def get_UnrewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_sav
                     states.extend(list(tf.no[i][nh,0]+1))          # append all non-home cage visits       
         s_seq = np.array([np.arange(len(states)),states]).transpose()
         if savedata: 
-            dir_save1 = os.path.join(dir_save,f'{subID}_data')
+            dir_save1 = dir_save / f'{subID}_data'
             sl.make_long_dir(dir_save1)
-            with open(os.path.join(dir_save1,f'{subID}-stateseq_UntilG.pickle'), 'wb') as f:
+            with open(dir_save1 / f'{subID}-stateseq_UntilG.pickle', 'wb') as f:
                 pickle.dump(s_seq,f)   
-            pd.DataFrame(s_seq).to_csv(os.path.join(dir_save1,f'{subID}-stateseq_UntilG.csv'),sep='\t',header=None,index=None)
+            pd.DataFrame(s_seq).to_csv(dir_save1 / f'{subID}-stateseq_UntilG.csv',sep='\t',header=None,index=None)
             print(f'Saved data for subID {subID}.\n')
         
         if not excludefailed or foundgoal:
@@ -79,9 +79,9 @@ def get_UnrewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_sav
     df_stateseq = df_stateseq.transpose()
     df_stateseq.columns = ['subID','subRew','epi','it','state','reward_received','goal_state']
     if savedata: 
-        with open(os.path.join(dir_save,'df_stateseq_UnrewUntilG.pickle'),'wb') as f:
+        with open(dir_save / 'df_stateseq_UnrewUntilG.pickle','wb') as f:
             pickle.dump(df_stateseq,f)
-        df_stateseq.to_csv(os.path.join(dir_save,'df_statseq_UnrewUntilG.csv'),sep='\t')
+        df_stateseq.to_csv(dir_save / 'df_statseq_UnrewUntilG.csv',sep='\t')
     return df_stateseq,failed_ll
 
 
@@ -105,7 +105,7 @@ def get_RewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_save=
 
     for subID in AllNames: # iterate over subjects
         states = []
-        with open(os.path.join(dir_load,f'{subID}-tf'), 'rb') as f:
+        with open(dir_load / f'{subID}-tf', 'rb') as f:
             tf = pickle.load(f) # filter only exploration episode!!! - get reward for tf.?? and only go until there
             # tf has the following structure:
             # fr: start and end frame for each bout; (n,2) ndarray 
@@ -152,11 +152,11 @@ def get_RewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_save=
         s_seq = np.array([np.arange(len(states)),states]).transpose()
         #print(f"i={i}:{len(states)},{len(r_ll)}")
         if savedata: 
-            dir_save1 = os.path.join(dir_save,f'{subID}_data')
+            dir_save1 = dir_save / f'{subID}_data'
             sl.make_long_dir(dir_save1)
-            with open(os.path.join(dir_save1,f'{subID}-stateseq_UntilG.pickle'), 'wb') as f:
+            with open(dir_save1 / f'{subID}-stateseq_UntilG.pickle', 'wb') as f:
                 pickle.dump(s_seq,f)   
-            pd.DataFrame(s_seq).to_csv(os.path.join(dir_save1,f'{subID}-stateseq_UntilG.csv'),sep='\t',header=None,index=None)
+            pd.DataFrame(s_seq).to_csv(dir_save1 / f'{subID}-stateseq_UntilG.csv',sep='\t',header=None,index=None)
             print(f'Saved data for subID {subID}.\n')
         
         if not excludefailed or foundgoal:
@@ -175,9 +175,9 @@ def get_RewExp_until_goal(savedata=True,excludefailed=True,dir_load='',dir_save=
     df_stateseq = df_stateseq.transpose()
     df_stateseq.columns = ['subID','subRew','epi','it','state','reward_received','goal_state']
     if savedata: 
-        with open(os.path.join(dir_save,'df_stateseq_RewUntilG.pickle'),'wb') as f:
+        with open(dir_save / 'df_stateseq_RewUntilG.pickle','wb') as f:
             pickle.dump(df_stateseq,f)
-        df_stateseq.to_csv(os.path.join(dir_save,'df_statseq_RewUntilG.csv'),sep='\t')
+        df_stateseq.to_csv(dir_save / 'df_statseq_RewUntilG.csv',sep='\t')
         
     return df_stateseq, failed_ll
 
@@ -201,7 +201,7 @@ def get_RewExp_until_reward(savedata=True,dir_load='',dir_save=''):
 
     for subID in AllNames: # iterate over subjects
         states = []
-        with open(os.path.join(dir_load,f'{subID}-tf'), 'rb') as f:
+        with open(dir_load / f'{subID}-tf', 'rb') as f:
             tf = pickle.load(f) # filter only exploration episode!!! - get reward for tf.?? and only go until there
             # tf has the following structure:
             # fr: start and end frame for each bout; (n,2) ndarray 
@@ -229,11 +229,11 @@ def get_RewExp_until_reward(savedata=True,dir_load='',dir_save=''):
                     r_ll.extend([False]*len(list(tf.no[i][nh,0]+1)))
         s_seq = np.array([np.arange(len(states)),states]).transpose()
         if savedata: 
-            dir_save1 = os.path.join(dir_save,f'{subID}_data')
+            dir_save1 = dir_save / f'{subID}_data'
             sl.make_long_dir(dir_save1)
-            with open(os.path.join(dir_save1,f'{subID}-stateseq_UntilR.pickle'), 'wb') as f:
+            with open(dir_save1 / f'{subID}-stateseq_UntilR.pickle', 'wb') as f:
                 pickle.dump(s_seq,f)   
-            pd.DataFrame(s_seq).to_csv(os.path.join(dir_save1,f'{subID}-stateseq_UntilR.csv'),sep='\t',header=None,index=None)
+            pd.DataFrame(s_seq).to_csv(dir_save1 / f'{subID}-stateseq_UntilR.csv',sep='\t',header=None,index=None)
             print(f'Saved data for subID {subID}.\n')
         
         subID_ll.extend([subID]*len(s_seq))
@@ -249,9 +249,9 @@ def get_RewExp_until_reward(savedata=True,dir_load='',dir_save=''):
     df_stateseq = df_stateseq.transpose()
     df_stateseq.columns = ['subID','subRew','epi','it','state','reward_received','goal_state']
     if savedata: 
-        with open(os.path.join(dir_save,'df_stateseq_RewUntilR.pickle'),'wb') as f:
+        with open(dir_save / 'df_stateseq_RewUntilR.pickle','wb') as f:
             pickle.dump(df_stateseq,f)
-        df_stateseq.to_csv(os.path.join(dir_save,'df_statseq_RewUntilR.csv'),sep='\t')
+        df_stateseq.to_csv(dir_save / 'df_statseq_RewUntilR.csv',sep='\t')
         
     return df_stateseq
 
@@ -276,7 +276,7 @@ def get_AllMice_until_maxit(savedata=True,dir_load='',dir_save=''):
     for subID in RewNames: # iterate over rewarded subjects
         states = []
         rews   = []
-        with open(os.path.join(dir_load,f'{subID}-tf'), 'rb') as f:
+        with open(dir_load / f'{subID}-tf', 'rb') as f:
             tf = pickle.load(f) # filter only exploration episode!!! - get reward for tf.?? and only go until there
             # tf has the following structure:
             # fr: start and end frame for each bout; (n,2) ndarray 
@@ -305,10 +305,10 @@ def get_AllMice_until_maxit(savedata=True,dir_load='',dir_save=''):
                 rews.extend(r)      
         s_seq = np.array([np.arange(len(states)),states]).transpose()
         if savedata: 
-            dir_save1 = os.path.join(dir_save,f'{subID}_data')
+            dir_save1 = dir_save / f'{subID}_data'
             sl.make_long_dir(dir_save1)
-            pd.DataFrame(s_seq).to_pickle(os.path.join(dir_save1,f'{subID}-stateseq_Full.pickle'))
-            pd.DataFrame(s_seq).to_csv(os.path.join(dir_save1,f'{subID}-stateseq_Full.csv'),sep='\t',header=None,index=None)
+            pd.DataFrame(s_seq).to_pickle(dir_save1 / f'{subID}-stateseq_Full.pickle')
+            pd.DataFrame(s_seq).to_csv(dir_save1 / f'{subID}-stateseq_Full.csv',sep='\t',header=None,index=None)
         subID_ll.extend([subID]*len(s_seq))
         subRew_ll.extend([1]*len(s_seq)) 
         epi_ll.extend([0]*len(s_seq))
@@ -320,7 +320,7 @@ def get_AllMice_until_maxit(savedata=True,dir_load='',dir_save=''):
     for subID in UnrewNames: # iterate over unrewarded subjects
         states = []
         rews   = []
-        with open(dir_load+'/'+subID+'-tf', 'rb') as f:
+        with open(dir_load / f'{subID}-tf', 'rb') as f:
             tf = pickle.load(f) # filter only exploration episode!!! - get reward for tf.?? and only go until there
             # tf has the following structure:
             # fr: start and end frame for each bout; (n,2) ndarray 
@@ -343,10 +343,10 @@ def get_AllMice_until_maxit(savedata=True,dir_load='',dir_save=''):
                 rews.extend(r)      
         s_seq = np.array([np.arange(len(states)),states]).transpose()
         if savedata: 
-            dir_save1 = os.path.join(dir_save,f'{subID}_data')
+            dir_save1 = dir_save / f'{subID}_data'
             sl.make_long_dir(dir_save1)
-            pd.DataFrame(s_seq).to_pickle(os.path.join(dir_save1,f'{subID}-stateseq_Full.pickle'))
-            pd.DataFrame(s_seq).to_csv(os.path.join(dir_save1,f'{subID}-stateseq_Full.csv'),sep='\t',header=None,index=None)
+            pd.DataFrame(s_seq).to_pickle(dir_save1 / f'{subID}-stateseq_Full.pickle')
+            pd.DataFrame(s_seq).to_csv(dir_save1 / f'{subID}-stateseq_Full.csv',sep='\t',header=None,index=None)
         subID_ll.extend([subID]*len(s_seq))
         subRew_ll.extend([0]*len(s_seq)) 
         epi_ll.extend([0]*len(s_seq))
@@ -362,7 +362,7 @@ def get_AllMice_until_maxit(savedata=True,dir_load='',dir_save=''):
     df_stateseq = df_stateseq.transpose()
     df_stateseq.columns = ['subID','subRew','epi','it','state','reward_received','goal_state']
     if savedata: 
-        df_stateseq.to_pickle(os.path.join(dir_save,'df_stateseq_AllMiceFull.pickle'))
-        df_stateseq.to_csv(os.path.join(dir_save,'df_statseq_AllMiceFull.csv'),sep='\t')
+        df_stateseq.to_pickle(dir_save / 'df_stateseq_AllMiceFull.pickle')
+        df_stateseq.to_csv(dir_save / 'df_statseq_AllMiceFull.csv',sep='\t')
 
     return df_stateseq
