@@ -1,0 +1,1 @@
+Data by Rosenberg et al. (2021) after custom preprocessing (see src/fitting_behavior/preprocessing/preprocess_data.py).
