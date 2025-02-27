@@ -3,7 +3,6 @@ import pandas as pd
 import scipy
 from scipy.special import softmax
 
-import sys
 import models.mf_agent.ac as ac
 import models.mb_agent.mb_surnor as nor
 import models.hybrid_agent.hybrid_ac_nor as hyb

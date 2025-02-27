@@ -41,11 +41,10 @@ def import_exploration_params_surnor(path=''):
     return params_dict
 
 def import_params_surnor(path=''):
-    if not path:
-        full_path = './src/mbnor/fittedparams_mbnor.csv'
+    if len(path)==0:
+        full_path = sl.get_rootpath() / 'src' / 'models' / 'mb_agent' / 'fittedparams_mbnor.csv'
     else:
-        if path[-1]=='/': full_path=path+'fittedparams_mbnor.csv'
-        else: full_path=path+'/fittedparams_mbnor.csv'
+        full_path = path / 'fittedparams_mbnor.csv'
     params_df = pd.read_csv(full_path,sep=';')
     params_df['Value'] = params_df['Value'].str.replace(',','.')
     params_df['Error'] = params_df['Error'].str.replace(',','.')

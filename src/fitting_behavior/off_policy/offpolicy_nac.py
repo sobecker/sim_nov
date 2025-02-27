@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import scipy
-import sys
 import models.mf_agent.ac as ac
 
 def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
