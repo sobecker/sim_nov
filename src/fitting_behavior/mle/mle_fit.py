@@ -52,7 +52,8 @@ def run_mle_fit(config):
         dir_data  = base_path / data_folder
 
     if save_path=='':
-        dir_save = base_path / 'data' / 'mle_results' / 'fits' / {"multistart" if rand_start>0 else "singlerun"} / save_name
+        str_multi = 'multistart' if rand_start>0 else 'singlerun'
+        dir_save = base_path / 'data' / 'mle_results' / 'fits' / str_multi / save_name
     else:
         dir_save  = base_path / 'data' / save_path / save_name 
     sl.make_long_dir(dir_save)
