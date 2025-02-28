@@ -50,7 +50,6 @@ for i in range(len(alg_type)):
 
     params = {'data_type': data_type,
                 'data_folder': '',
-                'data_path_type': '',
                 'comb_type': comb_type,
                 'var_name': l_var_i,
                 'kwargs': {"x0":l_x0_i,"bounds":l_bounds_i,"opt_method":opt_method},
@@ -58,7 +57,8 @@ for i in range(len(alg_type)):
                 'save_name': f'mle_{alg_type[i]}-{data_type}',
                 'verbose': True}
 
-    path = './src/scripts/MLE/mle_fit_configs/'
+    path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
+    sl.make_long_dir(path)
     name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
     if randstart:
@@ -67,19 +67,15 @@ for i in range(len(alg_type)):
         name = name+'_multi'  
 
     if data_type=='naive':
-        params['data_folder']       = '2022_11_17_10-57-08_nAC_debug'
-        params['data_path_type']    = 'auto'
+        params['data_folder'] = '2022_11_17_10-57-08_nAC_debug'
     elif data_type=='opt':
         if local:
-            params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-            params['data_path_type']    = 'manual'
+            params['data_folder'] = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
             name = name+'_local'
         else:
-            params['data_folder']       = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-            params['data_path_type']    = 'auto'
+            params['data_folder'] = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
     elif data_type=='mice':
-        params['data_folder']       = sl.get_datapath().replace('data','ext_data')+'Rosenberg2021/'    
-        params['data_path_type']    = 'manual'
+        params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 
-    with open(path+name+'.json', 'w') as fp:
+    with open(path / f'{name}.json', 'w') as fp:
         json.dump(params, fp)

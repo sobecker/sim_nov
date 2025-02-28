@@ -1,13 +1,12 @@
 import json
-import sys
 import utils.saveload as sl
 
-data_type   = 'opt'         # 'naive', 'opt', 'mice' 
+data_type   = 'mice'        # 'naive', 'opt', 'mice' 
 opt_method  = 'Nelder-Mead' # L-BFGS-B', 'Nelder-Mead', 'SLSQP'
-comb_type   = 'sep'         # 'sep', 'app', '' (for '' both sep and app are computed)
-randstart   = True          # set to False for single run with user-specified x0
+comb_type   = 'app'         # 'sep', 'app', '' (for '' both sep and app are computed)
+randstart   = False         # set to False for single run with user-specified x0
 local       = False         # running on local machine 
-leaky       = True         # leaky or non-leaky model
+leaky       = False         # leaky or non-leaky model
 alg_name    = ('leaky_' if leaky else '')+'nac'    
 
 l_var   = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0']
@@ -27,7 +26,6 @@ if leaky:
 
 params = {'data_type': data_type,
             'data_folder': '',
-            'data_path_type': '',
             'comb_type': comb_type,
             'var_name': l_var,
             'kwargs': {"x0":l_x0,"bounds":l_bounds,"opt_method":opt_method},
@@ -35,7 +33,8 @@ params = {'data_type': data_type,
             'save_name': f'mle_{alg_name}-{data_type}',
             'verbose': True}
 
-path = './src/scripts/MLE/mle_fit_configs/'
+path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
+sl.make_long_dir(path)
 name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
 if randstart:
@@ -44,19 +43,15 @@ if randstart:
     name = name+'_multi'  
 
 if data_type=='naive':
-    params['data_folder']       = '2022_11_17_10-57-08_nAC_debug'
-    params['data_path_type']    = 'auto'
+    params['data_folder'] = '2022_11_17_10-57-08_nAC_debug'
 elif data_type=='opt':
     if local:
-        params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-        params['data_path_type']    = 'manual'
+        params['data_folder'] = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
         name = name+'_local'
     else:
-        params['data_folder']       = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-        params['data_path_type']    = 'auto'
+        params['data_folder'] = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
 elif data_type=='mice':
-    params['data_folder']       = sl.get_datapath().replace('data','ext_data')+'Rosenberg2021/'    
-    params['data_path_type']    = 'manual'
+    params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 
-with open(path+name+'.json', 'w') as fp:
+with open(path / f'{name}.json', 'w') as fp:
     json.dump(params, fp)

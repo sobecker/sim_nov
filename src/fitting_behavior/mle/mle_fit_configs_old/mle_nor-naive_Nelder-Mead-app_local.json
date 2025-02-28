@@ -1,1 +1,0 @@
-{"data_type": "naive", "data_folder": "2022_12_09_13-31-14_sim_nor-tree_naive-nov", "data_path_type": "auto", "comb_type": "app", "var_name": ["lambda_N", "beta_1"], "kwargs": {"x0": [0.5, 5], "bounds": [[0.0, 0.999], [0.1, 30]], "opt_method": "Nelder-Mead"}, "alg_type": "nor", "save_name": "mle_nor-naive", "verbose": true}

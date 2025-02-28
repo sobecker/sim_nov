@@ -1,23 +1,27 @@
-import numpy as np
-import sys
-import os
-
+from pathlib import Path
 import utils.saveload as sl
 
-# alg_type    = ['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi','hnor']
+### Generates yaml files for fitting RL models with similarity-based novelty by running shell script on cluster. ###
+
+# Requirements:
+# Specify the paths below. Specify the types of algorithms to fit.
+
+alg_type    = ['hnac-gn','hnor','hhybrid2']
+levels      = [1,2,3,4,5,6]
+opt_type    = 'mice' 
+opt_alg     = ['Nelder-Mead']
+comb_type   = ['app']
+maxit       = False
+
+# alg_type    = ['hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box','hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle']#['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
 # levels      = [1,2,3,4,5,6]
 # opt_type    = 'mice' 
 # opt_alg     = ['Nelder-Mead']
 # comb_type   = ['']
+# maxit       = False
 
-alg_type    = ['hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box','hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle']#['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
-levels      = [1,2,3,4,5,6]
-opt_type    = 'mice' 
-opt_alg     = ['Nelder-Mead']
-comb_type   = ['']
-maxit       = False
-
-path_yaml = f'/Users/sbecker/yaml_files/yaml_rlnet/MLE/Fits/'
+path_yaml = Path(f'/Users/sbecker/yaml_files/yaml_sim_nov/mle/fits')
+path_exp  = Path(f'/lcncluster/becker/sim_nov/exps/mle/fits')
 sl.make_long_dir(path_yaml)
 
 for aa in range(len(alg_type)):
@@ -26,12 +30,12 @@ for aa in range(len(alg_type)):
             str_maxit = '-maxit' if maxit else ''
             clink = '-' if len(comb_type[cc])>0 else ''
             save_name1 = f'mle{str_maxit}_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}'
-            path_exps1 = f'/lcncluster/becker/RL_reward_novelty/exps/MLE/Fits/{save_name1}'
-            path_yaml1 = path_yaml+save_name1
-            sl.make_dir(path_yaml1)
+            path_exps1 = path_exp / save_name1
+            path_yaml1 = path_yaml / save_name1
+            sl.make_long_dir(path_yaml1)
             for ll in range(len(levels)):
                 save_name2 = f'mle{str_maxit}_{alg_type[aa]}-l{levels[ll]}-{opt_type}_{opt_alg[oo]}'
-                with open (path_yaml1+f'/{save_name2}{clink}{comb_type[cc]}.yaml', 'w') as rsh:
+                with open (path_yaml1 / f'{save_name2}{clink}{comb_type[cc]}.yaml', 'w') as rsh:
                     rsh.write(f'''\
 apiVersion: run.ai/v2alpha1
 kind: TrainingWorkload
@@ -70,5 +74,5 @@ spec:
           existingPvc: true
           path: /lcncluster
   nodePools:
-    value: "default" # S8 nodes are now named default, if using GPUs, put "g10 g9"  
+    value: "default" # S8 nodes are now named default, if using GPUs, put "g10 g9"
 ''')

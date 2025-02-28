@@ -1,13 +1,16 @@
-import numpy as np
-import sys
-import os
-
+from pathlib import Path
 import utils.saveload as sl
 
-# alg_type    = ['nac','nor']
-# opt_type    = 'mice' # opt, naive
-# opt_alg     = ['Nelder-Mead','L-BFGS-B','SLSQP']
-# comb_type   = ['sep','app']
+### Generates yaml files for fitting RL models with count-based novelty by running shell script on cluster. ###
+
+# Requirements:
+# Specify the paths below. Specify the types of algorithms to fit.
+
+alg_type    = ['nac','nor','hybrid2']
+opt_type    = 'mice' # opt, naive
+opt_alg     = ['Nelder-Mead']
+comb_type   = ['app']
+multistart  = False
 
 # alg_type    = ['nac-nooi','nac-kpop','nac-kpop-t','nac-kmix','nac-kmix-t']
 # opt_type    = 'mice' 
@@ -25,14 +28,8 @@ import utils.saveload as sl
 # comb_type   = ['']
 # multistart  = True
 
-alg_type    = ['hybrid']
-opt_type    = 'mice' # mice, opt, naive
-opt_alg     = ['Nelder-Mead']
-comb_type   = ['']
-multistart  = False
-
-
-path_yaml = f'/Users/sbecker/yaml_files/yaml_rlnet/MLE/Fits/'
+path_yaml = Path(f'/Users/sbecker/yaml_files/yaml_sim_nov/mle/fits')
+path_exp  = Path(f'/lcncluster/becker/sim_nov/exps/mle/fits')
 sl.make_long_dir(path_yaml)
 
 for aa in range(len(alg_type)):
@@ -40,53 +37,48 @@ for aa in range(len(alg_type)):
         for cc in range(len(comb_type)):
             clink = '-' if len(comb_type[cc])>0 else ''
             multi = '_multi' if multistart else ''
-            save_name = f'mle-maxit_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
-            path_exps_i = f'exps/MLE/Fits/{save_name}' 
-            path_yaml_i = path_yaml+save_name
-            sl.make_dir(path_yaml_i)
-            with open (path_yaml_i+f'/{save_name}{clink}{comb_type[cc]}.yaml', 'w') as rsh:
+            save_name = f'mle_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
+            path_exps_i = path_exp / save_name
+            path_yaml_i = path_yaml / save_name
+            sl.make_long_dir(path_yaml_i)
+            with open (path_yaml_i / f'{save_name}{clink}{comb_type[cc]}.yaml', 'w') as rsh:
                 rsh.write(f'''\
-apiVersion: run.ai/v1
-kind: RunaiJob
+apiVersion: run.ai/v2alpha1
+kind: TrainingWorkload
 metadata:
-  name: sophia-train-{save_name.replace('_','-').lower()}{clink}{comb_type[cc].lower()} # e.g. training-pod
-  labels:
-    # leave empty to obtain training job
+  name: {save_name.replace('_','-').lower()}{clink}{comb_type[cc].lower()} # e.g. training-pod
 spec:
-  template:
-    metadata:
-      labels:
-        user: sophia.becker # User i.e. firstname.lastname
-    spec:
-      nodeSelector:
-        run.ai/type: "S8"
-      hostIPC: true
-      securityContext:
-        runAsUser: 229361 # insert uid found in people.epfl in admistrative data
-        runAsGroup: 20184  # insert gid found in people.epfl in admistrative data
-        fsGroup: 0
-      containers:
-      - name: sophia-train-{save_name.replace('_','-').lower()}{clink}{comb_type[cc].lower()} # e.g. training-pod
-        image: nvcr.io/nvidia/pytorch:20.03-py3
-        workingDir: /lcncluster/becker/RL_reward_novelty
-        volumeMounts: # mount lcncluster shared volume
-            - mountPath: /lcncluster
-              name: lcncluster
-
-        command: ["/bin/bash"] # bash commands as args below, e.g. using a custom conda installation on the lcncluster
-        args: [{path_exps_i}/{save_name}{clink}{comb_type[cc]}.sh]
-        resources:
-          requests:
-            cpu: 5
-          limits:
-            cpu: 5
-        env: # define HOME directory for pod
-          - name: HOME
-            value: /lcncluster/becker/.caas_HOME # PATH to HOME e.g. /lcncluster/user/.caas_HOME
-      volumes: # define shared volume lcncluster
-          - name: lcncluster
-            persistentVolumeClaim:
-              claimName: runai-lcn1-sbecker-lcncluster
-      restartPolicy: Never
-      schedulerName: runai-scheduler
+  image:
+    value: nvcr.io/nvidia/pytorch:20.03-py3
+  name:
+    value: {save_name.replace('_','-').lower()}{clink}{comb_type[cc].lower()} # e.g. training-pod
+  command:
+    value: "/bin/bash" # bash commands as args below, e.g. using a custom conda installation on the lcncluster
+  arguments: 
+    value: {path_exps_i / f'{save_name}{clink}{comb_type[cc]}.sh'}
+  environment:
+    items:
+      HOME:
+        value: /lcncluster/becker/.caas_HOME # PATH to HOME e.g. /lcncluster/user/.caas_HOME
+  runAsUser:
+    value: true # system automatically fetches and applies UID and GID
+  cpu:
+    value: "20"
+  cpuLimit:
+    value: "20"
+  gpu:
+    value: "0" # up to 4, 0 for CPU only
+  memory:
+    value: 60Gi
+  memoryLimit:
+    value: 60Gi
+  pvcs:
+    items:
+      pvc--0: # First is "pvc--0", second is "pvc--1", etc.
+        value: 
+          claimName: runai-lcn1-sbecker-lcncluster
+          existingPvc: true
+          path: /lcncluster
+  nodePools:
+    value: "default" # S8 nodes are now named default, if using GPUs, put "g10 g9"
 ''')

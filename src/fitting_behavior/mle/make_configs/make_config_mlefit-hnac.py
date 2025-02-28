@@ -1,17 +1,17 @@
 import json
 import pandas as pd
-import sys
 import utils.saveload as sl
+from pathlib import Path
 
-alg_type = ['leaky_hnac-gn'] #hnac-gn_center-triangle', 'hnac-gn_notrace_center-box','hnac-gn-gv_notrace','hnac-gn-goi_notrace','hnac-gn-gv-goi_notrace'] #['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi']
-levels   = [0,1,2,3,4,5,6]
+levels = [0,1,2,3,4,5,6] # level 0: component center is the first branching point, level 6: component centers are the leaf nodes
 
-data_type   = 'mice'        # 'naive', 'opt', 'mice' 
+alg_type = ['hnac-gn'] #hnac-gn_center-triangle',  'leaky_hnac-gn, 'hnac-gn_notrace_center-box','hnac-gn-gv_notrace','hnac-gn-goi_notrace','hnac-gn-gv-goi_notrace'] #['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi']
+data_type   = 'mice'        # 'mice', deprecated: 'naive', 'opt'
 opt_method  = 'Nelder-Mead' # L-BFGS-B', 'Nelder-Mead', 'SLSQP'
-comb_type   = ''            # 'sep', 'app', '' (for '' both sep and app are computed)
-randstart   = False          # set to False for single run with user-specified x0
+comb_type   = 'app'         # 'sep', 'app', '' (for '' both sep and app are computed)
+randstart   = False         # set to False for single run with user-specified x0
 local       = False         # running on local machine 
-parallel    = True         # running parallelized
+parallel    = True          # running parallelized
 
 l_var   = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0']
 l_x0    = [0.5,     0.1,     0.1,     0.5,    0.5,    0.5,   0,     0]
@@ -45,18 +45,17 @@ for i in range(len(alg_type)):
 
         params = {'data_type': data_type,
                     'data_folder': '',
-                    'data_path_type': '',
                     'comb_type': comb_type,
                     'var_name': l_var_i,
                     'kwargs': {"x0":l_x0_i,"bounds":l_bounds_i,"opt_method":opt_method},
                     'alg_type': alg_type[i],
-                    'level':levels[j],
-                    'save_name': f'mle_{alg_type[i]}-l{levels[j]}-{data_type}',
                     'verbose': True,
                     'parallel': parallel,
-                    'save_path':f'MLE_results/Fits/{"MultiStart/" if randstart else "SingleRun/"}mle_{alg_type[i]}-{data_type}_{opt_method}'}
+                    'level':levels[j],
+                    'save_name': f'mle_{alg_type[i]}-l{levels[j]}-{data_type}'
+                    }
 
-        path = './src/scripts/MLE/mle_fit_configs/'
+        path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
         name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
         if randstart:
@@ -64,20 +63,16 @@ for i in range(len(alg_type)):
             params["rand_start"] = 10 
             name = name+'_multi'  
 
-        if data_type=='naive':
-            params['data_folder']       = '2022_11_17_10-57-08_nAC_debug'
-            params['data_path_type']    = 'auto'
-        elif data_type=='opt':
+        if data_type=='naive': # deprecated
+            params['data_folder'] = '2022_11_17_10-57-08_nAC_debug'
+        elif data_type=='opt': # deprecated
             if local:
-                params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-                params['data_path_type']    = 'manual'
+                params['data_folder'] = '/Volumes/lcncluster/becker/RL_reward_novelty/data/bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
                 name = name+'_local'
             else:
-                params['data_folder']       = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-                params['data_path_type']    = 'auto'
+                params['data_folder'] = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
         elif data_type=='mice':
-            params['data_folder']       = sl.get_datapath().replace('data','ext_data')+'Rosenberg2021/'    
-            params['data_path_type']    = 'auto'
+            params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 
-        with open(path+name+'.json', 'w') as fp:
+        with open(path / f'{name}.json', 'w') as fp:
             json.dump(params, fp)

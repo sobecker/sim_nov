@@ -69,7 +69,7 @@ def make_long_dir(path):
         current_path = Path(*sub_path)
 
         if not current_path.exists():
-            made_path = make_dir(current_path)
+            made_path = os.mkdir(current_path)
             c += 1
         
         if c >= max_depth:
@@ -80,23 +80,18 @@ def make_long_dir(path):
 ##############################################################################
 #       DATA SAVE / LOAD                                                     #
 ##############################################################################
-def load_sim_data(dir_data,file_data='data_basic.pickle',auto_path=False):
-    if auto_path:
-        if 'data/' in dir_data:
-            path_data = dir_data / file_data
-        elif 'src/' in os.getcwd():
-            path_data = os.path.join('..','..','data',dir_data,file_data)
-        else:
-            path_data = os.path.join('.','data',dir_data,file_data)
-    else:
-        if dir_data[-1]=='/': path_data = dir_data+file_data
-        else: path_data = dir_data+'/'+file_data 
+def load_sim_data(dir_data,file_data='data_basic.pickle'):
+    """
+    Load simulation data from a given directory (for fitting).
+    """
+    path_data = dir_data / file_data
+     
     flag_load = True
     if not os.path.exists(path_data):
         print(f'Data file {file_data} does not exist in {path_data}. Trying to load file all_data (old format) instead.')
         path_data = path_data.replace(file_data,'all_data.pickle')
         if not os.path.exists(path_data):
-            print(f'Data file {file_data} does not exist in {path_data}. Trying to load file all_data (old format) instead.')
+            print(f'Data file {file_data} does not exist in {path_data}. Please specify a valid data path and file.')
             flag_load = False                   
     if flag_load:
         type_data = path_data.split('.')[-1]
@@ -106,8 +101,6 @@ def load_sim_data(dir_data,file_data='data_basic.pickle',auto_path=False):
             data = pd.read_csv(path_data,index_col=0)
         elif type_data=='npy': 
             data = np.load(path_data)
-    else:
-        raise ValueError('No valid data file found.')    
     return data
 
 def load_sim_params(dir_params,file_params='params.pickle',auto_path=False):
