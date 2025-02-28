@@ -46,8 +46,8 @@ for aa in range(len(alg_type)):
                 rsh.write(f'''\
 #!/bin/bash
 echo "creating directory"
-log_folder="$(date +'%Y-%m-%d_%H-%M-%S')_{save_name1}{clink}{comb_type[cc]}
-"base_path="/lcncluster/becker/sim_nov"
+log_folder="$(date +'%Y-%m-%d_%H-%M-%S')_{save_name1}{clink}{comb_type[cc]}"
+base_path="/lcncluster/becker/sim_nov"
 echo "folder name: ${{log_folder}}"
 mkdir -p ${{base_path}}/logs/mle
 mkdir -p ${{base_path}}/logs/mle/fits/

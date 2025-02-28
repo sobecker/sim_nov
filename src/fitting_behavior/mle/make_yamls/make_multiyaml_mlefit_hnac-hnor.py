@@ -21,7 +21,7 @@ maxit       = False
 # maxit       = False
 
 path_yaml = Path(f'/Users/sbecker/yaml_files/yaml_sim_nov/mle/fits')
-path_exp  = Path(f'/lcncluster/becker/sim_nov/exps/mle/fits')
+path_exp  = Path(f'/lcncluster/becker/sim_nov/exp/mle/fits')
 sl.make_long_dir(path_yaml)
 
 for aa in range(len(alg_type)):
