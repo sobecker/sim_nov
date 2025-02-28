@@ -53,8 +53,6 @@ for j in range(len(levels)):
             name = name+'_local'
         else:
             params['data_folder'] = 'nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r'
-    elif data_type=='mice':
-        params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 
     with open(path / f'{name}.json', 'w') as fp:
         json.dump(params, fp)

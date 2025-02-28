@@ -38,6 +38,5 @@ if randstart:
     params["rand_start"] = 10 
     name = name+'_multi'  
 
-params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 with open(path / f'{name}.json', 'w') as fp:
     json.dump(params, fp)

@@ -56,8 +56,6 @@ elif data_type=='opt':
         name = name+'_local'
     else:
         params['data_folder'] = 'bintree_archive/sim_opt/2022_08_16_11-23-13_gpopt_nAC-N-expl_OI'
-elif data_type=='mice':
-    params['data_folder'] = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021') 
 
 with open(path / f'{name}.json', 'w') as fp:
     json.dump(params, fp)

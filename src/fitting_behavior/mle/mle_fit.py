@@ -132,6 +132,7 @@ def run_mle_fit(config):
             for i in range(len(AllNames)):
                 file = f'{AllNames[i]}-stateseq_UntilG.pickle'
                 dir_data_i = dir_data / f'{AllNames[i]}_data'
+                print(dir_data_i)
                 df_i = preprocess_micedata(dir_data_i,file,P,subID=AllNames[i],epi=0)
                 d.append(df_i)
             all_data = pd.concat(d,ignore_index=True)
