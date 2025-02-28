@@ -80,7 +80,7 @@ def run_mle_fit(config):
         log_file = open(dir_save / f'log{"_" if len(comb_type)>0 else ""}{comb_type}.txt', 'w') # create log file
         with open(dir_save / f'config{"_" if len(comb_type)>0 else ""}{comb_type}.json', 'w') as fc: 
             json.dump(config, fc) # save config file for reproducibility
-        sl.saveCodeVersion(dir_save,file_cv=f'code_version{"_" if len(comb_type)>0 else ""}{comb_type}.txt') # save code version
+        sl.saveCodeVersion(dir_save,dir_git=base_path,file_cv=f'code_version{"_" if len(comb_type)>0 else ""}{comb_type}.txt') # save code version
 
         # Initialize model parameters to default values
         update_type = 'fix' if 'leaky' in alg_type_fit else None
@@ -131,7 +131,8 @@ def run_mle_fit(config):
             d = []
             for i in range(len(AllNames)):
                 file = f'{AllNames[i]}-stateseq_UntilG.pickle'
-                df_i = preprocess_micedata(dir_data,file,P,subID=AllNames[i],epi=0)
+                dir_data_i = dir_data / f'{AllNames[i]}_data'
+                df_i = preprocess_micedata(dir_data_i,file,P,subID=AllNames[i],epi=0)
                 d.append(df_i)
             all_data = pd.concat(d,ignore_index=True)
         else:                   # Artificial data
@@ -240,7 +241,7 @@ if __name__=="__main__":
         #config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nac-opt_Nelder-Mead-sep.json'))
         # config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nac-mice_Nelder-Mead-app.json'))
         #config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle-maxit_hhybrid-l1-mice_Nelder-Mead.json'))
-        config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_leaky_hnor_center-triangle-l5-mice_Nelder-Mead.json'))
+        config = json.load(open('./src/fitting_behavior/mle/mle_fit_configs/mle_nor-mice_Nelder-Mead-app.json'))
     print(type(config))
     print(config)
 

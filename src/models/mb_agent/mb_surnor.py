@@ -41,7 +41,7 @@ def import_exploration_params_surnor(path=''):
     return params_dict
 
 def import_params_surnor(path=''):
-    if len(path)==0:
+    if len(str(path))==0:
         full_path = sl.get_rootpath() / 'src' / 'models' / 'mb_agent' / 'fittedparams_mbnor.csv'
     else:
         full_path = path / 'fittedparams_mbnor.csv'

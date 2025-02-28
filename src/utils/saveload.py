@@ -264,7 +264,7 @@ def write_log(log_file,*args):
     log_file.write(line+'\n')
     print(line)
 
-def saveCodeVersion(dir_cv,dir_git='/lcncluster/becker/RL_reward_novelty/',file_cv='code_version.txt'):
+def saveCodeVersion(dir_cv,dir_git='',file_cv='code_version.txt'):
     if not os.path.isdir(dir_cv):
         os.mkdir(dir_cv)
     
