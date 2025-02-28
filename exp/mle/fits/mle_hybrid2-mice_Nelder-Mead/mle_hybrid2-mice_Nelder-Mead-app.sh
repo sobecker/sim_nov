@@ -1,7 +1,8 @@
 #!/bin/bash
 echo "creating directory"
 log_folder="$(date +'%Y-%m-%d_%H-%M-%S')_mle_hybrid2-mice_Nelder-Mead-app
-"base_path="/lcncluster/becker/sim_nov"echo "folder name: ${log_folder}"
+"base_path="/lcncluster/becker/sim_nov"
+echo "folder name: ${log_folder}"
 mkdir -p ${base_path}/logs/mle
 mkdir -p ${base_path}/logs/mle/fits/
 mkdir -p ${base_path}/logs/mle/fits/${log_folder}
