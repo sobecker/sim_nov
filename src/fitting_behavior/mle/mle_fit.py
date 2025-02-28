@@ -43,8 +43,6 @@ def run_mle_fit(config):
     # Set paths
     base_path = sl.get_rootpath() 
 
-    if save_path=='': 
-        save_path = 'mle_results' / 'fits' / {"multistart" if rand_start>0 else "singlerun"} 
     if data_folder=='':
         if data_type=='mice':
             dir_data  = base_path / 'ext_data' / 'Rosenberg2021'
@@ -53,7 +51,10 @@ def run_mle_fit(config):
     else:
         dir_data  = base_path / data_folder
 
-    dir_save  = base_path / 'data' / save_path / save_name 
+    if save_path=='':
+        dir_save = base_path / 'data' / 'mle_results' / 'fits' / {"multistart" if rand_start>0 else "singlerun"} / save_name
+    else:
+        dir_save  = base_path / 'data' / save_path / save_name 
     sl.make_long_dir(dir_save)
 
     # Check whether file already exists and set bools (which cases to fit)
