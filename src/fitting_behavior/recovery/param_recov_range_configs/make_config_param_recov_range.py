@@ -1,30 +1,40 @@
 import json
 import numpy as np
-
-import sys
 import utils.saveload as sl
 
-config_sim      = True
-config_fit      = False
+### Script to create config files for simulation and/or fitting of parameter recovery data ###
 
-# Options for sim/fit config
-fixed_range     = True
-range_perc      = 0.2
-uniparam        = True  # only simulate a single parameter set (but with different random seeds)
-no_rew          = True  # simulate without stopping at rewarded state
-# Options for fit config
-parallel        = True
-maxit           = 200
-overwrite       = False
+config_sim      = True      # create config for simulation
+config_fit      = False     # create config for recovery fitting
 
-comb_type   = 'app' # 'app','sep'
-alg_type    = ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box'] #['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace'] #['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2'] # 'nac','nor','hybrid2','hnac-gn','hnor','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi','hhybrid2'
-alg_type_sim = alg_type
-alg_type_fit = alg_type
-path        = './src/scripts/ParameterRecovery/param_recov_range_configs/'
-opt_method  = 'Nelder-Mead' # 'SLSQP','L-BFGS-B'
-levels      = list(range(1,7))
+# Options for sim/fit config ##################################################################
+fixed_range     = True      # simulate model within fixed parameter range
+range_perc      = 0.2       # percentage of fixed range to cover in simulation
+uniparam        = True      # only simulate a single parameter set (but with different random seeds)
+no_rew          = True      # simulate without stopping at rewarded state
 
+# Options for fit config ######################################################################
+parallel        = True      # run fitting in parallel
+maxit           = 200       # maximum number of iterations for fitting optimizer
+overwrite       = False     # overwrite existing fit results
+
+# Models to simulate and/or fit ###############################################################
+comb_type       = 'app' # 'app','sep'
+alg_type        = ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2']
+maxit           = [False, False, False, False, False, True]
+# ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box'] 
+# ['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
+# ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2'] 
+# other models: 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
+alg_type_sim    = alg_type
+alg_type_fit    = alg_type
+path            = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'recovery' / 'param_recov_range_configs'
+sl.make_long_dir(path)
+opt_method      = 'Nelder-Mead' # 'SLSQP','L-BFGS-B'
+levels          = list(range(1,7))
+
+# Define parameter ranges for simulation and fitting ###########################################
+# MB agents
 l_var_nor       = ['lambda_N','beta_1','epsilon','k_leak']
 l_x0_nor        = [0.5,5,0.0002,0.5] 
 l_bounds_nor    = [[0.,0.999],
@@ -37,6 +47,7 @@ l_limbounds_nor = [[0.,0.999],
                     [0.001,0.999]]
 l_fixrange_nor  = [np.round(range_perc*(l_bounds_nor[i][1]-l_bounds_nor[i][0]),4) for i in range(len(l_bounds_nor))]
 
+# MF agents
 l_var_nac       = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0']
 l_x0_nac        = [0.5,     0.1,     0.1,     0.5,    0.5,    0.5,   0,     0] 
 l_bounds_nac    = [[0.,0.999],      #gamma
@@ -57,6 +68,7 @@ l_limbounds_nac = [[0.,0.999],      #gamma
                     [-100,100]]     #a_w0
 l_fixrange_nac  = [np.round(range_perc*(l_bounds_nac[i][1]-l_bounds_nac[i][0]),4) for i in range(len(l_bounds_nac))]
 
+# Hybrid agents
 l_var_hyb       = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0','lambda_N','beta_1','epsilon','k_leak','w_mf','w_mb']
 l_x0_hyb        = [0.5,     0.1,     0.1,     0.5,    0.5,    0.5,   0,     0,    0.5,       5,       0.0002,    0.5,    0.5,    0.5]
 l_bounds_hyb    = [[0.,0.999],      #gamma
@@ -119,7 +131,7 @@ l_limbounds_hyb2= [[0.,0.999],      #gamma
                     [0,1]]          #w_mf
 l_fixrange_hyb2 = [np.round(range_perc*(l_bounds_hyb[i][1]-l_bounds_hyb[i][0]),4) for i in range(len(l_bounds_hyb))]
 
-# Make configs for simulation (recovery data)
+# Make configs for simulation (recovery data) ##################################################
 if config_sim:
     for i in range(len(alg_type)):
         if 'nor' in alg_type[i]:
@@ -148,6 +160,7 @@ if config_sim:
             l_bounds    = l_bounds_hyb.copy()
             l_limbounds = l_limbounds_hyb.copy()
             l_fixrange  = l_fixrange_hyb.copy()
+
         params = {'comb_type':comb_type,
                     'seed': 12345,
                     'start_seed': 0,
@@ -158,22 +171,26 @@ if config_sim:
                     'no_rew': no_rew,
                     'parallel': parallel,
                     'var_name': l_var,
-                    'alg_type': alg_type[i]}
-        if fixed_range:     params['kwargs'] = {"range":l_fixrange,"abs_bounds":l_bounds}
-        else:               params['kwargs'] = {"bounds":l_limbounds}
+                    'alg_type': alg_type[i],
+                    'maxit': maxit[i]}
+        
+        if fixed_range:     
+            params['kwargs'] = {"range":l_fixrange,"abs_bounds":l_bounds}
+        else:               
+            params['kwargs'] = {"bounds":l_limbounds}
+            
         if 'hnor' in alg_type[i] or 'hnac' in alg_type[i] or 'hhybrid' in alg_type[i]:
             for ll in range(len(levels)):
                 params['levels'] = [levels[ll]]
                 name = f'multisim-{params["alg_type"]}_{comb_type}_{"uniparam" if uniparam else ("fixrange" if fixed_range else "varrange")}_seed-{params["seed"]}_l{levels[ll]}'
-                with open(path+name+'.json', 'w') as fp:
+                with open(path / f'{name}.json', 'w') as fp:
                     json.dump(params, fp)
         else:
             name = f'multisim-{params["alg_type"]}_{comb_type}_{"uniparam" if uniparam else ("fixrange" if fixed_range else "varrange")}_seed-{params["seed"]}'
-            with open(path+name+'.json', 'w') as fp:
+            with open(path / f'{name}.json', 'w') as fp:
                 json.dump(params, fp)
 
-
-# Make configs for MLE fit (parameter recovery)
+# Make configs for MLE fit (parameter recovery) ################################################
 if config_fit:
     for i in range(len(alg_type)):
         if 'nor' in alg_type[i]:
@@ -211,6 +228,6 @@ if config_fit:
         if 'hnor' in alg_type[i] or 'hnac' in alg_type[i] or 'hhybrid' in alg_type[i]:
             params['levels'] = levels
         name = f'multifit-{params["alg_type"]}_{params["comb_type"]}_{params["kwargs"]["opt_method"]}'
-        with open(path+name+'.json', 'w') as fp:
+        with open(path / f'{name}.json', 'w') as fp:
             json.dump(params, fp)
 

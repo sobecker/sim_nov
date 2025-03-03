@@ -3,11 +3,11 @@ from argparse import ArgumentParser
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
-import sys
 import os
 import fitting_behavior.optimization.auxiliary_opt as auxo
 import fitting_behavior.optimization.base_params_opt as bpo
 import utils.saveload as sl
+from models.mb_agent.mb_surnor import import_params_surnor
 
 # Create random parameters within range (app) or use all sep param combinations
 def get_uni_params(comb_type, num_sim, seed, var_name, kwargs, dir_save, res, batchID=1):
@@ -18,8 +18,8 @@ def get_uni_params(comb_type, num_sim, seed, var_name, kwargs, dir_save, res, ba
     p_rand_df           = pd.DataFrame(p_rand,columns=var_name)
     p_rand_df['simID']  = np.arange(num_sim)
 
-    p_rand_df.to_csv(os.path.join(dir_save,f'params_{comb_type}_overview{batchID}.csv'))
-    p_rand_df.to_pickle(os.path.join(dir_save,f'params_{comb_type}_overview{batchID}.pickle'))
+    p_rand_df.to_csv(dir_save / f'params_{comb_type}_overview{batchID}.csv')
+    p_rand_df.to_pickle(dir_save / f'params_{comb_type}_overview{batchID}.pickle')
     return p_rand_df
 
 # Create random parameters within range (app) or use all sep param combinations
@@ -40,8 +40,8 @@ def get_rand_params(comb_type, num_sim, seed, var_name, kwargs, dir_save, res):
         p_rand  = rng.uniform(low=lows,high=highs,size=(num_sim,len(lows))) 
     p_rand_df           = pd.DataFrame(p_rand,columns=var_name)
     p_rand_df['simID']  = np.arange(num_sim)
-    p_rand_df.to_csv(os.path.join(dir_save,f'params_{comb_type}_overview.csv'))
-    p_rand_df.to_pickle(os.path.join(dir_save,f'params_{comb_type}_overview.pickle'))
+    p_rand_df.to_csv(dir_save / f'params_{comb_type}_overview.csv')
+    p_rand_df.to_pickle(dir_save / f'params_{comb_type}_overview.pickle')
     return p_rand_df
 
 # Get baseparams for sim
@@ -49,30 +49,41 @@ def get_sim_setup(alg_type,level=0,no_rew=False):
     notrace = 'notrace' in alg_type
     center  = 'center' in alg_type
     center_type = alg_type.split('center-')[1].split('_')[0].split('-')[0] if center else ''
+
     if 'nac' in alg_type:
         sim_fun     = auxo.run_optsim_nac_tree
         sim_fun_str = 'auxo.run_optsim_nac_tree'
         rec_type    = 'advanced1'
-        if alg_type=='nac':
+        if alg_type=='nac':                 # MF agent with cnov
             base_params = bpo.base_params_nACtree.copy()
-        elif 'hnac' in alg_type:
+        elif 'hnac' in alg_type:            # MF agent with snov
             base_params = bpo.get_baseparams_all_hnac(alg_type,[level],True,notrace=notrace,center=center,center_type=center_type)
+
     elif 'nor' in alg_type:
         sim_fun     = auxo.run_opt_sim_mbnor
         sim_fun_str = 'auxo.run_opt_sim_mbnor'
         rec_type    = 'basic'
-        if alg_type=='nor':     base_params = bpo.base_params_mbnortree_exp.copy()
-        elif 'hnor' in alg_type:  base_params = bpo.get_baseparams_all_hnor(alg_type,[level],True,notrace=notrace,center=center,center_type=center_type)
+        if alg_type=='nor':                 # MB agent with cnov
+            base_params = bpo.base_params_mbnortree_exp.copy()
+        elif 'hnor' in alg_type:            # MB agent with snov
+            base_params = bpo.get_baseparams_all_hnor(alg_type,[level],True,notrace=notrace,center=center,center_type=center_type)
+        params_surnor = import_params_surnor(path = sl.get_rootpath() / 'src' / 'models' / 'mb_agent')
+        base_params.update(params_surnor)
+
     elif 'hybrid' in alg_type:
         sim_fun     = auxo.run_optsim_hybrid_tree
         sim_fun_str = 'auxo.run_optsim_hybrid_tree'
         rec_type    = 'basic'
-        if 'hhybrid' in alg_type:   base_params = bpo.baseparams_all_hhybrid_comb('hnor','hnac-gn',[level],True,notrace=notrace,center=center,center_type=center_type)
-        elif 'hybrid' in alg_type:  base_params = bpo.baseparams_hybrid_comb()
+        if 'hhybrid' in alg_type:           # Hybrid agent with snov
+            base_params = bpo.baseparams_all_hhybrid_comb('hnor','hnac-gn',[level],True,notrace=notrace,center=center,center_type=center_type,path_surnor= sl.get_rootpath() / 'src' / 'models' / 'mb_agent')
+        elif 'hybrid' in alg_type:          # Hybrid agent with cnov
+            base_params = bpo.baseparams_hybrid_comb(path_surnor= sl.get_rootpath() / 'src' / 'models' / 'mb_agent')
+
     if no_rew:
         T = base_params['T'] 
         T[:] = 0
         base_params['T'] = T
+
     return sim_fun,sim_fun_str,rec_type,base_params
 
 # Run simulation for each parameter set
@@ -114,6 +125,7 @@ def run_multisim_range(config):
     seed        = config['seed'] if 'seed' in config.keys() else 12345
 
     alg_type    = config['alg_type'] # 'nac','nor','hnac-gn','hnor','hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
+    maxit       = config['maxit'] if 'maxit' in config.keys() else False
     if 'hnor' in alg_type or 'hnac' in alg_type or 'hhybrid' in alg_type: 
         levels  = config['levels']
     var_name    = config['var_name'] 
@@ -130,9 +142,7 @@ def run_multisim_range(config):
     else:           get_params = get_rand_params
     
     # Prepare folder for saving
-    dir_save = f'/lcncluster/becker/RL_reward_novelty/data/ParameterRecovery/SimData{"_uniparam" if uniparam else ""}/{alg_type}_{comb_type}{"_norew" if no_rew else ""}/'
-    # dir_save = sl.get_datapath()+f'ParameterRecovery/SimData{"_uniparam" if uniparam else ""}/{alg_type}_{comb_type}{"_norew" if no_rew else ""}/'
-    #dir_save = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/ParameterRecovery/SimData{"_uniparam" if uniparam else ""}/{alg_type}_{comb_type}/'
+    dir_save = sl.get_rootpath() / 'data' / 'recovery' / f'simdata{"_uniparam" if uniparam else ""}' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}'
     sl.make_long_dir(dir_save)
 
     # Get batch ID
@@ -141,38 +151,38 @@ def run_multisim_range(config):
         batchID += 1
 
     # Save metadata
-    log_file = open(dir_save+f'log{batchID}.txt', 'w') # create log file
-    with open(dir_save+f'config{batchID}.json', 'w') as fc: json.dump(config, fc) # save config file for reproducibility
-    sl.saveCodeVersion(dir_save,file_cv=f'code_version{batchID}.txt') # save code version
+    log_file = open(dir_save / f'log{batchID}.txt', 'w')                # create log file
+    with open(dir_save / f'config{batchID}.json', 'w') as fc: 
+        json.dump(config, fc)                                           # save config file for reproducibility
+    sl.saveCodeVersion(dir_save,file_cv=f'code_version{batchID}.txt')   # save code version
 
-    # Generate + save random parameter sets
-    # dir_load = '/Volumes/lcncluster/becker/RL_reward_novelty/data/'
-    # dir_load = sl.get_datapath() 
-    dir_load = '/lcncluster/becker/RL_reward_novelty/data/'
-    if 'hnor' in alg_type or 'hnac' in alg_type or 'hhybrid' in alg_type:
+    # Generate + save parameter sets tp be simulated
+    dir_load = sl.get_rootpath() / 'data'
+
+    if 'hnor' in alg_type or 'hnac' in alg_type or 'hhybrid' in alg_type:       # for similarity-based agents
         res = []
         for i in range(len(levels)):
-            dir_save_i = os.path.join(dir_save,f'{alg_type}_{comb_type}_l{levels[i]}')
+            dir_save_i = dir_save / f'{alg_type}_{comb_type}_l{levels[i]}'
             sl.make_long_dir(dir_save_i)
-            print(dir_save_i)
-            if 'hhybrid' in alg_type and not ('notrace' in alg_type or 'center' in alg_type):
-                dir_i = os.path.join(dir_load,f'MLE_results/Fits/SingleRun/mle-maxit_{alg_type}-{data_type}_{opt_type}/mle-maxit_{alg_type}-l{levels[i]}-{data_type}_{opt_type}') 
-                file_i = f'mle-maxit_{alg_type}-l{levels[i]}-{data_type}_{opt_type}_{comb_type}.csv'
-            else:
-                dir_i = os.path.join(dir_load,f'MLE_results/Fits/SingleRun/mle_{alg_type}-{data_type}_{opt_type}/mle_{alg_type}-l{levels[i]}-{data_type}_{opt_type}') 
-                file_i = f'mle_{alg_type}-l{levels[i]}-{data_type}_{opt_type}_{comb_type}.csv'
-            print(dir_i)
-            print(file_i)
+
+            # Load fitted data sets
+            dir_i   = dir_load / 'mle_results' / 'fits' / 'singlerun' / f'mle{"-maxit" if maxit else ""}_{alg_type}-{data_type}_{opt_type}' / f'mle{"-maxit" if maxit else ""}_{alg_type}-l{levels[i]}-{data_type}_{opt_type}' 
+            file_i  = f'mle{"-maxit" if maxit else ""}_{alg_type}-l{levels[i]}-{data_type}_{opt_type}_{comb_type}.csv'
             res_i = sl.load_sim_data(dir_i,file_data=file_i)       
             res.append(res_i)
+
+            # Generate parameter sets for simulation and simulate
             p_rand_df = get_params(comb_type,num_sim,seed,var_name,kwargs,dir_save_i,res_i,batchID=batchID)
             sim_fun, sim_fun_str, rec_type, base_params = get_sim_setup(alg_type,level=levels[i],no_rew=no_rew)
             run_sim_setup(startID,start_seed,num_sim,log_file,alg_type,p_rand_df,sim_fun,sim_fun_str,agent_num,epi_num,base_params,rec_type,dir_save_i,parallel=parallel)
-    else:
-        # if 'hybrid' in alg_type:
-        #     res = sl.load_sim_data(os.path.join(dir_load,f'MLE_results/Fits/SingleRun/mle-maxit_{alg_type}-{data_type}_{opt_type}'),file_data=f'mle-maxit_{alg_type}-{data_type}_{opt_type}_{comb_type}.csv')
-        # else:
-        res = sl.load_sim_data(os.path.join(dir_load,f'MLE_results/Fits/SingleRun/mle_{alg_type}-{data_type}_{opt_type}'),file_data=f'mle_{alg_type}-{data_type}_{opt_type}_{comb_type}.csv')
+
+    else:                                                                   # for count-based agents
+        # Load fitted data sets                                                                    
+        dir_i  = dir_load / 'mle_results' / 'fits' / 'singlerun' / f'mle{"-maxit" if maxit else ""}_{alg_type}-{data_type}_{opt_type}'
+        file_i = f'mle{"-maxit" if maxit else ""}_{alg_type}-{data_type}_{opt_type}_{comb_type}.csv'
+        res = sl.load_sim_data(dir_i,file_data=file_i)
+
+        # Generate parameter sets for simulation and simulate
         p_rand_df = get_params(comb_type, num_sim, seed, var_name, kwargs, dir_save, res, batchID=batchID)
         sim_fun, sim_fun_str, rec_type, base_params = get_sim_setup(alg_type,no_rew=no_rew)
         run_sim_setup(startID,start_seed,num_sim,log_file,alg_type,p_rand_df,sim_fun,sim_fun_str,agent_num,epi_num,base_params,rec_type,dir_save,parallel=parallel)

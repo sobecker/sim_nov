@@ -1,27 +1,35 @@
-import numpy as np
-import sys
-
 import utils.saveload as sl
+from pathlib import Path
 
-yaml_sim = True
-yaml_fit = False
+### Script to create yaml files for simulation and/or fitting of parameter recovery data ###
 
+yaml_sim = True     # create yaml for simulation
+yaml_fit = False    # create yaml for recovery fitting
+
+# Make yaml for simulation (recovery data) ##################################################
 if yaml_sim:
-    path = '/Users/sbecker/yaml_files/yaml_rlnet/ParameterRecovery/Sim/'; sl.make_long_dir(path)
+    path = Path('/Users/sbecker/yaml_files/yaml_sim_nov/recovery/sim/')
+    sl.make_long_dir(path)
 
     comb_type   = ['app'] # 'app','sep'
-    alg_type    = ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box'] #['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace'] #['hnac-gn','nac','nor','hybrid2'] # 'nac','nor','hybrid2','hnac-gn','hnor','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi','hhybrid2'
+    alg_type    = ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2']
+    # ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box']
+    # ['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
+    # ['hnac-gn','nac','nor','hybrid2'] 
+    # 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
     opt_method  = ['Nelder-Mead'] # 'SLSQP','L-BFGS-B'
     param_range = 'uniparam'
     levels      = list(range(1,7))
 
     for i_c in range(len(comb_type)):
         for i_a in range(len(alg_type)):
+            
+            # Create yaml files for similarity-based agents
             if 'hnor' in alg_type[i_a] or 'hnac' in alg_type[i_a] or 'hhybrid' in alg_type[i_a]:
                 for i_l in range(len(levels)):
                   save_name = f'multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}_l{levels[i_l]}'
                   log_folder = f'{alg_type[i_a]}_{comb_type[i_c]}_{param_range}_l{levels[i_l]}'
-                  with open(path+save_name+'.yaml', 'w') as rsh:
+                  with open(path / f'{save_name}.yaml', 'w') as rsh:
                     rsh.write(f'''\
 apiVersion: run.ai/v2alpha1
 kind: TrainingWorkload
@@ -35,7 +43,7 @@ spec:
   command:
     value: "/bin/bash" # bash commands as args below, e.g. using a custom conda installation on the lcncluster
   arguments: 
-    value: /lcncluster/becker/RL_reward_novelty/exps/ParameterRecovery/Sim/multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}_l{levels[i_l]}.sh
+    value: /lcncluster/becker/sim_nov/exp/recovery/sim/multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}_l{levels[i_l]}.sh
   environment:
     items:
       HOME:
@@ -62,10 +70,11 @@ spec:
   nodePools:
     value: "default" # S8 nodes are now named default, if using GPUs, put "g10 g9"
 ''')
+            # Create yaml files for count-based agents
             else:
               save_name = f'multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}'
               log_folder = f'{alg_type[i_a]}_{comb_type[i_c]}_{param_range}'
-              with open(path+save_name+'.yaml', 'w') as rsh:
+              with open(path / f'{save_name}.yaml', 'w') as rsh:
                 rsh.write(f'''\
 apiVersion: run.ai/v2alpha1
 kind: TrainingWorkload
@@ -79,7 +88,7 @@ spec:
   command:
     value: "/bin/bash" # bash commands as args below, e.g. using a custom conda installation on the lcncluster
   arguments: 
-    value: /lcncluster/becker/RL_reward_novelty/exps/ParameterRecovery/Sim/multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}.sh
+    value: /lcncluster/becker/sim_nov/exp/recovery/sim/multisim-{alg_type[i_a]}_{comb_type[i_c]}_{param_range}.sh
   environment:
     items:
       HOME:
@@ -107,6 +116,7 @@ spec:
     value: "default" # S8 nodes are now named default, if using GPUs, put "g10 g9"
 ''')
     
+# Make yaml for recovery fitting ############################################################
 if yaml_fit:
 
     path = '/Users/sbecker/yaml_files/yaml_rlnet/ParameterRecovery/Fits/'; sl.make_long_dir(path)
