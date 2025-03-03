@@ -33,12 +33,12 @@ for j in range(len(levels)):
                 'parallel': parallel,
                 'local': local,
                 'level':levels[j],
-                'save_name': f'mle_{alg_type}-l{levels[j]}-{data_type}'
+                'save_name': f'mle_{alg_type}-l{levels[j]}-{data_type}_{opt_method}'
                 }
 
     path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
     sl.make_long_dir(path)    
-    name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
+    name = f'{params["save_name"]}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
     if randstart:
         params["seed"] = 12345      

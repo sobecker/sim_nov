@@ -425,7 +425,7 @@ class pc():
             self.kmat = h['kmat'] # kernel function matrix (list of matrices |S|xlen(av))
             self.eps = h['k_alph'] if self.update_type=='fix' else h['eps'] # prior or fixed learning rate for novelty
             if self.eps==None:
-                self.eps = [1/(len(self.h_w[i])**2) for i in range(len(self.h_w))]     
+                self.eps = [1/(len(self.h_w[i])**2) for i in range(len(self.h_w))]   
             self.h_g = None
         else:
             self.w = None
@@ -596,8 +596,12 @@ class pc():
 
     def updateNovelty(self,s):
         # Update for novelty based on t
-        self.t = self.eps*self.t + 1
-        self.counts *= self.eps
+        if isinstance(self.eps,(list,np.ndarray)):
+            self.t = self.eps[0]*self.t + 1
+            self.counts *= self.eps[0]
+        else:
+            self.t = self.eps*self.t + 1
+            self.counts *= self.eps
         self.counts[s] +=1
 
         if self.ntype=='N-ktemp':

@@ -7,6 +7,10 @@ from matplotlib import colors, cm
 import utils.saveload as sl
 from fitting_behavior.model_comparison.compute_bic import compute_bic
 
+### Script to produce BIC plots for model comparison ###
+
+# Helper functions to shift y-axis ################################################################################################
+# Fixes compatibility problem with matplotlib bar plots / Adobe Illustrator) 
 my_ceil = lambda num, prec: (10**(-prec))*np.ceil(num*10**(prec))
 my_floor = lambda num, prec: (10**(-prec))*np.floor(num*10**(prec))
 
@@ -22,7 +26,8 @@ def make_shifted_yaxis(ax,shift):
     ax.set_yticks(yt)
     ax.set_yticklabels(ytl)
 
-def compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col,best_fun,worst_fun):
+# Load + combine model comparison data ##### ######################################################################################
+def load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col,best_fun,worst_fun):
     bic_gran = []
     for i_alg in range(len(algs_gran)):
         alg_type    = algs_gran[i_alg]
@@ -57,15 +62,17 @@ def compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_
 
     return bic_df_all, best_ofbest, best_ofworst
 
-def plot_best_worst(algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,my_ylim=None,bic_only=False):
+# Helper functions to shift y-axis ################################################################################################
+# Helper functions to shift y-axis ################################################################################################
+def plot_best_worst(algs_basic,algs_gran,alg_labels,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,my_ylim=None,bic_only=False):
     # Compute BIC and LL
     plot_col1   = 'bic' if comb_type=='app' else 'sum_bic'
     best_fun1    = np.min; worst_fun1   = np.max
-    bic_df_all, bic_bob, bic_bow = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
+    bic_df_all, bic_bob, bic_bow = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
 
     plot_col2   = 'LL' if comb_type=='app' else 'sum_LL'
     best_fun2    = np.max; worst_fun2   = np.min
-    LL_df_all, LL_bob, LL_bow  = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
+    LL_df_all, LL_bob, LL_bow  = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
 
     # Set figure color map
     cmap    = plt.cm.get_cmap('tab20')
@@ -128,15 +135,17 @@ def plot_best_worst(algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_lo
         plt.savefig(path_save / save_name+'.eps')
         plt.savefig(path_save / save_name+'.svg')
 
-def plot_scenario(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,ax=None):
+# Helper functions to shift y-axis ################################################################################################
+# Helper functions to shift y-axis ################################################################################################
+def plot_scenario(scenario,algs_basic,algs_gran,alg_labels,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,ax=None):
     # Compute BIC and LL
     plot_col1   = 'bic' if comb_type=='app' else 'sum_bic'
     best_fun1    = np.min; worst_fun1   = np.max
-    bic_df_all, bic_bob, bic_bow = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
+    bic_df_all, bic_bob, bic_bow = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
 
     plot_col2   = 'LL' if comb_type=='app' else 'sum_LL'
     best_fun2    = np.max; worst_fun2   = np.min
-    LL_df_all, LL_bob, LL_bow  = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
+    LL_df_all, LL_bob, LL_bow  = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
 
     # Set figure color map
     cmap    = plt.cm.get_cmap('tab20c')
@@ -193,15 +202,17 @@ def plot_scenario(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,
         plt.savefig(path_save / save_name+'.eps')
         plt.savefig(path_save / save_name+'.svg')
 
-def plot_scenario_schwartz_approx(scenario,algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,bar_pattern=None,ax=None,plot_legend=False,ylim=None,col_bic=None,col_LL=None):
+# Helper functions to shift y-axis ################################################################################################
+# Helper functions to shift y-axis ################################################################################################
+def plot_scenario_schwartz_approx(scenario,algs_basic,algs_gran,alg_labels,comb_type,path_load,path_save,save_plot=False,save_name='',figshape=None,bar_pattern=None,ax=None,plot_legend=False,ylim=None,col_bic=None,col_LL=None):
     # Compute BIC and LL
     plot_col1   = 'bic' if comb_type=='app' else 'sum_bic'
     best_fun1    = np.min; worst_fun1   = np.max
-    bic_df_all, bic_bob, bic_bow = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
+    bic_df_all, bic_bob, bic_bow = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col1,best_fun1,worst_fun1)
 
     plot_col2   = 'LL' if comb_type=='app' else 'sum_LL'
     best_fun2    = np.max; worst_fun2   = np.min
-    LL_df_all, LL_bob, LL_bow  = compute_model_comp(algs_basic,algs_gran,opt_method,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
+    LL_df_all, LL_bob, LL_bow  = load_model_comp(algs_basic,algs_gran,comb_type,path_load,plot_col2,best_fun2,worst_fun2)
 
     # Set figure color map
     if col_bic is None or col_LL is None:
@@ -275,7 +286,8 @@ def plot_scenario_schwartz_approx(scenario,algs_basic,algs_gran,alg_labels,opt_m
         plt.savefig(os.path.join(path_save,save_name+'.eps'),bbox_inches='tight')
         plt.savefig(os.path.join(path_save,save_name+'.svg'),bbox_inches='tight')   
 
-
+# Helper functions to shift y-axis ################################################################################################
+# Helper functions to shift y-axis ################################################################################################
 def plot_bic_bar(path_load,alg_type,comb_type,path_save,save_name,title='',ax=None,figshape=None):
     # Load BIC and LL data            
     bic_df = sl.load_sim_data(path_load,file_data=f'bic_{alg_type}_{comb_type}.csv')
@@ -333,6 +345,8 @@ def plot_bic_bar(path_load,alg_type,comb_type,path_save,save_name,title='',ax=No
     plt.savefig(path_save+save_name+'.svg',bbox_inches='tight')
     plt.savefig(path_save+save_name+'.eps',bbox_inches='tight')
 
+# Helper functions to shift y-axis ################################################################################################
+# Helper functions to shift y-axis ################################################################################################
 def plot_schwartz_approx_per_level(path_load,alg_type,comb_type,path_save='',save_plot=True,save_name='',title='',ax=None,figshape=None,plot_legend=False,ylim=None,col_bic=None,col_LL=None):
     # Load BIC and LL data            
     bic_df = sl.load_sim_data(path_load,file_data=f'bic_{alg_type}_{comb_type}.csv')
@@ -441,11 +455,11 @@ if __name__=="__main__":
 
         # Plot old Fig. 3A (BIC and -2*LL across model types)
         # figshape        = (0.8*(len(algs_gran)+len(algs_basic)),6)
-        # plot_best_worst(algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_bicdata,path_save,save_plot=True,save_name='best-worst',figshape=figshape,my_ylim=[13000,13600],bic_only=True)
+        # plot_best_worst(algs_basic,algs_gran,alg_labels,comb_type,path_bicdata,path_save,save_plot=True,save_name='best-worst',figshape=figshape,my_ylim=[13000,13600],bic_only=True)
 
         # Plot new Fig. 3A (LL and penalty across model types)
         # figshape        = (len(algs_gran),3)
-        # plot_scenario_schwartz_approx('best',algs_basic,algs_gran,alg_labels,opt_method,comb_type,path_bicdata,path_save,save_plot=True,save_name='best-schwartz',figshape=figshape,ax=None)
+        # plot_scenario_schwartz_approx('best',algs_basic,algs_gran,alg_labels,comb_type,path_bicdata,path_save,save_plot=True,save_name='best-schwartz',figshape=figshape,ax=None)
 
         figshape    = (2.5,2.2)
         alg_details = 'hhybrid2'

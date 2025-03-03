@@ -52,11 +52,11 @@ for i in range(len(alg_type)):
                     'verbose': True,
                     'parallel': parallel,
                     'level':levels[j],
-                    'save_name': f'mle_{alg_type[i]}-l{levels[j]}-{data_type}'
+                    'save_name': f'mle_{alg_type[i]}-l{levels[j]}-{data_type}_{opt_method}'
                     }
 
         path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
-        name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
+        name = f'{params["save_name"]}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
         if randstart:
             params["seed"] = 12345      

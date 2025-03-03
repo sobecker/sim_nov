@@ -1,5 +1,3 @@
-import sys
-import numpy as np
 import pandas as pd
 import utils.saveload as sl
 import fitting_behavior.optimization.base_params_opt as bpo

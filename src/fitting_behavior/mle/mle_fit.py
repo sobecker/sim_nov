@@ -120,7 +120,8 @@ def run_mle_fit(config):
                 mf_type = config['hyb_type'][1] if 'hyb_type' in config.keys() else 'hnac-gn'
                 params = bpo.baseparams_all_hhybrid_comb(mb_type,mf_type,levels=[level],notrace=notrace,center=center,center_type=center_type,path_surnor= base_path / 'src' / 'models' / 'mb_agent',update_type=update_type)
             else:                           # Hybrid agent with cnov
-                params = bpo.baseparams_hybrid_comb()
+                params = bpo.baseparams_hybrid_comb(path_surnor=base_path / 'src' / 'models' / 'mb_agent')
+        print(params)
 
         # Load mice or artificial data to be fitted      
         if data_type=='mice':   # Mice data

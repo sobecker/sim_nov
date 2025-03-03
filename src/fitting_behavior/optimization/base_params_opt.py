@@ -709,11 +709,11 @@ def get_baseparams_all_hnor(alg_type,levels,eps1=True,hnov_type=2,notrace=False,
     return bp
 
 # Method returns three dictionaries of hybrid parameters
-def baseparams_hybrid():
+def baseparams_hybrid(path_surnor=''):
     params_exp = base_params_mbnortree_exp.copy()
     params_hybrid = {'w_mf':0.5, 'w_mb':0.5,'sim_name':'hybrid_balanced'}
     params_exp.update(params_hybrid)
-    params_mb  = nor.import_exploration_params_surnor()
+    params_mb  = nor.import_exploration_params_surnor(path=path_surnor)
     params_mf  = base_params_nACtree.copy()
     return params_exp,params_mb,params_mf
 
@@ -728,13 +728,13 @@ def comb_params(p_exp,p_mb,p_mf):
     return p_mf
 
 # Method returns single parameter dictionary
-def baseparams_hybrid_comb():
-    p_exp, p_mb, p_mf = baseparams_hybrid()
+def baseparams_hybrid_comb(path_surnor=''):
+    p_exp, p_mb, p_mf = baseparams_hybrid(path_surnor=path_surnor)
     p_mf = comb_params(p_exp,p_mb,p_mf)
     return p_mf
 
 # Method returns three dictionaries with params for granular hybrid agent
-def baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/',update_type=None):
+def baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='',update_type=None):
     params_exp  = get_baseparams_all_hnor(mb_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
     params_mb   = nor.import_exploration_params_surnor(path=path_surnor)
     params_mf   = get_baseparams_all_hnac(mf_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
@@ -745,7 +745,7 @@ def baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,
     return params_exp,params_mb,params_mf
 
 # Method returns single dictionary with params for granular hybrid agent
-def baseparams_all_hhybrid_comb(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/',update_type=None):
+def baseparams_all_hhybrid_comb(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='',update_type=None):
     p_exp, p_mb, p_mf = baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,path_surnor=path_surnor,update_type=update_type)
     p_mf = comb_params(p_exp,p_mb,p_mf)
     return p_mf

@@ -24,18 +24,8 @@ def auto_seeds(trials):
     return list(range(trials))
 
 def import_exploration_params_surnor(path=''):
-    if not path:
-        full_path = './src/mbnor/fittedparams_mbnor.csv'
-    else:
-        if path[-1]=='/': full_path=path+'fittedparams_mbnor.csv'
-        else: full_path=path+'/fittedparams_mbnor.csv'
-    params_df = pd.read_csv(full_path,sep=';')
-    params_df['Value'] = params_df['Value'].str.replace(',','.')
-    params_df['Error'] = params_df['Error'].str.replace(',','.')
-    params_df['Value'] = pd.to_numeric(params_df['Value'],downcast='float')
-    params_df['Error'] = pd.to_numeric(params_df['Error'],downcast='float')
-    params_dict = dict(zip(params_df['Parameter'],params_df['Value']))
-
+    
+    params_dict = import_params_surnor(path=path)
     params_dict['beta_N1']=1; params_dict['lambda_R']=0
 
     return params_dict

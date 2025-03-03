@@ -26,12 +26,12 @@ params = {'data_type':data_type,
             'var_name': l_var,
             'kwargs': {"x0":l_x0,"bounds":l_bounds,"opt_method":opt_method},
             'alg_type': alg_name,
-            'save_name': f'mle_{alg_name}-{data_type}',
+            'save_name': f'mle_{alg_name}-{data_type}_{opt_method}',
             'verbose': True}
    
 path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
 sl.make_long_dir(path)
-name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
+name = f'{params["save_name"]}{("-" if len(comb_type)>0 else "")}{comb_type}'
 
 if randstart:
     params["seed"] = 12345      

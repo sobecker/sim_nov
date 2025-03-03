@@ -1,0 +1,30 @@
+Successfully loaded config file.
+
+<class 'dict'>
+{'data_type': 'mice', 'data_folder': '', 'comb_type': 'app', 'var_name': ['gamma', 'c_alph', 'a_alph', 'c_lam', 'a_lam', 'temp', 'c_w0', 'a_w0', 'lambda_N', 'beta_1', 'epsilon', 'k_leak', 'w_mf', 'w_mb'], 'kwargs': {'x0': [0.5, 0.1, 0.1, 0.5, 0.5, 0.5, 0, 0, 0.5, 5, 0.0002, 0.5, 0.5, 0.5], 'bounds': [[0.0, 0.999], [0.001, 0.5], [0.001, 0.5], [0.0, 0.999], [0.0, 0.999], [0.001, 1.0], [-100, 100], [-100, 100], [0.0, 0.999], [0.1, 30], [0.0001, 1], [0.001, 0.999], [0, 1], [0, 30]], 'opt_method': 'Nelder-Mead'}, 'alg_type': 'hybrid2', 'save_name': 'mle_hybrid2-mice_Nelder-Mead', 'verbose': True}
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B1_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B2_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B3_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B4_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C1_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C3_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C6_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C7_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C8_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/C9_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B5_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B6_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/B7_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D3_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D4_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D5_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D6_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D7_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D8_data
+/lcncluster/becker/sim_nov/ext_data/Rosenberg2021/D9_data
+Number of data samples fitted: 7972.
+dict_keys(['sim_name', 'round_prec', 'number_trials', 'number_epi', 'max_it', 'seeds', 'x0', 'S', 'R', 'P', 'a', 'x', 'T', 'agent_types', 'decision_weights', 'tauM', 'RM', 'c_w0', 'a_w0', 'gamma', 'c_alph', 'a_alph', 'c_lam', 'a_lam', 'temp', 'mf_rec_type', 'mf_k', 'mf_ntype', 'mf_k_alph', 'epsilon', 'k_leak', 'lambda_R', 'lambda_N', 'beta_1', 'beta_N1', 'T_PS', 'A', 'w_mf', 'w_mb', 'mb_rec_type', 'mb_k', 'mb_ntype', 'mb_k_alph'])
+Computing MLE (Nelder-Mead) for combined data set.
+
+Computing MLE (Nelder-Mead) for combined data set.
+

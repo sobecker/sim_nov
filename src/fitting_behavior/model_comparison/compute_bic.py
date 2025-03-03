@@ -5,6 +5,9 @@ import os
 import matplotlib.pyplot as plt
 import utils.saveload as sl
 
+### Script to compute BIC for model comparison ###
+
+# Compute BIC for all models ###################################################################################
 def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit,n_app=None,n_sep=None):
     # Get number of data points from underlying mice data (see compute_sizemicedata.py)
     if n_app==None: n_app = 7972
@@ -100,41 +103,29 @@ def plot_bic_bar(bic_df,comb_type,measure_type,name,name_save,path_save,eps=100,
     plt.savefig(path_save+save_name+'.eps',bbox_inches='tight')
 
 if __name__=="__main__":
+
     # Specify list of candidate models
-    path_models = '/Volumes/lcncluster/becker/RL_reward_novelty/data/MLE_results/Fits/SingleRun/'
-    candidates  = ['nac-oi-only',
-                    'nac',
-                    'nac-kpop',
-                    'nac-kmix',
-                    'nac-nooi',
+
+    path_models = sl.get_rootpath() / 'data' / 'mle_results' / 'fits' / 'singlerun'
+    candidates  = ['nac',
                     'nor',
-                    'hybrid2',
-                    'hybrid']
-    maxit   = [False, 
-                False, 
-                False,
-                False,
-                False,
-                False,
-                False,
-                True]
+                    'hybrid2']
+    maxit   = [False] * len(candidates)
     # candidates  = ['hybrid-maxit',
     #                 'hybrid']
     opt_method  = 'Nelder-Mead'
     comb_type   = 'app' # 'sep','app'
     measure_type= 'bic' # 'bic','LL'
-    # name_save   = 'hybrid-vs-maxit'
-    # name_save1  = 'hybrid-vs-maxit'
-    # name        = 'hybrid with/without maxit'
     name_save   = 'basic-nov'
     name_save1  = 'basic-nov_which-alg'
     name        = 'basic nov'
     
-    path_save   = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/ModelSelection/BIC/'
+    path_save   = sl.get_rootpath() / 'data' / 'model_selection' / 'bic'
     sl.make_long_dir(path_save)
-    path_save1  = f'/Volumes/lcncluster/becker/RL_reward_novelty/output/ModelSelection/BIC/'
-    sl.make_long_dir(path_save1)
-
     bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit)
+    
+    path_save1  = sl.get_rootpath() / 'output' / 'model_selection' / 'bic'
+    sl.make_long_dir(path_save1)
     plot_bic_bar(bic_df,comb_type,measure_type,name,name_save1,path_save1)
+    
     print('done')
