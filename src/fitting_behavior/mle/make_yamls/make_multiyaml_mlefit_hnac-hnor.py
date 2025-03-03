@@ -6,7 +6,7 @@ import utils.saveload as sl
 # Requirements:
 # Specify the paths below. Specify the types of algorithms to fit.
 
-alg_type    = ['hnac-gn','hnor','hhybrid2']
+alg_type    = ['hnac-gn-goi','hnor','hhybrid2']
 levels      = [1,2,3,4,5,6]
 opt_type    = 'mice' 
 opt_alg     = ['Nelder-Mead']

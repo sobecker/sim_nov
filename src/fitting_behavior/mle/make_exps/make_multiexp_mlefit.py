@@ -14,6 +14,7 @@ opt_type    = 'mice' # opt, naive
 opt_alg     = ['Nelder-Mead']
 comb_type   = ['app']
 multistart  = False
+maxit       = [False, False, True]
 
 # Additional MF tests
 # alg_type    = ['nac-nooi','nac-kpop','nac-kpop-t','nac-kmix','nac-kmix-t']
@@ -38,7 +39,7 @@ for aa in range(len(alg_type)):
         for cc in range(len(comb_type)):
             clink = '-' if len(comb_type[cc])>0 else ''
             multi = '_multi' if multistart else ''
-            save_name1 = f'mle_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
+            save_name1 = f'mle{"-maxit" if maxit[aa] else ""}_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
             path_i = path_exp / save_name1 
             sl.make_long_dir(path_i)
 

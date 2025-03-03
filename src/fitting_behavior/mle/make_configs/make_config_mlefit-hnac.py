@@ -5,7 +5,7 @@ from pathlib import Path
 
 levels = [0,1,2,3,4,5,6] # level 0: component center is the first branching point, level 6: component centers are the leaf nodes
 
-alg_type = ['hnac-gn'] #hnac-gn_center-triangle',  'leaky_hnac-gn, 'hnac-gn_notrace_center-box','hnac-gn-gv_notrace','hnac-gn-goi_notrace','hnac-gn-gv-goi_notrace'] #['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi']
+alg_type = ['hnac-gn-goi'] #hnac-gn_center-triangle',  'leaky_hnac-gn, 'hnac-gn_notrace_center-box','hnac-gn-gv_notrace','hnac-gn-goi_notrace','hnac-gn-gv-goi_notrace'] #['hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi']
 data_type   = 'mice'        # 'mice', deprecated: 'naive', 'opt'
 opt_method  = 'Nelder-Mead' # L-BFGS-B', 'Nelder-Mead', 'SLSQP'
 comb_type   = 'app'         # 'sep', 'app', '' (for '' both sep and app are computed)

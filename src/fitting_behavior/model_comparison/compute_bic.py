@@ -1,11 +1,33 @@
-import sys
 import numpy as np
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 import utils.saveload as sl
+import fitting_behavior.optimization.base_params_opt as bpo
+from fitting_behavior.mle.mle_fit import preprocess_micedata
 
-### Script to compute BIC for model comparison ###
+### Script to compute BIC for RL agents seeking count-based novelty ###
+
+# Compute number of steps in mice data ########################################################################
+def compute_size_micedata(UnrewNames=['B5','B6','B7','D3','D4','D5','D6','D7','D8','D9'],RewNames=['B1','B2','B3','B4','C1','C3','C6','C7','C8','C9']):
+    AllNames    = RewNames+UnrewNames
+
+    params = bpo.base_params_nACtree.copy()
+    P = params['P']
+
+    d = []
+    len_app = 0
+    len_sep = []
+    for i in range(len(AllNames)):
+        dir  = sl.get_rootpath() / 'ext_data' / 'Rosenberg2021'
+        file = dir / f'{AllNames[i]}_data' / f'{AllNames[i]}-stateseq_UntilG.pickle'
+        df_i = preprocess_micedata(dir,file,P,subID=AllNames[i],epi=0)
+        d.append(df_i)
+        len_app += len(df_i)
+        len_sep.append(len(df_i))
+
+    dict_len = {a:l for a,l in zip(AllNames,len_sep)}
+
+    return len_app, dict_len
 
 # Compute BIC for all models ###################################################################################
 def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit,n_app=None,n_sep=None):
@@ -29,7 +51,7 @@ def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,
         # if candidates[i]=='hybrid-maxit':
         #     path = path_models+f'mle-maxit_hybrid-mice_{opt_method}/'
         #     file = f'mle-maxit_hybrid-mice_{opt_method}_{comb_type}.csv'
-        path = path_models+f'mle{"-maxit" if maxit[i] else ""}_{candidates[i]}-mice_{opt_method}/'
+        path = path_models / f'mle{"-maxit" if maxit[i] else ""}_{candidates[i]}-mice_{opt_method}'
         file = f'mle{"-maxit" if maxit[i] else ""}_{candidates[i]}-mice_{opt_method}_{comb_type}.csv'
         res  = sl.load_sim_data(path,file_data=file)
 
@@ -78,6 +100,7 @@ def compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,
 
     return bic_df
 
+# Plot BIC for all models ###################################################################################
 def plot_bic_bar(bic_df,comb_type,measure_type,name,name_save,path_save,eps=100,xtl=[]):
     # comb_type='sep','app' / measure_type='bic','LL'
     plot_col  = measure_type if comb_type=='app' else ('sum_LL' if measure_type=='LL' else 'sum_bic') # mean_LL
@@ -99,33 +122,79 @@ def plot_bic_bar(bic_df,comb_type,measure_type,name,name_save,path_save,eps=100,
     f.suptitle(f'{measure_type.upper()} for {name} ({comb_type})')
 
     save_name = f'{name_save}_{comb_type}_{measure_type}'
-    plt.savefig(path_save+save_name+'.svg',bbox_inches='tight')
-    plt.savefig(path_save+save_name+'.eps',bbox_inches='tight')
+    plt.savefig(path_save / f'{save_name}.svg',bbox_inches='tight')
+    plt.savefig(path_save / f'{save_name}.eps',bbox_inches='tight')
 
 if __name__=="__main__":
 
-    # Specify list of candidate models
+    n_app, n_sep = compute_size_micedata()
+    plot_bic    = False
 
+    # Compute BIC for RL models seeking count-based novelty #####################################################
     path_models = sl.get_rootpath() / 'data' / 'mle_results' / 'fits' / 'singlerun'
     candidates  = ['nac',
                     'nor',
-                    'hybrid2']
+                    # 'hybrid2'
+                    ]
     maxit   = [False] * len(candidates)
-    # candidates  = ['hybrid-maxit',
-    #                 'hybrid']
     opt_method  = 'Nelder-Mead'
     comb_type   = 'app' # 'sep','app'
     measure_type= 'bic' # 'bic','LL'
     name_save   = 'basic-nov'
-    name_save1  = 'basic-nov_which-alg'
-    name        = 'basic nov'
     
     path_save   = sl.get_rootpath() / 'data' / 'model_selection' / 'bic'
     sl.make_long_dir(path_save)
-    bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit)
+    bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,maxit,n_app,n_sep)
     
-    path_save1  = sl.get_rootpath() / 'output' / 'model_selection' / 'bic'
-    sl.make_long_dir(path_save1)
-    plot_bic_bar(bic_df,comb_type,measure_type,name,name_save1,path_save1)
+    if plot_bic:
+        name_save1  = 'basic-nov_which-alg'
+        name        = 'basic nov'
+        path_save1  = sl.get_rootpath() / 'output' / 'model_selection' / 'bic'
+        sl.make_long_dir(path_save1)
+        plot_bic_bar(bic_df,comb_type,measure_type,name,name_save1,path_save1)
     
-    print('done')
+    print('Computed BIC for count-based novelty-seeking RL models.')
+
+    # Compute BIC for RL models seeking similarity-based novelty ################################################
+    alg_types    = ['hhybrid2',
+                    'hnor',
+                    'hnac-gn'
+                    ] # 'hnor','hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
+    # alg_types    = ['hnor_center-triangle','hnor_notrace','hnor_notrace_center-box',
+    #                 'hnac-gn_center-triangle','hnac-gn_notrace','hnac-gn_notrace_center-box',                    
+    #                 'hhybrid2_center-triangle','hhybrid2_notrace','hhybrid2_notrace_center-box'
+    #                 ] 
+    data_type    = 'mice'           # 'mice','opt','naive'
+    opt_method   = 'Nelder-Mead'    # 'Nelder-Mead','L-BFGS-B','SLSQP'
+    comb_types   = ['app']          # 'sep','app'
+    measure_type = 'LL'             # 'bic','LL'
+    epss         = [[50,100]]*len(alg_types)
+    maxit        = [False]*len(alg_types) 
+
+    for i_alg in range(len(alg_types)):
+        for i_comb in range(len(comb_types)):
+
+            alg_type = alg_types[i_alg]
+            comb_type = comb_types[i_comb]
+            eps = epss[i_alg][i_comb]
+            
+            path_models = sl.get_rootpath() / 'data' / 'mle_results' / 'fits' / 'singlerun'
+            levels      = [1,2,3,4,5,6]
+            candidates  = [f'{alg_type}-l{i}' for i in levels]
+            xtl         = [f'l{i}' for i in levels]
+
+            path_save   = sl.get_rootpath() / 'data' / 'model_selection' / 'bic'
+            sl.make_long_dir(path_save)
+            name_save   = f'{alg_type}'
+
+            bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_save,name_save,[maxit[i_alg]]*len(candidates),n_app,n_sep)
+
+            if plot_bic:
+                path_save1  = sl.get_rootpath() / 'output' / 'model_selection' / 'bic'
+                sl.make_long_dir(path_save1)
+                name        = f'{alg_type}'
+                name_save1  = f'{alg_type}_which-alg'
+
+                plot_bic_bar(bic_df,comb_type,measure_type,name,name_save1,path_save1,eps=eps,xtl=xtl)
+
+        print('Computed BIC for similarity-based novelty-seeking RL models.')

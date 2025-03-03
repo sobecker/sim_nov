@@ -85,8 +85,8 @@ def plot_modelrecov_levels(alg_type,measure_type,comb_type,opt_method,data_gen,c
         f.tight_layout()
 
         if save_plot:
-            plt.savefig(path_save_plot,f'{name_save_plot}.eps') / bbox_inches='tight'
-            plt.savefig(os.path.join(path_save_plot,f'{name_save_plot}.svg'),bbox_inches='tight')
+            plt.savefig(path_save_plot / f'{name_save_plot}.eps', bbox_inches='tight')
+            plt.savefig(os.path.join(path_save_plot / f'{name_save_plot}.svg'),bbox_inches='tight')
 
 
 if __name__=='__main__': 

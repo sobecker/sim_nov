@@ -89,12 +89,12 @@ def load_sim_data(dir_data,file_data='data_basic.pickle'):
     flag_load = True
     if not os.path.exists(path_data):
         print(f'Data file {file_data} does not exist in {path_data}. Trying to load file all_data (old format) instead.')
-        path_data = path_data.replace(file_data,'all_data.pickle')
+        path_data = Path(str(path_data).replace(file_data,'all_data.pickle'))
         if not os.path.exists(path_data):
             print(f'Data file {file_data} does not exist in {path_data}. Please specify a valid data path and file.')
             flag_load = False                   
     if flag_load:
-        type_data = path_data.split('.')[-1]
+        type_data = str(path_data).split('.')[-1]
         if type_data=='pickle' or type_data=='pkl':
             data = pd.read_pickle(path_data)
         elif type_data=='csv': 

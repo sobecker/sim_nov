@@ -9,7 +9,7 @@ path_exp = sl.get_rootpath() / 'exp' / 'mle' / 'fits'             # path to save
 sl.make_long_dir(path_exp)
 
 # Standard setting [reproducing the paper results]
-alg_type    = ['hnac-gn','hnor','hhybrid2']                                     # algorithms to fit: ... 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi' 
+alg_type    = ['hnac-gn-goi','hnor','hhybrid2']                                     # algorithms to fit: ... 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi' 
 levels      = [1,2,3,4,5,6]                                                     # granularity levels to fit for each algorithm
 opt_type    = 'mice' # 'mice','opt','naive'                                     # which data to fit to 
 opt_alg     = ['Nelder-Mead'] # 'Nelder-Mead','L-BFGS-B','SLSQP'                # optimization algorithm

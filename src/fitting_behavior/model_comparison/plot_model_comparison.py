@@ -406,15 +406,20 @@ def plot_schwartz_approx_per_level(path_load,alg_type,comb_type,path_save='',sav
    
 if __name__=="__main__":
 
-    algs_basic      = ['nac','nor','hybrid2']
-    algs_gran       = ['hnac-gn','hnac-gn-goi','hnor','hhybrid2'] #'hnac-gn-gv','hnac-gn-gv-goi',
-    # alg_labels      = ['MF\n(count)','MB\n(count)','Hybrid\n(count)','MF\n(kernel)','adapt. MF\n(kernel)','MB\n(kernel)','Hybrid (kernel)']
-    alg_labels      = ['MF\n(c)','MB\n(c)','Hybrid\n(c)','MF\n(k)','adapt. MF\n(k)','MB\n(k)','Hybrid\n(k)']
-    opt_method      = 'Nelder-Mead'    # 'Nelder-Mead','L-BFGS-B','SLSQP'
-    comb_types      = ['app']
-    epss            = [[50,100]]*len(algs_gran)
-    maxit           = [False,False,False,True]
-    recomp_bic      = False 
+    """ outdated """
+    algs_basic       = ['nac','nor'] #,'hybrid2']
+    alg_labels_basic = ['MF\n(c)','MB\n(c)'] #,'Hybrid\n(c)']
+    maxit_basic      = [False,False] #,True]
+    
+    algs_gran        = ['hnac-gn','hnor','hhybrid2'] #'hnac-gn-goi'
+    alg_labels_gran  = ['MF\n(s)','MB\n(s)','Hybrid\n(s)'] # 'adapt. MF\n(k)' 
+    maxit_gran       = [False,False,False] 
+
+    opt_method       = 'Nelder-Mead'    # 'Nelder-Mead','L-BFGS-B','SLSQP'
+    comb_types       = ['app']
+    epss             = [[50,100]]*len(algs_gran)
+     
+    recomp_bic       = False 
 
     path_bicdata    = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/ModelSelection/BIC/'
     path_save       = sl.get_datapath().replace('data','output') / f'Figures_Paper/Fig_model_comparison/'
@@ -422,9 +427,9 @@ if __name__=="__main__":
     if recomp_bic:
         for i_alg in range(len(algs_basic)):
             for i_comb in range(len(comb_types)):
-                alg_type = algs_basic[i_alg]
+                alg_type  = algs_basic[i_alg]
                 comb_type = comb_types[i_comb]
-                eps = epss[i_alg][i_comb]
+                eps       = epss[i_alg][i_comb]
 
                 path_models = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/MLE_results/Fits/SingleRun/'
                 # mle{"-maxit" if maxit[i_alg] else ""}_{alg_type}-mice_{opt_method}/'
@@ -432,7 +437,7 @@ if __name__=="__main__":
 
                 sl.make_long_dir(path_bicdata)
                 name_save   = f'{alg_type}'
-                bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_bicdata,name_save,[maxit[i_alg]]*len(candidates))
+                bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_bicdata,name_save,[maxit_basic[i_alg]]*len(candidates))
 
         for i_alg in range(len(algs_gran)):
             for i_comb in range(len(comb_types)):
@@ -441,14 +446,14 @@ if __name__=="__main__":
                 comb_type = comb_types[i_comb]
                 eps = epss[i_alg][i_comb]
                 
-                path_models = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/MLE_results/Fits/SingleRun/mle{"-maxit" if maxit[i_alg] else ""}_{alg_type}-mice_{opt_method}/'
+                path_models = f'/Volumes/lcncluster/becker/RL_reward_novelty/data/MLE_results/Fits/SingleRun/mle{"-maxit" if maxit_gran[i_alg] else ""}_{alg_type}-mice_{opt_method}/'
                 levels      = [1,2,3,4,5,6]
                 candidates  = [f'{alg_type}-l{i}' for i in levels]
                 xtl         = [f'l{i}' for i in levels]
 
                 sl.make_long_dir(path_bicdata)
                 name_save   = f'{alg_type}'
-                bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_bicdata,name_save,[maxit[i_alg]]*len(candidates))
+                bic_df = compute_bic(path_models,candidates,opt_method,comb_type,path_bicdata,name_save,[maxit_gran[i_alg]]*len(candidates))
 
     for i_comb in range(len(comb_types)):
         comb_type   = comb_types[i_comb]
