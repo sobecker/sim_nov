@@ -1,1 +1,0 @@
-{"seed": 12345, "num_sim": 50, "agent_num": 20, "var_name": ["lambda_N", "beta_1", "epsilon", "k_leak"], "kwargs": {"x0": [0.5, 5, 0.0002, 0.5], "bounds": [[0.0, 0.999], [0.1, 30], [0.001, 1], [0.001, 0.999]]}, "alg_type": "nor"}

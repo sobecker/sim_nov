@@ -1,1 +1,0 @@
-{"comb_type": "app", "seed": 12345, "start_seed": 0, "startID": 0, "num_sim": 20, "agent_num": 20, "uniparam": true, "no_rew": true, "parallel": true, "var_name": ["lambda_N", "beta_1", "epsilon", "k_leak"], "alg_type": "hnor_center-triangle", "kwargs": {"range": [0.1998, 5.98, 0.2, 0.1996], "abs_bounds": [[0.0, 0.999], [0.1, 30], [0.0001, 1], [0.001, 0.999]]}, "levels": [2]}
