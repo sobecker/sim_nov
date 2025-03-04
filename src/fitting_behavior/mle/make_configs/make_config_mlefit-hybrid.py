@@ -10,8 +10,8 @@ leaky       = False          # leaky or non-leaky model
 alg_name    = ('leaky_' if leaky else '')+'hybrid2'   
 maxit       = True
 
-l_var   = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0','lambda_N','beta_1','epsilon','k_leak','w_mf','w_mb']
-l_x0    = [0.5,     0.1,     0.1,     0.5,    0.5,    0.5,   0,     0,    0.5,       5,       0.0002,    0.5,    0.5,    0.5]
+l_var   = ['gamma','c_alph','a_alph','c_lam','a_lam','temp','c_w0','a_w0','lambda_N','beta_1','epsilon','k_leak','w_mf']
+l_x0    = [0.5,     0.1,     0.1,     0.5,    0.5,    0.5,   0,     0,    0.5,       5,       0.0002,    0.5,    0.5]   
 l_bounds    = [[0.,0.999],      #gamma
                 [0.001,0.5],    #c_alph
                 [0.001,0.5],    #a_alph
@@ -24,8 +24,13 @@ l_bounds    = [[0.,0.999],      #gamma
                 [0.1,30],       #beta_1
                 [0.0001,1],     #epsilon
                 [0.001,0.999],  #k_leak
-                [0,1],          #w_mf
-                [0,30]]         #w_mb
+                [0,1]]          #w_mf
+
+if not 'hybrid2' in alg_name:
+    l_var.append('w_mb')
+    l_x0.append(0.5)
+    l_bounds.append([0,30])     #w_mb
+
 if leaky:
     l_var.append('k_alph')
     l_x0.append(0.5)

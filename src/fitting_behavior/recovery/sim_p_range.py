@@ -210,13 +210,7 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-nac_sep_fixrange_seed-12345.json'))
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-nac_app_fixrange_seed-12345.json'))
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-nor_sep_fixrange_seed-12345.json'))
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-hnac-gn-gv-goi_sep_fixrange_seed-12345.json'))
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-hhybrid_app_fixrange_seed-12345.json'))
-        # config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-hhybrid2_app_uniparam_seed-12345.json'))
-        config = json.load(open('./src/scripts/ParameterRecovery/param_recov_range_configs/multisim-nor_app_uniparam_seed-12345_l1.json'))
+        config = json.load(open('./src/fitting_behavior/recovery/param_recov_range_configs/multisim-hybrid2_app_uniparam_seed-12345.json'))
     print(type(config))
     print(config)
 
