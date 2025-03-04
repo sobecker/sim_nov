@@ -18,7 +18,8 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
             dirData = sl.get_datapath()
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
-        dataFolder = sl.make_long_dir(dirData,datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name'])
+        dataFolder = dirData / f'{datetime.datetime.now().strftime("%Y_%m_%d_%H-%M-%S")}_{params_exp["sim_name"]}'
+        sl.make_long_dir(dataFolder)
 
     # Start timer
     if verbose: print(f"Start running experiment.\n")

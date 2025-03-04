@@ -16,12 +16,12 @@ no_rew          = True      # simulate without stopping at rewarded state
 # Options for fit config ######################################################################
 parallel        = True      # run fitting in parallel
 maxit           = 200       # maximum number of iterations for fitting optimizer
-overwrite       = False     # overwrite existing fit results
+overwrite       = True      # overwrite existing fit results
 
 # Models to simulate and/or fit ###############################################################
 comb_type       = 'app' # 'app','sep'
-alg_type        = ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2']
-maxit           = [False, False, False, False, False, True]
+alg_type        = ['hnor','hhybrid2','hnac-gn','hnac-gn-goi','nor','nac','hybrid2']
+maxit           = [False, False, False, False, False, False, True]
 # ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box'] 
 # ['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
 # ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2'] 

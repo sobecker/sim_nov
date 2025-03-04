@@ -18,11 +18,12 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
     # Create folder to save data
     dataFolder = None
     if saveData:
-        if len(dirData)==0:
-            dirData = sl.get_datapath()
+        if len(str(dirData))==0:
+            dirData = sl.get_rootpath()
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
-        dataFolder = sl.make_long_dir(os.path.join(dirData,datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']))
+        dataFolder = dirData / f'{datetime.datetime.now().strftime("%Y_%m_%d_%H-%M-%S")}_{params_exp['sim_name']}'
+        sl.make_long_dir(dataFolder)
 
     # Start timer
     if verbose: print(f"Start running experiment.\n")
@@ -89,7 +90,7 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
         if saveData:
             if verbose: print(f"Start saving data into {dataFolder}.\n")
             start_data = timeit.default_timer()
-            all_mb_recs[0].saveCodeVersion(dataFolder) # save code version
+            sl.saveCodeVersion(dataFolder) # save code version
             
             # Save MB params + data
             all_params_mb = {k:v for d in (params_exp,params_mb) for k,v in d.items()}
@@ -386,15 +387,15 @@ def saveData_mf(dir_data,data_basic,q=[],format_data='df',data_name='data_basic'
         os.mkdir(dir_data)
         
     if format_data=='df':
-        data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
+        data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
     elif format_data=='csv':
-        data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
+        data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
 
     if len(q)>0:
         if format_data=='df':
-            q.to_pickle(dir_data+'/qvals.pickle')  
+            q.to_pickle(dir_data / 'qvals.pickle')  
         elif format_data=='csv':
-            q.to_csv(dir_data+'/qvals.csv',sep='\t')
+            q.to_csv(dir_data / 'qvals.csv',sep='\t')
 
 def saveData_mb(dir_data,all_data,format_data='df',data_name='data_basic'):
     if not os.path.isdir(dir_data):
@@ -405,15 +406,15 @@ def saveData_mb(dir_data,all_data,format_data='df',data_name='data_basic'):
     else:                   q = []
              
     if format_data=='df':
-        data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
+        data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
     elif format_data=='csv':
-        data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
+        data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
 
     if len(q)>0:
         if format_data=='df':
-            q.to_pickle(dir_data+'/qvals.pickle')  
+            q.to_pickle(dir_data / 'qvals.pickle')  
         elif format_data=='csv':
-            q.to_csv(dir_data+'/qvals.csv',sep='\t')
+            q.to_csv(dir_data / 'qvals.csv',sep='\t')
 
 def saveData_mf(dir_data,all_data,format_data='df',data_name='data_basic'):
         data_basic = all_data[0]
@@ -424,19 +425,19 @@ def saveData_mf(dir_data,all_data,format_data='df',data_name='data_basic'):
             ea = data_basic[4]
         else: wc=[];ec=[];wa=[];ea=[]
         if format_data=='df':
-            data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
+            data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
         elif format_data=='csv':
-            data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
+            data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
 
         if format_data=='df':
-            if len(wc)>0: wc.to_pickle(dir_data+'/wc.pickle')
-            if len(ec)>0: ec.to_pickle(dir_data+'/ec.pickle')  
-            if len(wa)>0: wa.to_pickle(dir_data+'/wa.pickle')  
-            if len(ea)>0: ea.to_pickle(dir_data+'/ea.pickle')    
+            if len(wc)>0: wc.to_pickle(dir_data / 'wc.pickle')
+            if len(ec)>0: ec.to_pickle(dir_data / 'ec.pickle')  
+            if len(wa)>0: wa.to_pickle(dir_data / 'wa.pickle')  
+            if len(ea)>0: ea.to_pickle(dir_data / 'ea.pickle')    
         elif format_data=='csv':
-            if len(wc)>0: wc.to_csv(dir_data+'/wc.csv',sep='\t')
-            if len(ec)>0: ec.to_csv(dir_data+'/ec.csv',sep='\t')
-            if len(wa)>0: wa.to_csv(dir_data+'/wa.csv',sep='\t')
-            if len(ea)>0: ea.to_csv(dir_data+'/ea.csv',sep='\t')
+            if len(wc)>0: wc.to_csv(dir_data / 'wc.csv',sep='\t')
+            if len(ec)>0: ec.to_csv(dir_data / 'ec.csv',sep='\t')
+            if len(wa)>0: wa.to_csv(dir_data / 'wa.csv',sep='\t')
+            if len(ea)>0: ea.to_csv(dir_data / 'ea.csv',sep='\t')
 
         

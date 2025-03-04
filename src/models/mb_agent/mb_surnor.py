@@ -6,10 +6,6 @@ import timeit
 import datetime
 import pickle
 import csv
-import subprocess
-
-import sys
-
 import models.mf_agent.ac as ac
 import utils.saveload as sl
 
@@ -107,9 +103,9 @@ class surnor_recorder():
         
         data_basic = self.readoutData_basic()
         if format_data=='df':
-            data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
+            data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
         elif format_data=='csv':
-            data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
+            data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
 
         if self.rec_type=='advanced':
             # b,q = self.readoutData_advanced()
@@ -117,52 +113,45 @@ class surnor_recorder():
             if format_data=='df':
                 #np.save(dir_data+'/beliefs.npy',b)
                 # np.save(dir_data+'/qvals.npy',q)
-                q.to_pickle(dir_data+'/qvals.pickle')  
+                q.to_pickle(dir_data / 'qvals.pickle')  
             elif format_data=='csv':
                 #np.savetxt(dir_data+'/beliefs.csv',b.reshape(len(b[:,0,0,0]),-1),delimiter='\t')
                 # np.savetxt(dir_data+'/qvals.csv',q.reshape(len(q[:,0,0]),-1),delimiter='\t')
-                q.to_csv(dir_data+'/qvals.csv',sep='\t')
+                q.to_csv(dir_data / 'qvals.csv',sep='\t')
         
         end_save = timeit.default_timer()
         
     def saveParams(self,params,dir_params,format_params='dict',params_name='params'):
-        if not os.path.isdir(dir_params):
+        if not dir_params.exists():
             os.mkdir(dir_params)
         
         if format_params=='dict':
-            with open(dir_params+f'/{params_name}.pickle', 'wb') as f:
+            with open(dir_params / f'{params_name}.pickle', 'wb') as f:
                 pickle.dump(params,f)   
         elif format_params=='csv':
-            with open(dir_params+f'/{params_name}.csv', 'w') as csvfile:
+            with open(dir_params / f'{params_name}.csv', 'w') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=params.keys())
                 writer.writeheader()
                 writer.writerow(params)
         elif format_params=='txt':
-            with open(dir_params+f'/{params_name}.txt', 'w') as f: 
+            with open(dir_params / f'{params_name}.txt', 'w') as f: 
                 for key, value in params.items(): 
                     f.write('%s:%s\n' % (key, value))
         # elif format_params=='json':
         #     with open(dir_params+'/params.json', 'w') as f: 
         #         json.dump(params,f,sort_keys=True,indent=2)
-    
-    def saveCodeVersion(self,dir_cv):
-        if not os.path.isdir(dir_cv):
-            os.mkdir(dir_cv)
-        
-        with open(dir_cv+'/code_version.txt','w') as f:
-            cv = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
-            f.write(cv)
         
 ### Experiment ##############################################################################################
 def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnData=False,dirData=''):
     # Create folder to save data
     dataFolder = None
     if saveData:
-        if len(dirData)==0:
-            dirData = sl.get_datapath()
+        if len(str(dirData))==0:
+            dirData = sl.get_rootpath() / 'data' / 'auxiliary_simulations'
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
-        dataFolder = sl.make_long_dir(os.path.join(dirData,datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']))
+        dataFolder = dirData / f'{datetime.datetime.now().strftime("%Y_%m_%d_%H-%M-%S")}_{params_exp["sim_name"]}'
+        sl.make_long_dir(dataFolder)
 
     # Start timer
     if verbose: print(f"Start running experiment.\n")
@@ -392,7 +381,7 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
         #     dataFolder = './data/'+datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']
         rec.saveParams(all_params,dataFolder,'dict')
         rec.saveParams(all_params,dataFolder,'csv')
-        rec.saveCodeVersion(dataFolder)
+        sl.saveCodeVersion(dataFolder)
         # rec.saveParams(all_params,dataFolder,'json')
         rec.saveData(dataFolder,format_data='df')
         rec.saveData(dataFolder,format_data='csv')

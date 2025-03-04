@@ -142,22 +142,23 @@ def run_multisim_range(config):
     else:           get_params = get_rand_params
     
     # Prepare folder for saving
-    dir_save = sl.get_rootpath() / 'data' / 'recovery' / f'simdata{"_uniparam" if uniparam else ""}' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}'
+    base_path = sl.get_rootpath()
+    dir_save  = base_path / 'data' / 'recovery' / f'simdata{"_uniparam" if uniparam else ""}' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}'
     sl.make_long_dir(dir_save)
 
     # Get batch ID
     batchID = 1
-    while os.path.exists(dir_save+f'log{batchID}.txt') and batchID<100:
+    while os.path.exists(dir_save / f'log{batchID}.txt') and batchID<100:
         batchID += 1
 
     # Save metadata
     log_file = open(dir_save / f'log{batchID}.txt', 'w')                # create log file
     with open(dir_save / f'config{batchID}.json', 'w') as fc: 
         json.dump(config, fc)                                           # save config file for reproducibility
-    sl.saveCodeVersion(dir_save,file_cv=f'code_version{batchID}.txt')   # save code version
+    sl.saveCodeVersion(dir_save,base_path,file_cv=f'code_version{batchID}.txt')   # save code version
 
     # Generate + save parameter sets tp be simulated
-    dir_load = sl.get_rootpath() / 'data'
+    dir_load = base_path / 'data'
 
     if 'hnor' in alg_type or 'hnac' in alg_type or 'hhybrid' in alg_type:       # for similarity-based agents
         res = []
@@ -166,7 +167,7 @@ def run_multisim_range(config):
             sl.make_long_dir(dir_save_i)
 
             # Load fitted data sets
-            dir_i   = dir_load / 'mle_results' / 'fits' / 'singlerun' / f'mle{"-maxit" if maxit else ""}_{alg_type}-{data_type}_{opt_type}' / f'mle{"-maxit" if maxit else ""}_{alg_type}-l{levels[i]}-{data_type}_{opt_type}' 
+            dir_i   = dir_load / 'mle_results' / 'fits' / 'singlerun' / f'mle{"-maxit" if maxit else ""}_{alg_type}-l{levels[i]}-{data_type}_{opt_type}' 
             file_i  = f'mle{"-maxit" if maxit else ""}_{alg_type}-l{levels[i]}-{data_type}_{opt_type}_{comb_type}.csv'
             res_i = sl.load_sim_data(dir_i,file_data=file_i)       
             res.append(res_i)

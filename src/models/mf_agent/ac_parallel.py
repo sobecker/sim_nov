@@ -19,7 +19,8 @@ def run_ac_exp(params,verbose=False,saveData=False,dirData='',returnData=False,r
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
         timestamp = datetime.datetime.now()
-        dataFolder = sl.make_long_dir(dirData,timestamp.strftime('%Y_%m_%d_%H-%M-%S')+f'_{params["sim_name"]}')
+        dataFolder = dirData / f'{timestamp.strftime("%Y_%m_%d_%H-%M-%S")}_{params["sim_name"]}'
+        sl.make_long_dir(dataFolder)
         print(f"Simulation data will be saved in: \n{dataFolder}\n")
 
     # Start timer

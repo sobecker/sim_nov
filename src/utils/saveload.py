@@ -268,6 +268,8 @@ def saveCodeVersion(dir_cv,dir_git='',file_cv='code_version.txt'):
     if not os.path.isdir(dir_cv):
         os.mkdir(dir_cv)
     
+    if len(str(dir_git))==0:
+        dir_git = get_rootpath()
     os.chdir(dir_git)
         
     with open(dir_cv / file_cv,'w') as f:

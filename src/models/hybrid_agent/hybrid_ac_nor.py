@@ -19,11 +19,12 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
     # Create folder to save data
     dataFolder = None
     if saveData:
-        if len(dirData)==0:
-            dirData = sl.get_datapath()
+        if len(str(dirData))==0:
+            dirData = sl.get_rootpath()
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
-        dataFolder = sl.make_long_dir(os.path.join(dirData,datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']))
+        dataFolder = dirData / f'{datetime.datetime.now().strftime("%Y_%m_%d_%H-%M-%S")}_{params_exp["sim_name"]}'
+        sl.make_long_dir(dataFolder)
 
     # Start timer
     if verbose: print(f"Start running experiment.\n")
@@ -332,7 +333,7 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
         if verbose: print(f"Start saving data into {dataFolder}.\n")
         start_data = timeit.default_timer()
         # Save code version
-        mb_rec.saveCodeVersion(dataFolder)
+        sl.saveCodeVersion(dataFolder)
         # Save MB params + data
         mb_rec.saveParams(all_params_mb,dataFolder,'dict',params_name='mb_params')
         mb_rec.saveParams(all_params_mb,dataFolder,'csv',params_name='mb_params')

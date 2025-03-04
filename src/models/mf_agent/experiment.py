@@ -15,10 +15,6 @@ import timeit
 import os
 import csv
 import pickle
-import subprocess
-
-import sys
-
 from models.mf_agent.ac import *
 import utils.saveload as sl 
 
@@ -129,22 +125,22 @@ class recorder():
         
         data_basic = self.readoutData_basic()
         if format_data=='df':
-            data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
+            data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
         elif format_data=='csv':
-            data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
+            data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
 
         if self.rec_type=='advanced2':
             wc,ec,wa,ea = self.readoutData_advanced2()
             if format_data=='df':
-                wc.to_pickle(dir_data+'/wc.pickle')
-                ec.to_pickle(dir_data+'/ec.pickle')  
-                wa.to_pickle(dir_data+'/wa.pickle')  
-                ea.to_pickle(dir_data+'/ea.pickle')    
+                wc.to_pickle(dir_data / 'wc.pickle')
+                ec.to_pickle(dir_data / 'ec.pickle')  
+                wa.to_pickle(dir_data / 'wa.pickle')  
+                ea.to_pickle(dir_data / 'ea.pickle')    
             elif format_data=='csv':
-                wc.to_csv(dir_data+'/wc.csv',sep='\t')
-                ec.to_csv(dir_data+'/ec.csv',sep='\t')
-                wa.to_csv(dir_data+'/wa.csv',sep='\t')
-                ea.to_csv(dir_data+'/ea.csv',sep='\t')
+                wc.to_csv(dir_data / 'wc.csv',sep='\t')
+                ec.to_csv(dir_data / 'ec.csv',sep='\t')
+                wa.to_csv(dir_data / 'wa.csv',sep='\t')
+                ea.to_csv(dir_data / 'ea.csv',sep='\t')
 
         end_save = timeit.default_timer()
         return (end_save-start_save)
@@ -157,26 +153,17 @@ class recorder():
             save_params = params.copy()
             # if 'h' in save_params.keys():# and save_params['h']['h_k']: 
             #     del save_params['h']
-            with open(dir_params+f'/{params_name}.pickle', 'wb') as f:
+            with open(dir_params / f'{params_name}.pickle', 'wb') as f:
                 pickle.dump(save_params,f)   
         elif format_params=='csv':
-            with open(dir_params+f'/{params_name}.csv', 'w') as csvfile:
+            with open(dir_params / f'{params_name}.csv', 'w') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=params.keys())
                 writer.writeheader()
                 writer.writerow(params)
         elif format_params=='txt':
-            with open(dir_params+f'/{params_name}.txt', 'w') as f: 
+            with open(dir_params / f'{params_name}.txt', 'w') as f: 
                 for key, value in params.items(): 
                     f.write('%s:%s\n' % (key, value))
-
-    def saveCodeVersion(self,dir_cv):
-        if not os.path.isdir(dir_cv):
-            os.mkdir(dir_cv)
-        
-        with open(dir_cv+'/code_version.txt','w') as f:
-            cv = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
-            f.write(cv)
-        
 
 class experiment():
     
@@ -193,12 +180,16 @@ class experiment():
 
         if self.saveData:
             if not self.dataFolder:
-                self.dataFolder = sl.get_datapath()
-            if verbose: print(f"Start making folder to save data.\n")
-            self.dataFolder = sl.make_dir(self.dataFolder,self.timestamp.strftime('%Y_%m_%d_%H-%M-%S')+'_'+self.params['sim_name'])
-            print(f"Simulation data will be saved in: \n{self.dataFolder}\n")
+                self.dataFolder = sl.get_rootpath() / 'data' / 'auxiliary_simulations'
+            if verbose: 
+                print(f"Start making folder to save data.\n")
+            self.dataFolder = self.dataFolder / f'{self.timestamp.strftime("%Y_%m_%d_%H-%M-%S")}_{self.params["sim_name"]}'
+            sl.make_long_dir(self.dataFolder)
+            if verbose:
+                print(f"Simulation data will be saved in: \n{self.dataFolder}\n")
 
-        if verbose: print(f"Created new experiment.\n")
+        if verbose: 
+            print(f"Created new experiment.\n")
 
     
     def runExperiment(self):
@@ -225,7 +216,7 @@ class experiment():
         if self.saveData:
             self.rec.saveParams(self.params,self.dataFolder,'dict')
             self.rec.saveParams(self.params,self.dataFolder,'csv')
-            self.rec.saveCodeVersion(self.dataFolder)
+            sl.saveCodeVersion(self.dataFolder)
             
             if self.verbose: print(f"Start saving data into folder {self.dataFolder}.\n")
             sdur1 = self.rec.saveData(self.dataFolder,'df')
@@ -500,7 +491,7 @@ def run_ac_exp(params,verbose=False,saveData=False,dirData='',returnData=False):
         start_data = timeit.default_timer()  
         rec.saveParams(params,dataFolder,'dict')
         rec.saveParams(params,dataFolder,'csv')
-        rec.saveCodeVersion(dataFolder)
+        sl.saveCodeVersion(dataFolder)
         rec.saveData(dataFolder,'df')
         rec.saveData(dataFolder,'csv')
         end_data = timeit.default_timer()

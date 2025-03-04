@@ -12,7 +12,7 @@ if yaml_sim:
     sl.make_long_dir(path)
 
     comb_type   = ['app'] # 'app','sep'
-    alg_type    = ['hnor','hhybrid2','hnac-gn','nor','nac','hybrid2']
+    alg_type    = ['hnor','hhybrid2','hnac-gn','hnac-gn-goi','nor','nac','hybrid2']
     # ['hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle','hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box']
     # ['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
     # ['hnac-gn','nac','nor','hybrid2'] 
