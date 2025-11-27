@@ -11,7 +11,7 @@ from matplotlib import cm
 from scipy.stats import sem
 
 import utils.saveload as sl
-import fitting_neural.grid_search_complex_cells as gsc
+import fitting_neural.grid_search_snov as gsc
 import fitting_neural.simulate_data as sd
 import utils.visualization as vis
 

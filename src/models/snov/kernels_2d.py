@@ -8,7 +8,7 @@ from scipy.optimize import curve_fit
 import os
 import sys
 import utils.saveload as sl
-from scipy.stats import multivariate_normal 
+from scipy.stats import multivariate_normal
 
 #####################################################################################################################
 #           Kernel-related functions                                                                                #

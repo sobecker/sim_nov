@@ -1,6 +1,6 @@
-import os
 import numpy as np
 import pandas as pd
+import os
 
 ############################################################################################################
 #               Function to load experimental data for Homann experiments                                  #
@@ -48,5 +48,3 @@ def load_exp_homann(cluster=True,type='mean'):
         else:
             all_data.append((edx,edy)) 
     return all_data
-
-

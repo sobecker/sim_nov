@@ -26,9 +26,12 @@ def kfun_complex(k_arr, i, mode='mean'): # k_arr has shape: n_stimuli x n_conv_p
     k_arr = k_arr * (k_arr>0)
     return i, aggfun(k_arr,axis=-1) # output shape: n_stimuli x n_conv_points
 
-def kfun_complex_comb(k_arr, i, num_complex=1, type_complex=[4], mode='mean'): # k_arr has shape: n_stimuli x n_conv_points x n_kernels
+def kfun_complex_comb(k_arr, i, num_complex=1, type_complex=[4], mode='mean', rng=None, seed=12345): # k_arr has shape: n_stimuli x n_conv_points x n_kernels
     k_arr = k_arr * (k_arr>0) 
     aggfun = np.sum if mode=='sum' else np.mean
+
+    if rng is None:
+        rng = np.random.default_rng(seed)
 
     # Compute all combinations of complex cells
     num_simple = k_arr.shape[-1]
@@ -54,13 +57,13 @@ def kfun_complex_comb(k_arr, i, num_complex=1, type_complex=[4], mode='mean'): #
     if k_arr.shape[-1] in type_complex:
         c = [c_all[-1]] # largest complex cell is always selected
         if num_complex>1:
-            c.extend([c_all[i] for i in np.random.choice(range(len(c_all)-1),num_complex-1,replace=False)])
+            c.extend([c_all[i] for i in rng.choice(range(len(c_all)-1),num_complex-1,replace=False)])
     else:
-        c = [c_all[i] for i in np.random.choice(range(len(c_all)),num_complex,replace=False)]
+        c = [c_all[i] for i in np.choice(range(len(c_all)),num_complex,replace=False)]
     
     # Drop last drawn complex cell to account for the probabilistic part of num_complex
     if rand_complex!=1:
-        rr = np.random.rand()
+        rr = rng.uniform()
         if rr<rand_complex:
             c = c[:-1]
     
@@ -100,7 +103,8 @@ def compute_kmat(k,kfun_idx,kfun_complex_idx,ksig=[],x=np.array([]),kwargs={}):
                     _, kmat_ci = kfun_complex_comb(kmat_s[:,np.where(kfun_idx[j]==i)[0]],i,
                                                            num_complex=kwargs['num_complex'] if 'num_complex' in kwargs.keys() else 1,
                                                            type_complex=kwargs['type_complex'] if 'type_complex' in kwargs.keys() else [4],
-                                                           mode=mode_complex)
+                                                           mode=mode_complex,
+                                                           seed=kwargs['complex_seed'] if 'complex_seed' in kwargs.keys() else 12345)
                     if len(kmat_ci)>0:
                         kmat_c.append(kmat_ci)
                 if len(kmat_c)==0:
@@ -109,7 +113,8 @@ def compute_kmat(k,kfun_idx,kfun_complex_idx,ksig=[],x=np.array([]),kwargs={}):
                     _, kmat_ci = kfun_complex_comb(kmat_s[:,np.where(kfun_idx[j]==i)[0]],i,
                                                            num_complex=1,
                                                            type_complex=kwargs['type_complex'] if 'type_complex' in kwargs.keys() else [4],
-                                                           mode=mode_complex)
+                                                           mode=mode_complex,
+                                                           seed=kwargs['complex_seed'] if 'complex_seed' in kwargs.keys() else 12345)
                     kmat_c.append(kmat_ci)
                 kmat_c = np.concatenate(kmat_c,axis=-1)
                 kmat_all.append(kmat_c)
@@ -151,7 +156,8 @@ def compute_kmat_conv(k,kfun_idx,kfun_complex_idx,ksig=[],x=np.array([]),kwargs=
                     _, kmat_ci = kfun_complex_comb(kmat_s[:,:,np.where(kfun_idx[j]==i)[0]],i,
                                                            num_complex=kwargs['num_complex'] if 'num_complex' in kwargs.keys() else 1,
                                                            type_complex=kwargs['type_complex'] if 'type_complex' in kwargs.keys() else [4],
-                                                           mode=mode_complex)
+                                                           mode=mode_complex,
+                                                           seed=kwargs['complex_seed'] if 'complex_seed' in kwargs.keys() else 12345)
                     if len(kmat_ci)>0:
                         kmat_c.append(kmat_ci)
                 if len(kmat_c)==0:
@@ -160,7 +166,8 @@ def compute_kmat_conv(k,kfun_idx,kfun_complex_idx,ksig=[],x=np.array([]),kwargs=
                     _, kmat_ci = kfun_complex_comb(kmat_s[:,:,np.where(kfun_idx[j]==i)[0]],i,
                                                            num_complex=1,
                                                            type_complex=kwargs['type_complex'] if 'type_complex' in kwargs.keys() else [4],
-                                                           mode=mode_complex)
+                                                           mode=mode_complex,
+                                                           seed=kwargs['complex_seed'] if 'complex_seed' in kwargs.keys() else 12345)
                     kmat_c.append(kmat_ci)
                 kmat_c = np.concatenate(kmat_c,axis=-1)
                 kmat_all.append(kmat_c)
@@ -273,7 +280,7 @@ def init_nov_conv(k,kfun_idx,kfun_complex_idx,ksig0,num_conv,x=np.array([]),seq=
 ####################################################################################################################################################################
 # Initialize Gabor novelty and return dictionary with parameters
 ####################################################################################################################################################################
-def init_gabor_knov(gnum_complex=4,dfreq=1.5,ctype=[4],cvar='frequency',k_type='triangle',ksig=1,kcenter=1,cdens=2,seed=12345,rng=None,mask=False,conv=True,parallel=False,adj_w=True,adj_f=False,alph_adj=3,sampling='basic',fixed_freq=None,fixed_width=None,contrast='off',softmax_norm=False,eps_k=1,alph_k=0.1,add_empty=False,debug=False):
+def init_gabor_knov(gnum_complex=4,dfreq=1.5,ctype=[4],cvar='frequency',k_type='triangle',ksig=1,kcenter=1,cdens=2,seed=12345,rng=None,mask=False,conv=True,parallel=False,adj_w=True,adj_f=False,alph_adj=3,sampling='basic',fixed_freq=None,fixed_width=None,contrast='off',softmax_norm=False,add_empty=False,debug=False):
     
     # Define random generator and stimulus dimensions
     if not rng: rng = np.random.default_rng(seed)
@@ -369,9 +376,6 @@ def init_gabor_knov(gnum_complex=4,dfreq=1.5,ctype=[4],cvar='frequency',k_type='
                 'kfun_complex_idx': [np.unique(cell_id)],
                 # 'kmu':[kcenter]*len(k),
                 'ksig':[ksig]*len(k),
-                'eps_k':eps_k,
-                'alph_k':alph_k,
-                't0_update':0,
                 'ref_gabors':kcl_df,
                 'ref_gabors_im':kgabor
                 # 'ref_gabors_fullim':o_kgabor
@@ -385,8 +389,8 @@ def init_gabor_knov(gnum_complex=4,dfreq=1.5,ctype=[4],cvar='frequency',k_type='
 ####################################################################################################################################################################
 # Simulations based on indexing input stimuli
 ####################################################################################################################################################################
-# Adaptive lr
-def sim_knov_gabor(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps_k,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+# Adaptive lr (non-leaky)
+def sim_knov_gabor(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
     # Format inputs
     if idx:
         stim_unique = stim[0]
@@ -401,6 +405,7 @@ def sim_knov_gabor(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps_k,t0_update=0,cden
         kwl, _, kmat_seq, _, klen = init_nov_conv(k,kfun_idx,kfun_complex_idx,ksig0,num_conv,seq=stim_unique,kwargs=kwargs)
     else:
         kwl, _, kmat_seq, _, klen = init_nov(k,kfun_idx,kfun_complex_idx,ksig0,seq=stim_unique,kwargs=kwargs)
+    ## TODO: initialize counter of cumulative (leaky) responsibilities instead of weights! 
     knum = kmat_seq.shape[0]
 
     # Flip bits of the kmat_seq matrix
@@ -446,6 +451,7 @@ def sim_knov_gabor(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps_k,t0_update=0,cden
         for t in range(len(stim_idx)):
             # Compute novelty values
             kk,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+            # TODO: define comp_nov_leaky that computes novelty based on responsibilities instead of weights, but also record weights!
             klist.append(kk)
             plist.append(pk[0])
             nlist.append(nk[0])
@@ -477,14 +483,239 @@ def sim_knov_gabor(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps_k,t0_update=0,cden
 
             # Update novelty parameters in response to stimulus
             rk_new    = knov_vec.update_rk_approx(kwl,kmat_seq,stim_idx[t])                   # Update responsibilities
-            kwl       = knov_vec.update_nov_approx(kwl,t+t0_update,rk_new,knum,eps=eps_k)     # Update kernel weights
+            kwl       = knov_vec.update_nov_approx(kwl,t+t0_update,rk_new,knum,eps=eps)     # Update kernel weights
+            # TODO: update the cumulative sum of responsibilities (not the weights)
 
         kwlist.append(kwl)
 
     return klist,plist,nlist,kwlist
 
+# Adaptive lr (with leaky responsibilities)
+def sim_knov_gabor_leaky(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps,alph_leak,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Format inputs
+    if idx:
+        stim_unique = stim[0]
+        stim_idx    = stim[1]
+    else:
+        stim_unique = stim
+        stim_idx    = list(np.arange(stim.shape[0]))
+
+    # Initialize novelty
+    if conv:
+        num_conv = stim_unique[0,::cdens,::cdens].size
+        kwl, _, kmat_seq, _, klen = init_nov_conv(k,kfun_idx,kfun_complex_idx,ksig0,num_conv,seq=stim_unique,kwargs=kwargs)
+    else:
+        kwl, _, kmat_seq, _, klen = init_nov(k,kfun_idx,kfun_complex_idx,ksig0,seq=stim_unique,kwargs=kwargs)
+    rcum = np.zero(kwl.shape) # initialize (leaky) sum of responsibilities
+    tcum = np.zero(kwl.shape) # initialize (leaky) sum of time steps
+    knum = kmat_seq.shape[0]
+
+    # Flip bits of the kmat_seq matrix
+    if flip:
+        if kmat_seq_flipped is not None:
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_flipped))}')
+            kmat_seq = kmat_seq_flipped
+        else:
+            kmat_seq_old        = kmat_seq.copy()
+            for i in range(len(flip_idx)):
+                flip_nz = flip_idx[i][0]
+                flip_z  = flip_idx[i][1]
+                kmat_seq[flip_nz]   = kmat_seq_old[flip_z]
+                kmat_seq[flip_z]    = kmat_seq_old[flip_nz]
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_old))}')
+
+    debug = kwargs['debug'] if 'debug' in kwargs.keys() else False
+    if debug and not (stim_type is None): 
+        # Identify time step of the novelty event
+        if 'fam_r' in stim_type:
+            nov_t = np.where(np.array(stim_type)=='fam_r')[0][0]
+        else:
+            nov_t = np.where(np.array(stim_type)=='nov')[0][0]
+    else:
+        nov_t = -1
+
+    # Check if all stimuli are represented
+    represented = (np.sum(kmat_seq,axis=0)!=0).all()
+    if not represented:
+        print('Simulation will note be executed because at least one input stimulus is not represented by the current kernel model. All recordings are set to NaN. \n')
+        klist = []
+        plist = np.NaN * np.ones(len(stim_idx))
+        nlist = np.NaN * np.ones(len(stim_idx))
+        kwlist = []
+        rclist = []
+        tclist = []
+        wlist = []
+    else:
+        # Initialize recording
+        klist = []
+        plist = []
+        nlist = []
+        kwlist = []
+        rclist = []
+        tclist = []
+        wlist = []
+
+        # Run task
+        for t in range(len(stim_idx)):
+            # Compute novelty values
+            kk,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+            klist.append(kk)
+            plist.append(pk[0])
+            nlist.append(nk[0])
+            kwlist.append(kwl)
+
+            if t==nov_t:
+                # Plot weight matrix
+                f,ax = plt.subplots(1,1,figsize=(10,1))
+                aw = ax.imshow(kwl.transpose(),cmap='binary',origin='lower',aspect='auto')
+                len_simple = klen[0] * klen[2] if len(klen)==3 else klen[0]
+                ax.axvline(len_simple,color='k',lw=2)
+                ax.set_xticks([]); ax.set_yticks([])
+                ax.set_xlabel('Simple | Complex')
+                f.colorbar(aw,ax=ax,label=f'Kernel weight at t={t} (novelty event)')
+                f.tight_layout()
+
+                # Plot stats of weight matrix
+                f,ax = plt.subplots(1,3,figsize=(3*3,1))
+                stats_all = [np.array([fun_i(kwl[:len_simple]), fun_i(kwl[len_simple:])]).reshape((1,-1)) for fun_i in [np.mean, np.sum, np.max]]
+                label_all = ['Av.','Cum.','Max.']
+                for i in range(len(stats_all)):
+                    vmin, vmax = np.min(stats_all[i]), np.max(stats_all[i])
+                    a_i = ax[i].imshow(stats_all[i],vmin=vmin,vmax=vmax,cmap='binary',aspect='equal',origin='lower')
+                    ax[i].axvline(0.5,color='k',lw=1)
+                    ax[i].set_xticks([]); ax[i].set_yticks([])
+                    ax[i].set_xlabel('Simple | Complex')
+                    f.colorbar(a_i,ax=ax[i],label=f'{label_all[i]} weight')
+                f.tight_layout()
+
+            # Update novelty parameters in response to stimulus
+            rk_new    = knov_vec.update_rk_approx(kwl,kmat_seq,stim_idx[t])                   # Update responsibilities
+            rcum, tcum, kwl = knov_vec.update_nov_approx_leaky(rcum,kwl,tcum,rk_new,alph_leak=alph_leak,eps=eps)     # Update sum of responsibilities and component weights
+
+        kwlist.append(kwl)
+
+    return klist,kwlist,plist,nlist
+
+# Adaptive lr (with leaky responsibilities, with more detailed recording of weights)
+def sim_knov_gabor_leaky2(stim,k,kfun_idx,kfun_complex_idx,ksig0,eps,alph_leak,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Set recording type
+    record = kwargs['record'] if (len(kwargs)>0 and 'record' in kwargs.keys()) else 'minimal'
+
+    # Format inputs
+    if idx:
+        stim_unique = stim[0]
+        stim_idx    = stim[1]
+    else:
+        stim_unique = stim
+        stim_idx    = list(np.arange(stim.shape[0]))
+
+    # Initialize novelty
+    if conv:
+        num_conv = stim_unique[0,::cdens,::cdens].size
+        kwl, _, kmat_seq, _, klen = init_nov_conv(k,kfun_idx,kfun_complex_idx,ksig0,num_conv,seq=stim_unique,kwargs=kwargs)
+    else:
+        kwl, _, kmat_seq, _, klen = init_nov(k,kfun_idx,kfun_complex_idx,ksig0,seq=stim_unique,kwargs=kwargs)
+    rcum = np.zeros(kwl.shape) # initialize (leaky) sum of responsibilities
+    tcum = 0                   # initialize (leaky) sum of time steps
+    knum = kmat_seq.shape[0]
+
+    # Flip bits of the kmat_seq matrix
+    if flip:
+        if kmat_seq_flipped is not None:
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_flipped))}')
+            kmat_seq = kmat_seq_flipped
+        else:
+            kmat_seq_old        = kmat_seq.copy()
+            for i in range(len(flip_idx)):
+                flip_nz = flip_idx[i][0]
+                flip_z  = flip_idx[i][1]
+                kmat_seq[flip_nz]   = kmat_seq_old[flip_z]
+                kmat_seq[flip_z]    = kmat_seq_old[flip_nz]
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_old))}')
+
+    debug = kwargs['debug'] if 'debug' in kwargs.keys() else False
+    if debug and not (stim_type is None): 
+        # Identify time step of the novelty event
+        if 'fam_r' in stim_type:
+            nov_t = np.where(np.array(stim_type)=='fam_r')[0][0]
+        else:
+            nov_t = np.where(np.array(stim_type)=='nov')[0][0]
+    else:
+        nov_t = -1
+
+    # Check if all stimuli are represented
+    represented = (np.sum(kmat_seq,axis=0)!=0).all()
+    if not represented:
+        print('Simulation will note be executed because at least one input stimulus is not represented by the current kernel model. All recordings are set to NaN. \n')
+        klist = []
+        plist = np.NaN * np.ones(len(stim_idx))
+        nlist = np.NaN * np.ones(len(stim_idx))
+        kwlist = []
+        rclist = []
+        tclist = []
+        wlist = []
+    else:
+        # Initialize recording
+        klist = []
+        plist = []
+        nlist = []
+        kwlist = []
+        rclist = []
+        tclist = []
+        wlist = []
+
+        # Run task
+        for t in range(len(stim_idx)):
+            # Compute novelty values
+            if record=='minimal':
+                _,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+            else:
+                _,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+                klist.append(kmat_seq[:,stim_idx[t]]) # component activations for current stimulus
+                # kwlist.append(kk) 
+                rclist.append(rcum) # cumulative responsibilities
+                tclist.append(tcum) # time step
+                wlist.append(kwl) # component weights
+            plist.append(pk[0])
+            nlist.append(nk[0])
+
+            if (not record=='minimal') and t==nov_t:
+                # Plot weight matrix
+                f,ax = plt.subplots(1,1,figsize=(10,1))
+                aw = ax.imshow(kwl.transpose(),cmap='binary',origin='lower',aspect='auto')
+                len_simple = klen[0] * klen[2] if len(klen)==3 else klen[0]
+                ax.axvline(len_simple,color='k',lw=2)
+                ax.set_xticks([]); ax.set_yticks([])
+                ax.set_xlabel('Simple | Complex')
+                f.colorbar(aw,ax=ax,label=f'Kernel weight at t={t} (novelty event)')
+                f.tight_layout()
+
+                # Plot stats of weight matrix
+                f,ax = plt.subplots(1,3,figsize=(3*3,1))
+                stats_all = [np.array([fun_i(kwl[:len_simple]), fun_i(kwl[len_simple:])]).reshape((1,-1)) for fun_i in [np.mean, np.sum, np.max]]
+                label_all = ['Av.','Cum.','Max.']
+                for i in range(len(stats_all)):
+                    vmin, vmax = np.min(stats_all[i]), np.max(stats_all[i])
+                    a_i = ax[i].imshow(stats_all[i],vmin=vmin,vmax=vmax,cmap='binary',aspect='equal',origin='lower')
+                    ax[i].axvline(0.5,color='k',lw=1)
+                    ax[i].set_xticks([]); ax[i].set_yticks([])
+                    ax[i].set_xlabel('Simple | Complex')
+                    f.colorbar(a_i,ax=ax[i],label=f'{label_all[i]} weight')
+                f.tight_layout()
+
+            # Update novelty parameters in response to stimulus
+            rk_new    = knov_vec.update_rk_approx(kwl,kmat_seq,stim_idx[t])                   # Update responsibilities
+            rcum, tcum, kwl = knov_vec.update_nov_approx_leaky(rcum,kwl,tcum,rk_new,alph_leak=alph_leak,eps=eps)     # Update sum of responsibilities and component weights
+
+        if not record=='minimal':
+            rclist.append(rcum)
+            tclist.append(tcum)
+            wlist.append(kwl)
+
+    return klist,kwlist,wlist,rclist,tclist,plist,nlist
+
 # Fixed lr
-def sim_knov_gabor_flr(stim,k,kfun_idx,kfun_complex_idx,ksig0,alph_k,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+def sim_knov_gabor_flr(stim,k,kfun_idx,kfun_complex_idx,ksig0,k_alph,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
     # Format inputs
     if idx:
         stim_unique = stim[0]
@@ -579,11 +810,124 @@ def sim_knov_gabor_flr(stim,k,kfun_idx,kfun_complex_idx,ksig0,alph_k,t0_update=0
 
             # Update novelty parameters in response to stimulus
             rk_new    = knov_vec.update_rk_approx(kwl,kmat_seq,stim_idx[t])        # Update responsibilities
-            kwl       = knov_vec.update_nov_approx_flr(kwl,rk_new,alph=alph_k)     # Update kernel weights
+            kwl       = knov_vec.update_nov_approx_flr(kwl,rk_new,alph=k_alph)     # Update kernel weights
         
         kwlist.append(kwl)
 
     return klist,plist,nlist,kwlist
+
+# Fixed lr (with more detailed recording of weights)
+def sim_knov_gabor_flr2(stim,k,kfun_idx,kfun_complex_idx,ksig0,k_alph,t0_update=0,cdens=2,conv=False,idx=True,flip=False,flip_idx=None,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Set recording type
+    record = kwargs['record'] if (len(kwargs)>0 and 'record' in kwargs.keys()) else 'minimal'
+
+    # Format inputs
+    if idx:
+        stim_unique = stim[0]
+        stim_idx    = stim[1]
+    else:
+        stim_unique = stim
+        stim_idx    = list(np.arange(stim.shape[0]))
+
+    # Initialize novelty
+    if conv:
+        num_conv = stim_unique[0,::cdens,::cdens].size
+        kwl, _, kmat_seq, _, klen = init_nov_conv(k,kfun_idx,kfun_complex_idx,ksig0,num_conv,seq=stim_unique,kwargs=kwargs)
+    else:
+        kwl, _, kmat_seq, _, klen = init_nov(k,kfun_idx,kfun_complex_idx,ksig0,seq=stim_unique,kwargs=kwargs)
+
+    # Flip bits of the kmat_seq matrix
+    if flip:
+        # # Switch num_flips non-zero and a zero kernels
+        # kmat_seq_nz = np.where(kmat_seq!=0)
+        # kmat_seq_z  = np.where(kmat_seq==0)
+        # flip_nz = np.choice(kmat_seq_nz[0],num_flips)
+        # flip_z  = np.choice(kmat_seq_z[0],num_flips)
+        if kmat_seq_flipped is not None:
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_flipped))}')
+            kmat_seq = kmat_seq_flipped
+        else:
+            kmat_seq_old        = kmat_seq.copy()
+            for i in range(len(flip_idx)):
+                flip_nz = flip_idx[i][0]
+                flip_z  = flip_idx[i][1]
+                kmat_seq[flip_nz]   = kmat_seq_old[flip_z]
+                kmat_seq[flip_z]    = kmat_seq_old[flip_nz]
+            print(f'Flip sum: {np.sum(np.abs(kmat_seq-kmat_seq_old))}')
+    
+    debug = kwargs['debug'] if 'debug' in kwargs.keys() else False
+    if debug and not (stim_type is None): 
+        # Identify time step of the novelty event
+        if 'fam_r' in stim_type:
+            nov_t = np.where(np.array(stim_type)=='fam_r')[0][0]
+        else:
+            nov_t = np.where(np.array(stim_type)=='nov')[0][0]
+    else:
+        nov_t = -1
+
+    # Check if all stimuli are represented
+    represented = (np.sum(kmat_seq,axis=0)!=0).all()
+    if not represented:
+        print('Simulation will note be executed because at least one input stimulus is not represented by the current kernel model. All recordings are set to NaN. \n')
+        klist = []
+        plist = np.NaN * np.ones(len(stim_idx))
+        nlist = np.NaN * np.ones(len(stim_idx))
+        kwlist = []
+        wlist = []
+    else:
+        # Initialize recording
+        klist  = []
+        kwlist = []
+        plist  = []
+        nlist  = []
+        wlist  = []
+
+        # Run task
+        for t in range(len(stim_idx)):
+            # Compute novelty values
+            if record=='minimal':
+                _,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+            else:
+                kk,pk,nk = knov_vec.comp_nov(kwl,kmat_seq[:,stim_idx[t]].reshape((-1,1)))
+                klist.append(kmat_seq[:,stim_idx[t]])
+                kwlist.append(kk)
+                wlist.append(kwl)
+            plist.append(pk[0])
+            nlist.append(nk[0])
+            
+            if (not record=='minimal') and t==nov_t:
+                # Plot weight matrix
+                f,ax = plt.subplots(1,1,figsize=(10,1))
+                aw = ax.imshow(kwl.transpose(),cmap='binary',origin='lower',aspect='auto')
+                len_simple = klen[0] * klen[2] if len(klen)==3 else klen[0]
+                ax.axvline(len_simple,color='k',lw=2)
+                ax.set_xticks([]); ax.set_yticks([])
+                ax.set_xlabel('Simple | Complex')
+                f.colorbar(aw,ax=ax,label=f'Kernel weight\n at t={t}')
+                f.tight_layout()
+
+                # Plot stats of weight matrix
+                f,ax = plt.subplots(1,3,figsize=(3*3,1))
+                stats_all = [np.array([fun_i(kwl[:len_simple]), fun_i(kwl[len_simple:])]).reshape((1,-1)) for fun_i in [np.mean, np.sum, np.max]]
+                label_all = ['Av.','Cum.','Max.']
+                for i in range(len(stats_all)):
+                    vmin, vmax = np.min(stats_all[i]), np.max(stats_all[i])
+                    a_i = ax[i].imshow(stats_all[i],vmin=vmin,vmax=vmax,cmap='binary',aspect='equal',origin='lower')
+                    ax[i].axvline(0.5,color='k',lw=1)
+                    ax[i].set_xticks([]); ax[i].set_yticks([])
+                    ax[i].set_xlabel('Simple | Complex')
+                    f.colorbar(a_i,ax=ax[i],label=f'{label_all[i]} weight')
+                f.tight_layout()
+
+            # Update novelty parameters in response to stimulus
+            rk_new    = knov_vec.update_rk_approx(kwl,kmat_seq,stim_idx[t])        # Update responsibilities
+            kwl       = knov_vec.update_nov_approx_flr(kwl,rk_new,alph=k_alph)     # Update kernel weights
+        
+        if not record=='minimal':
+            wlist.append(kwl)
+
+    return klist,kwlist,wlist,plist,nlist
+
 
 ####################################################################################################################################################################
 # Simulate Gabor novelty with given stimulus sequence and parameter dictionary for Homann experiment
@@ -594,7 +938,7 @@ def run_gabor_knov_withparams(stim,k_params,idx=True,flip=False,kmat_seq_flipped
                                                                         kfun_idx=k_params['kfun_idx'],
                                                                         kfun_complex_idx=k_params['kfun_complex_idx'],
                                                                         ksig0=k_params['ksig'],
-                                                                        eps_k=k_params['eps_k'],
+                                                                        eps=k_params['eps'],
                                                                         t0_update=k_params['t0_update'],
                                                                         cdens=k_params['cdens'] if 'cdens' in k_params.keys() else None,
                                                                         conv=True if 'cdens' in k_params.keys() else False,
@@ -613,6 +957,65 @@ def run_gabor_knov_withparams(stim,k_params,idx=True,flip=False,kmat_seq_flipped
     plt.close('all')
     return df_all, kl_gabor, kwl_gabor
 
+def run_gabor_knov_withparams_leaky(stim,k_params,idx=True,flip=False,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Run novelty experiment
+    klist, kwlist, plist, nlist = sim_knov_gabor_leaky(stim,
+                                                        k=k_params['k'],
+                                                        kfun_idx=k_params['kfun_idx'],
+                                                        kfun_complex_idx=k_params['kfun_complex_idx'],
+                                                        ksig0=k_params['ksig'],
+                                                        alph_leak = k_params['alph_leak'],
+                                                        eps=k_params['eps'],
+                                                        cdens=k_params['cdens'] if 'cdens' in k_params.keys() else None,
+                                                        conv=True if 'cdens' in k_params.keys() else False,
+                                                        idx=idx,
+                                                        flip=flip,
+                                                        flip_idx=k_params['flip_idx'] if 'flip_idx' in k_params.keys() else None,
+                                                        kmat_seq_flipped=kmat_seq_flipped,
+                                                        stim_type=stim_type,
+                                                        kwargs=kwargs)
+
+    # Format data
+    pl_gabor  = np.array(plist)
+    nl_gabor  = np.array(nlist)
+    kl_gabor  = np.squeeze(np.stack(klist)) if len(klist)>0 else []
+    kwl_gabor = np.squeeze(np.stack(kwlist)) if len(kwlist)>0 else []
+    df_all = pd.DataFrame({'nt':nl_gabor.flatten(),'pt':pl_gabor.flatten()})
+    plt.close('all')
+    return df_all, kl_gabor, kwl_gabor
+
+def run_gabor_knov_withparams_leaky2(stim,k_params,idx=True,flip=False,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Run novelty experiment
+    klist, kwlist, wlist, rclist, tclist, plist, nlist = sim_knov_gabor_leaky2(stim,
+                                                                k=k_params['k'],
+                                                                kfun_idx=k_params['kfun_idx'],
+                                                                kfun_complex_idx=k_params['kfun_complex_idx'],
+                                                                ksig0=k_params['ksig'],
+                                                                alph_leak = k_params['alph_leak'],
+                                                                eps=k_params['eps'],
+                                                                cdens=k_params['cdens'] if 'cdens' in k_params.keys() else None,
+                                                                conv=True if 'cdens' in k_params.keys() else False,
+                                                                idx=idx,
+                                                                flip=flip,
+                                                                flip_idx=k_params['flip_idx'] if 'flip_idx' in k_params.keys() else None,
+                                                                kmat_seq_flipped=kmat_seq_flipped,
+                                                                stim_type=stim_type,
+                                                                kwargs=kwargs)
+
+    # Format data
+    pl_gabor  = np.array(plist)
+    nl_gabor  = np.array(nlist)
+    df_all = pd.DataFrame({'nt':nl_gabor.flatten(),'pt':pl_gabor.flatten()})
+
+    kl_gabor  = np.squeeze(np.stack(klist)) if len(klist)>0 else []
+    kwl_gabor = np.squeeze(np.stack(kwlist)) if len(kwlist)>0 else []
+    wl_gabor  = np.squeeze(np.stack(wlist)) if len(wlist)>0 else []
+    rc_gabor  = np.squeeze(np.stack(rclist)) if len(rclist)>0 else []
+    tc_gabor  = np.squeeze(np.stack(tclist)) if len(tclist)>0 else []
+        
+    plt.close('all')
+    return df_all, kl_gabor, kwl_gabor, wl_gabor, rc_gabor, tc_gabor
+
 # Simulate Gabor novelty with given stimulus sequence and parameter dictionary for Homann experiment (fixed learning rate)
 def run_gabor_knov_withparams_flr(stim,k_params,idx=True,flip=False,kmat_seq_flipped=None,stim_type=None,kwargs={}):
     # Run novelty experiment
@@ -621,7 +1024,7 @@ def run_gabor_knov_withparams_flr(stim,k_params,idx=True,flip=False,kmat_seq_fli
                                                                             kfun_idx=k_params['kfun_idx'],
                                                                             kfun_complex_idx=k_params['kfun_complex_idx'],
                                                                             ksig0=k_params['ksig'],
-                                                                            alph_k=k_params['alph_k'],
+                                                                            k_alph=k_params['k_alph'],
                                                                             cdens=k_params['cdens'] if 'cdens' in k_params.keys() else None,
                                                                             conv=True if 'cdens' in k_params.keys() else False,
                                                                             idx=idx,
@@ -638,4 +1041,32 @@ def run_gabor_knov_withparams_flr(stim,k_params,idx=True,flip=False,kmat_seq_fli
     df_all = pd.DataFrame({'nt':nl_gabor.flatten(),'pt':pl_gabor.flatten()})
     plt.close('all')
     return df_all, kl_gabor, kwl_gabor
+
+def run_gabor_knov_withparams_flr2(stim,k_params,idx=True,flip=False,kmat_seq_flipped=None,stim_type=None,kwargs={}):
+    # Run novelty experiment
+    klist, kwlist, wlist, plist, nlist = sim_knov_gabor_flr2(stim,
+                                                            k=k_params['k'],
+                                                            kfun_idx=k_params['kfun_idx'],
+                                                            kfun_complex_idx=k_params['kfun_complex_idx'],
+                                                            ksig0=k_params['ksig'],
+                                                            k_alph=k_params['k_alph'],
+                                                            cdens=k_params['cdens'] if 'cdens' in k_params.keys() else None,
+                                                            conv=True if 'cdens' in k_params.keys() else False,
+                                                            idx=idx,
+                                                            flip=flip,
+                                                            flip_idx=k_params['flip_idx'] if 'flip_idx' in k_params.keys() else None,
+                                                            kmat_seq_flipped=kmat_seq_flipped,
+                                                            stim_type=stim_type,
+                                                            kwargs=kwargs)
+    # Format data
+    pl_gabor  = np.array(plist)
+    nl_gabor  = np.array(nlist)
+    df_all = pd.DataFrame({'nt':nl_gabor.flatten(),'pt':pl_gabor.flatten()})
+
+    kl_gabor  = np.squeeze(np.stack(klist)) if len(klist)>0 else []
+    kwl_gabor = np.squeeze(np.stack(kwlist)) if len(kwlist)>0 else []
+    wl_gabor  = np.squeeze(np.stack(wlist)) if len(wlist)>0 else []
+    
+    plt.close('all')
+    return df_all, kl_gabor, kwl_gabor, wl_gabor
 

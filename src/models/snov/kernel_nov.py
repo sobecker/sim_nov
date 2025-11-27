@@ -77,6 +77,13 @@ def update_nov_approx_flr(kw,rk,alph):
     kw   = kw+alph*(rk-kw)
     return kw
 
+# Update weights (incremental update, leaky responsibilities)
+def update_nov_approx_leaky(rcum,kw,tcum,rk,alph_leak,eps):
+    rcum = (1-alph_leak)*rcum + rk      # update the sum of responsibilities
+    tcum = (1-alph_leak)*tcum + 1       # update the sum of time steps - this does not need to be a vector
+    kw   = (rcum + eps)/(tcum+len(kw)*eps) # compute new weights
+    return rcum, tcum, kw
+
 # Update weights (incremental update)
 def update_nov_approx(kw,t,rk,knum,eps=1):
     kw   = kw+1/(t+len(kw)*eps)*(rk-kw)
@@ -149,11 +156,26 @@ def k_triangle2(x,loc,scale):  # here: loc is the maximum value, scale is the st
 def k_triangle_eps(x,loc,scale): 
     return 1/scale*(1-np.abs(x-loc)/scale)*np.heaviside(1-np.abs(x-loc)/scale,0)
 
+def k_triangle3(x,loc,scale):  # here: loc is the maximum value, scale is the steepness of the triangle
+    return (1-np.abs(x-loc)/scale)*np.heaviside(1-np.abs(x-loc)/scale,0)
+
 def k_box(x,loc,scale): 
     return 1/(2*scale)*(np.heaviside(scale+loc-x,1)-np.heaviside(loc-scale-x,1))
 
+def k_box2(x,loc,scale): 
+    return 1/2*(np.heaviside(scale+loc-x,1)-np.heaviside(loc-scale-x,1))
+
+def k_id(s,scale=None,loc=None):
+    return s
+
 # def k_sigmoid(x,scale,shift):
 #     return 1/(1+np.exp(-scale*(x-shift)))
+
+def k_tanh(s,loc,scale):
+    # scale gives the range across which the function goes from 0 to 1 / loc is the center of the function (where it is 1). We translate this to the actual scaling factor in the tanh (scale = scaling factor) and the actual shift of the tanh (shift = loc-scale/2) i.e. where it is 0.5
+    scale_tanh = scale
+    loc_tanh = loc - scale/2  
+    return 0.5*(np.tanh(5/scale_tanh*(s-loc_tanh))+1)*np.heaviside(s-(loc_tanh-scale_tanh),0)
 
 def k_sin(x,loc,scale,eps=0):
     kk = None

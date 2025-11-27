@@ -255,10 +255,14 @@ def generate_stim_complex(dim_ranges,gabor_num,rng,adj_w=True,adj_f=False,alph_a
 
     return dfm
 
-def generate_teststim_parent(dim_ranges,gabor_num,n_orient=4,init_orient=0,fixed_phase=None,fixed_freq=None,fixed_width=None,rng=None,adj_w=True,adj_f=False,alph_adj=3,adj_jitter=None,mode='orientation',loc_sigma=(0,0),return_features=[0]): 
+def generate_teststim_parent(dim_ranges,gabor_num,n_orient=4,init_orient=0,fixed_phase=None,fixed_freq=None,fixed_width=None,rng=None,adj_w=True,adj_f=False,alph_adj=3,adj_jitter=None,mode='orientation',loc_sigma=(0,0),dxy=[],return_features=[0]): 
     # Compute locations of gabors in image
-    dx = (dim_ranges[4][1] - dim_ranges[4][0])/gabor_num[0] 
-    dy = (dim_ranges[5][1] - dim_ranges[5][0])/gabor_num[1]
+    if len(dxy)>0:
+        dx = dxy[0]
+        dy = dxy[1]
+    else:
+        dx = (dim_ranges[4][1] - dim_ranges[4][0])/gabor_num[0] 
+        dy = (dim_ranges[5][1] - dim_ranges[5][0])/gabor_num[1]
     xloc = [dim_ranges[4][0] + dx/2 + i*dx for i in range(gabor_num[0])]
     yloc = [dim_ranges[5][0] + dy/2 + i*dy for i in range(gabor_num[1])]
     xloc_jitter = np.random.normal(loc=0,scale=loc_sigma[0],size=(1,len(xloc)*len(yloc))) if loc_sigma[0]>0 else np.zeros((1,len(xloc)*len(yloc)))

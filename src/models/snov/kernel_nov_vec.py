@@ -136,6 +136,9 @@ def update_rk_approx1(kw,kmat):
 def update_nov_approx_flr(kw,rk,alph):
     return knov.update_nov_approx_flr(kw,rk,alph)
 
+def update_nov_approx_leaky(rcum,kw,tcum,rk,alph_leak,eps):
+    return knov.update_nov_approx_leaky(rcum,kw,tcum,rk,alph_leak,eps)
+
 def update_nov_approx(kw,t,rk,knum,eps=1):
     return knov.update_nov_approx(kw,t,rk,knum,eps=1)
 

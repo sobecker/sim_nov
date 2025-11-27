@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-####### Novelty model ########################################################
+####### Novelty model (non-leaky) ############################################
 # Initialize novelty variables
 def init_nov(states,counts0=np.array([])):
     if len(counts0)==1:
@@ -23,17 +23,159 @@ def update_nov(counts,s):
     counts[s] += 1
     return counts
 
-def update_nov_leaky(counts,times,s,k_alph=0.1):
-    counts = counts*k_alph
-    counts[s] += 1
-    times = times*k_alph + 1
-    return counts, times
+def sim_experiment(states,input_exp,eps=1,c_norm=0):
+    # Initialize novelty model
+    counts = init_nov(states)
+
+    s_list,t_list = input_exp[0], input_exp[1]
+
+    # Simulate experiment
+    pcl = []; ncl = []
+    for t in range(len(s_list)):
+        pc,nc  = comp_nov(counts,states,t,eps=eps,c_norm=c_norm) # Compute novelty
+        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])                    # Store familiarity + novelty    
+        counts = update_nov(counts,s_list[t])             # Update novelty
+
+    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
+                         'stimulus': s_list,
+                         'type': t_list,
+                         'familiarity': pcl,
+                         'novelty': ncl
+                         })
+    return data
 
 # Plot familiarity
 def plot_fam(ax,pc,states):
     ax.plot(states,pc,'o',c='orange')
     ax.set_xlabel('States')
     ax.set_ylabel('Familiarity')
+
+
+####### Novelty model (leaky counts - OLD) ####################################
+# Initialize novelty variables
+def init_nov_leaky(states,counts0=np.array([])):
+    counts = init_nov(states,counts0=counts0)
+    return counts
+
+# Evaluate novelty for all states
+def comp_nov_leaky(counts,states,t,eps=1,c_norm=0):
+    pc, nc = comp_nov(counts,states,t,eps=eps,c_norm=c_norm)
+    return pc,nc
+
+# Update novelty 
+def update_nov_leaky(counts,times,s,k_alph=0.1):
+    counts = counts*k_alph
+    counts[s] += 1
+    times = times*k_alph + 1
+    return counts, times
+
+def sim_experiment_leaky(states,input_exp,k_alph=0.1,eps=1,c_norm=0):
+    # Initialize novelty model
+    counts = init_nov_leaky(states)
+    times = 0
+
+    s_list,t_list = input_exp[0], input_exp[1]
+
+    # Simulate experiment
+    pcl = []; ncl = []
+    for t in range(len(s_list)):
+        pc,nc  = comp_nov_leaky(counts,states,times,eps=eps,c_norm=c_norm)                    # Compute novelty
+        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])                            # Store familiarity + novelty    
+        counts, times = update_nov_leaky(counts,times,s_list[t],k_alph=k_alph)          # Update novelty
+
+    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
+                         'stimulus': s_list,
+                         'type': t_list,
+                         'familiarity': pcl,
+                         'novelty': ncl
+                         })
+    return data
+
+
+####### Novelty model (leaky counts) #########################################
+# Initialize novelty variables
+def init_nov_leaky2(states,counts0=np.array([])):
+    counts = init_nov(states,counts0=counts0)
+    return counts
+
+# Evaluate novelty for all states
+def comp_nov_leaky2(counts,states,t,eps=1,c_norm=0):
+    pc, nc = comp_nov(counts,states,t,eps=eps,c_norm=c_norm)
+    return pc,nc
+
+# Update novelty 
+def update_nov_leaky2(counts,times,s,alph_leak=0.1):
+    counts = counts*(1-alph_leak)
+    counts[s] += 1
+    times = times*(1-alph_leak) + 1
+    return counts, times
+
+def sim_experiment_leaky2(states,input_exp,alph_leak=0.1,eps=1,c_norm=0):
+    # Initialize novelty model
+    counts = init_nov_leaky2(states)
+    times = 0
+
+    s_list,t_list = input_exp[0], input_exp[1]
+
+    # Simulate experiment
+    pcl = []; ncl = []
+    for t in range(len(s_list)):
+        pc,nc  = comp_nov_leaky2(counts,states,times,eps=eps,c_norm=c_norm)                    # Compute novelty
+        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])                            # Store familiarity + novelty    
+        counts, times = update_nov_leaky2(counts,times,s_list[t],alph_leak=alph_leak)          # Update novelty
+
+    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
+                         'stimulus': s_list,
+                         'type': t_list,
+                         'familiarity': pcl,
+                         'novelty': ncl
+                         })
+    return data
+
+
+####### Novelty model (fixed rate) ##########################################
+# Initialize novelty variables
+def init_nov_fr(states,p0=np.array([])):
+    if len(p0)==1:
+        pc = p0[0]*np.ones(len(states))
+    elif len(p0)>1:
+        pc = p0.copy()
+    else:
+        pc = 1/len(states)*np.ones(len(states))
+    return pc
+
+# Evaluate novelty for all states
+def comp_nov_fr(pc,c_norm=0):
+    nc = -np.log(pc)+c_norm
+    return pc,nc
+
+# Update novelty 
+def update_nov_fr(pc,s,k_alph=0.1):
+    pc = (1-k_alph)*pc
+    pc[s] += k_alph
+    return pc
+
+def sim_experiment_fr(states,input_exp,k_alph=0.1,c_norm=0):
+    # Initialize novelty model
+    pc = init_nov_fr(states)
+
+    s_list,t_list = input_exp[0], input_exp[1]
+
+    # Simulate experiment
+    pcl = []; ncl = []
+    for t in range(len(s_list)):
+        pc,nc  = comp_nov_fr(pc,c_norm=c_norm)                     # Compute novelty
+        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])       # Store familiarity + novelty    
+        pc = update_nov_fr(pc,s_list[t],k_alph=k_alph)             # Update novelty
+
+    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
+                         'stimulus': s_list,
+                         'type': t_list,
+                         'familiarity': pcl,
+                         'novelty': ncl
+                         })
+    return data
+
 
 ####### Generate Homann inputs ###############################################
 def generate_tau_emerge(n_fam,len_fam=3,input_corrected=True):
@@ -112,53 +254,9 @@ def generate_input(params_input,input_corrected=True):
     
     return [[s_tem,t_tem],[s_trec,t_trec],[s_tmem,t_tmem]], count_min, stim_unique
 
+
 ####### Simulate Homann experiments ##########################################
-def sim_experiment(states,input_exp,eps=1,c_norm=0):
-    # Initialize novelty model
-    counts = init_nov(states)
-
-    s_list,t_list = input_exp[0], input_exp[1]
-
-    # Simulate experiment
-    pcl = []; ncl = []
-    for t in range(len(s_list)):
-        pc,nc  = comp_nov(counts,states,t,eps=eps,c_norm=c_norm) # Compute novelty
-        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])                    # Store familiarity + novelty    
-        counts = update_nov(counts,s_list[t])             # Update novelty
-
-    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
-                         'stimulus': s_list,
-                         'type': t_list,
-                         'familiarity': pcl,
-                         'novelty': ncl
-                         })
-    
-    return data
-
-def sim_experiment_leaky(states,input_exp,k_alph=0.1,eps=1,c_norm=0):
-    # Initialize novelty model
-    counts = init_nov(states)
-    times = 0
-
-    s_list,t_list = input_exp[0], input_exp[1]
-
-    # Simulate experiment
-    pcl = []; ncl = []
-    for t in range(len(s_list)):
-        pc,nc  = comp_nov(counts,states,times,eps=eps,c_norm=c_norm)                    # Compute novelty
-        pcl.append(pc[s_list[t]]); ncl.append(nc[s_list[t]])                            # Store familiarity + novelty    
-        counts, times = update_nov_leaky(counts,times,s_list[t],k_alph=k_alph)          # Update novelty
-
-    data = pd.DataFrame({'time_step': np.arange(len(s_list)),
-                         'stimulus': s_list,
-                         'type': t_list,
-                         'familiarity': pcl,
-                         'novelty': ncl
-                         })
-    
-    return data
-
-def sim_tau_emerge(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False,steady=False):
+def sim_tau_emerge(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False,fr=False,steady=False):
     nrl = []
     data_all = []
     if steady: steadyl = []
@@ -166,6 +264,8 @@ def sim_tau_emerge(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=Fals
         # Run experiment 
         if leaky:
             data = sim_experiment_leaky(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,eps=eps,c_norm=c_norm) 
+        elif fr:
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm) 
         else:
             data = sim_experiment(states,[input_exp[0][i],input_exp[1][i]],eps=eps,c_norm=c_norm)
         data['n_fam'] = [var_exp[i]]*len(data)
@@ -188,13 +288,15 @@ def sim_tau_emerge(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=Fals
 
     return stats, data_all
 
-def sim_tau_memory(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False):
+def sim_tau_memory(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False,fr=False):
     nrl = []; srl = []
     data_all = []
     for i in range(len(var_exp)):
         # Run experiment 
         if leaky:
             data = sim_experiment_leaky(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,eps=eps,c_norm=c_norm) 
+        elif fr:
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm)
         else:
             data = sim_experiment(states,[input_exp[0][i],input_exp[1][i]],eps=eps,c_norm=c_norm)
         data['n_im'] = [var_exp[i]]*len(data)
@@ -214,7 +316,7 @@ def sim_tau_memory(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=Fals
 
     return stats_nov, stats_steady, data_all
 
-def sim_tau_recovery(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False,steady=False):
+def sim_tau_recovery(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=False,fr=False,steady=False):
     nrl = []
     data_all = []
     if steady: steadyl = []
@@ -222,6 +324,8 @@ def sim_tau_recovery(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=Fa
         # Run experiment 
         if leaky:
             data = sim_experiment_leaky(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,eps=eps,c_norm=c_norm) 
+        elif fr:
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm)
         else:
             data = sim_experiment(states,[input_exp[0][i],input_exp[1][i]],eps=eps,c_norm=c_norm)
         data['dN'] = [var_exp[i]]*len(data)
@@ -239,6 +343,103 @@ def sim_tau_recovery(states,input_exp,var_exp,eps=1,c_norm=0,k_alph=0.1,leaky=Fa
     stats = pd.DataFrame({'dN': var_exp,
                           'tr_norm': nrl})
     if steady: stats['steady'] = steadyl
+
+    data_all = pd.concat(data_all)
+
+    return stats, data_all
+
+####### Simulate Homann experiments ##########################################
+def sim_tau_emerge2(states,input_exp,var_exp,eps=1,c_norm=0,alph_leak=0.1,k_alph=0.1,model='leaky',record_steady=True):
+    nrl = []
+    data_all = []
+    if record_steady: steadyl = []
+
+    for i in range(len(var_exp)):
+        # Run experiment 
+        if model=='leaky':
+            data = sim_experiment_leaky2(states,[input_exp[0][i],input_exp[1][i]],alph_leak=alph_leak,eps=eps,c_norm=c_norm) 
+        elif model=='fr':
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm) 
+        else:
+            assert False , "Model not recognized. Use 'leaky' or 'fr'."
+        data['n_fam'] = [var_exp[i]]*len(data)
+
+        # Extract normalized novelty response
+        nov_idx = np.where(data['type']=='nov')[0][0]
+        nov_resp = data['novelty'].values[nov_idx]
+        steady_resp = np.mean(data['novelty'].values[max(0,nov_idx-3):nov_idx])
+        if record_steady:
+            data['steady'] = [steady_resp]*len(data)
+            steadyl.append(steady_resp)
+        nrl.append(nov_resp-steady_resp)
+        data_all.append(data)
+
+    stats = pd.DataFrame({'n_fam': var_exp,
+                          'nt_norm': nrl})
+    if record_steady: stats['steady'] = steadyl
+
+    data_all = pd.concat(data_all)
+
+    return stats, data_all
+
+def sim_tau_memory2(states,input_exp,var_exp,eps=1,c_norm=0,alph_leak=0.1,k_alph=0.1,model='leaky'):
+    nrl = [] 
+    data_all = []
+    srl = []
+    
+    for i in range(len(var_exp)):
+        # Run experiment 
+        if model=='leaky':
+            data = sim_experiment_leaky2(states,[input_exp[0][i],input_exp[1][i]],alph_leak=alph_leak,eps=eps,c_norm=c_norm) 
+        elif model=='fr':
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm)
+        else:
+            assert False , "Model not recognized. Use 'leaky' or 'fr'."
+        data['n_im'] = [var_exp[i]]*len(data)
+        data_all.append(data)
+
+        # Extract normalized novelty response
+        nov_idx = np.where(data['type']=='nov')[0][0]
+        nov_resp = data['novelty'].values[nov_idx]
+        steady_resp = np.mean(data['novelty'].values[max(0,nov_idx-5*var_exp[i]):nov_idx])
+        srl.append(steady_resp)
+        nrl.append(nov_resp-steady_resp)
+
+    stats_nov = pd.DataFrame({'n_im': var_exp,'nt_norm': nrl})
+    stats_steady = pd.DataFrame({'n_im': var_exp,'steady': srl})
+    
+    data_all = pd.concat(data_all)
+
+    return stats_nov, stats_steady, data_all
+
+def sim_tau_recovery2(states,input_exp,var_exp,eps=1,c_norm=0,alph_leak=0.1,k_alph=0.1,model='leaky',record_steady=True):
+    nrl = []
+    data_all = []
+    if record_steady: steadyl = []
+
+    for i in range(len(var_exp)):
+        # Run experiment 
+        if model=='leaky':
+            data = sim_experiment_leaky2(states,[input_exp[0][i],input_exp[1][i]],alph_leak=alph_leak,eps=eps,c_norm=c_norm) 
+        elif model=='fr':
+            data = sim_experiment_fr(states,[input_exp[0][i],input_exp[1][i]],k_alph=k_alph,c_norm=c_norm)
+        else:
+            assert False , "Model not recognized. Use 'leaky' or 'fr'."
+        data['dN'] = [var_exp[i]]*len(data)
+
+        # Extract normalized novelty response
+        nov_idx = np.where(data['type']=='fam_r')[0][0]
+        nov_resp = np.mean(data['novelty'].values[nov_idx:min(nov_idx+3,len(data))])
+        steady_resp = np.mean(data['novelty'].values[max(0,nov_idx-3):nov_idx])
+        if record_steady:
+            data['steady'] = [steady_resp]*len(data)
+            steadyl.append(steady_resp)
+        nrl.append(nov_resp-steady_resp)
+        data_all.append(data)
+
+    stats = pd.DataFrame({'dN': var_exp,
+                          'tr_norm': nrl})
+    if record_steady: stats['steady'] = steadyl
 
     data_all = pd.concat(data_all)
 

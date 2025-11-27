@@ -4,7 +4,7 @@ from scipy.stats import sem
 import os
 import sys
 # sys.path.append('/Volumes/lcncluster/becker/RL_reward_novelty')
-import fitting_neural.grid_search_complex_cells as gscc #import fit_homann_exp, corr_homann_exp, load_exp_homann  
+import fitting_neural.grid_search_snov as gsc #import fit_homann_exp, corr_homann_exp, load_exp_homann  
 import utils.saveload as sl
 
 def fit_homann_exp_jackknife(sim_data,homann_data,coef_steady=True,regr_meas='score',save_path='',save_name=''):
@@ -33,7 +33,7 @@ def fit_homann_exp_jackknife(sim_data,homann_data,coef_steady=True,regr_meas='sc
         fit_i    = np.dot(np.dot(np.linalg.inv(np.dot(x_i.transpose(),x_i)),x_i.transpose()),y_i).flatten()
     
         # Combined MSE (including all experiments)
-        comp_meas  = eval(f'gscc.{regr_meas}_loss')
+        comp_meas  = eval(f'gsc.{regr_meas}_loss')
         ypred_i    = np.dot(x_i,fit_i.reshape((-1,1))).flatten()
         mse_comb_i = comp_meas(y_i,ypred_i)
         mse_comb_jack.append(mse_comb_i)
@@ -133,7 +133,7 @@ else:
     save_path      = save_path_base + f'{name_proj}/{name_set}/{study_name}/'
 
 # Load Homann data + manipulate as needed
-homann_data = gscc.load_exp_homann(cluster=run_from_cluster)
+homann_data = gsc.load_exp_homann(cluster=run_from_cluster)
 homann_data[1][1][0] = 0    # set first value to 0
 save_name='_corr-lp0'
 # homann_data[1] = (homann_data[1][0][1:], homann_data[1][1][1:])
@@ -192,7 +192,7 @@ for i in range(len(grid_old)):
             for cc in list(mse_df.columns):
                 grid_df.loc[grid_df.grid_id==i,f'jack_{cc}'] = mse_df[cc].values[0]
         else:
-            _, coef, shift, mse_comb, [mse_tem,mse_trec,mse_tmem,mse_steady] = gscc.fit_homann_exp(sim_data,homann_data,coef_steady=True,regr_meas=regr_meas,save_path=save_path_i,save_name=save_name)
+            _, coef, shift, mse_comb, [mse_tem,mse_trec,mse_tmem,mse_steady] = gsc.fit_homann_exp(sim_data,homann_data,coef_steady=True,regr_meas=regr_meas,save_path=save_path_i,save_name=save_name)
             grid_df.loc[grid_df.grid_id==i,'mse_comb'] = mse_comb
             grid_df.loc[grid_df.grid_id==i,'mse_tem'] = mse_tem
             grid_df.loc[grid_df.grid_id==i,'mse_trec'] = mse_trec
@@ -208,7 +208,7 @@ for i in range(len(grid_old)):
                 sim_data_bi = []
                 for j, nn in enumerate(data_names):
                     sim_data_bi.append([boot_stats[j][bi][data_var[j]].values, boot_stats[j][bi][data_val[j]].values])
-                _, coef_bi, shift_bi, mse_comb_bi, [mse_tem_bi, mse_trec_bi, mse_tmem_bi, mse_steady_bi] = gscc.fit_homann_exp(sim_data_bi,homann_data,coef_steady=True,regr_meas=regr_meas)
+                _, coef_bi, shift_bi, mse_comb_bi, [mse_tem_bi, mse_trec_bi, mse_tmem_bi, mse_steady_bi] = gsc.fit_homann_exp(sim_data_bi,homann_data,coef_steady=True,regr_meas=regr_meas)
                 boot_coef.append(coef_bi); boot_shift.append(shift_bi); boot_mse_comb.append(mse_comb_bi); boot_mse_tem.append(mse_tem_bi); boot_mse_trec.append(mse_trec_bi); boot_mse_tmem.append(mse_tmem_bi); boot_mse_steady.append(mse_steady_bi); boot_mse_mean.append(np.mean([mse_tem_bi, mse_trec_bi, mse_tmem_bi, mse_steady_bi]))
 
             all_meas = ['mse_comb','mse_tem','mse_trec','mse_tmem','mse_steady','mse_mean','coef','shift']
@@ -218,7 +218,7 @@ for i in range(len(grid_old)):
 
     if comp_corr:
         # Compute correlation between simulated and experimental data
-        corr_comb, [corr_tem, corr_trec, corr_tmem, corr_steady] = gscc.corr_homann_exp(sim_data,homann_data,regr_meas='score',corr_type=corr_type,save_path=save_path_i)
+        corr_comb, [corr_tem, corr_trec, corr_tmem, corr_steady] = gsc.corr_homann_exp(sim_data,homann_data,regr_meas='score',corr_type=corr_type,save_path=save_path_i)
         grid_df.loc[grid_df.grid_id==i,'corr_comb'] = corr_comb
         grid_df.loc[grid_df.grid_id==i,'corr_tem'] = corr_tem
         grid_df.loc[grid_df.grid_id==i,'corr_trec'] = corr_trec
@@ -232,7 +232,7 @@ for i in range(len(grid_old)):
                 sim_data_bi = []
                 for j, nn in enumerate(data_names):
                     sim_data_bi.append([boot_stats[j][bi][data_var[j]].values, boot_stats[j][bi][data_val[j]].values])
-                corr_comb_bi, [corr_tem_bi, corr_trec_bi, corr_tmem_bi, corr_steady_bi] = gscc.corr_homann_exp(sim_data_bi,homann_data,regr_meas='score',corr_type=corr_type)
+                corr_comb_bi, [corr_tem_bi, corr_trec_bi, corr_tmem_bi, corr_steady_bi] = gsc.corr_homann_exp(sim_data_bi,homann_data,regr_meas='score',corr_type=corr_type)
                 boot_corr_comb.append(corr_comb_bi); boot_corr_tem.append(corr_tem_bi); boot_corr_trec.append(corr_trec_bi); boot_corr_tmem.append(corr_tmem_bi); boot_corr_steady.append(corr_steady_bi); boot_corr_mean.append(np.mean([corr_tem_bi, corr_trec_bi, corr_tmem_bi, corr_steady_bi]))
 
             all_meas = ['corr_comb','corr_tem','corr_trec','corr_tmem','corr_steady','corr_mean']
