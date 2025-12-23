@@ -19,7 +19,7 @@ sim_nov/
 ├── ext_data/               # preprocessed experimental data
 │   ├── Homann2022/             # V1 novelty responses 
 │   └── Rosenberg2021/          # mouse exploration behavior 
-├── src/                    # code files for data preprocessing, analysis, modeling and visualization
+├── src/                    # code files for data preprocessing, analysis, modeling, visualization
 │   ├── models/                 # novelty models
 │   └── fitting_neural/         # functions for neural fitting and analysis
 │   └── fitting_behavior/       # functions for behavior fitting and analysis
