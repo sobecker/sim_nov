@@ -270,6 +270,7 @@ def fit_homann_exp(sim_data,homann_data,coef_steady=True,weighting='equal-sample
     fit, yres, ypred, train_rss, train_mse, train_nmse = fit_wlse(x, y, w)
     coef = fit[1]  
     shift = fit[0]
+    yres_df = None
 
     # Save results
     if len(save_path)>0:

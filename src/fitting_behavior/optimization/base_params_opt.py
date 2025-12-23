@@ -193,6 +193,11 @@ rtree = tree.make_rtree_env(depth,None,rnode=117)
 #rtree = tree.make_rtree_env(depth,seed)
 x, P, R, T = tree.tree_df2list(rtree)
 
+h = {'k_alph': 1,             # leakiness of counts; 1=not leaky (default)
+     'alph_leak': 0,
+     'eps_leak': 1,
+     'update_type': 'leaky'}
+
 base_params_nACtree = {'sim_name':'nAC-tree',
                     'rec_type':'basic',
                     'round_prec':4,
@@ -220,7 +225,7 @@ base_params_nACtree = {'sim_name':'nAC-tree',
                     'a_lam':[0.0],          # e-trace decay factor of the actor
                     'temp':[0.01],          # temperature of the softmax decision, the higher the more probabilistic
                     'ntype':'N',            # type of novelty used: 'N-k','-1/N','leaky count' (to be implemented)
-                    'k_alph':1,             # leakiness of counts; 1=not leaky (default)
+                    'h': h,
                     'k':0}                  #1.5
 
 ##############################################################################
@@ -262,6 +267,11 @@ rtree = tree.make_rtree_env(depth,None,rnode=117)
 #rtree = tree.make_rtree_env(depth,seed)
 x, P, R, T = tree.tree_df2list(rtree)  
 
+h = {'k_alph':      1,        # leakiness of counts; 1=not leaky (default)
+     'alph_leak':   0,
+     'eps_leak':    1,
+     'update_type': 'leaky'}
+
 base_params_mbnortree_exp = {'sim_name':'mbNoR-tree',
                 'rec_type':'basic',
                 'number_trials':number_trial,
@@ -277,7 +287,10 @@ base_params_mbnortree_exp = {'sim_name':'mbNoR-tree',
                 'T': R, 
                 'k':0,
                 'ntype':'N-k',
-                'k_alph': 1 # leakiness of counts; 1=not leaky (default)
+                'h': h
+                # 'update_type': 'leaky', # novelty udpate type
+                # 'alph_leak': 0.5, # fixed update rate of counts (flr model)
+                # 'eps_leak': 1
                 }   
 
 
@@ -285,26 +298,44 @@ base_params_mbnortree_exp = {'sim_name':'mbNoR-tree',
 # H1/2-mbNoR base params (tree environment)                                    #
 ##############################################################################
 
-def baseparams_h1mbnor(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h1mbnor(levels,notrace=False,center=False,center_type='box',update_type=None,placefields=False,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True,depth=6,seed=None,rnode=117):
     number_epi = 1
     number_trial = 1
-    depth = 6
-    seed = 1234
 
-    rtree = tree.make_rtree_env(depth,None,rnode=117)
+    rtree = tree.make_rtree_env(depth,seed=seed,rnode=rnode)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree) 
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                              levels,
+                              join_levels=join_levels,
+                              filter_duplicates=filter_duplicates,
+                              notrace=notrace,
+                              center=center,
+                              center_type=center_type,
+                              update_type=update_type,
+                              placefields=placefields,
+                              comp_norm=comp_norm,
+                              maze_norm=maze_norm,
+                              uniform_initial=uniform_initial)
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
         level_str += str(levels[i])  
 
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
-    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
 
-    bp = {'sim_name':leaky_str+'H1-mbNoR-tree_l'+level_str+trace_str+center_str,
+    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
+
+    bp = {'sim_name':sim_name,
                 'rec_type':'basic',
                 'number_trials':number_trial,
                 'number_epi':number_epi,
@@ -326,26 +357,52 @@ def baseparams_h1mbnor(levels,notrace=False,center=False,center_type='box',updat
 
     return bp
 
-def baseparams_h2mbnor(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h2mbnor(levels,notrace=False,center=False,center_type='box',update_type=None,placefields=False,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True,depth=6,seed=None,rnode=117):
     number_epi = 1
     number_trial = 1
-    depth = 6
-    seed = 1234
 
-    rtree = tree.make_rtree_env(depth,None,rnode=117)
+    rtree = tree.make_rtree_env(depth,seed=seed,rnode=rnode)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree) 
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                update_type=update_type,
+                                placefields=placefields,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
+
+    # level_str = str(levels[0])
+    # for i in range(len(levels)-1):
+    #     level_str += str(levels[i])
+
+    # trace_str = '_notrace' if notrace else ''
+    # center_str = f'_center-{center_type}' if center else ''
+    # leaky_str = 'leaky_' if update_type=='leaky' else ''
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
+        level_str += str(levels[i])  
 
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
     leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
 
-    bp = {'sim_name':leaky_str+'H2-mbNoR-tree_l'+level_str+trace_str+center_str,
+    bp = {'sim_name':sim_name,
                 'rec_type':'basic',
                 'number_trials':number_trial,
                 'number_epi':number_epi,
@@ -371,28 +428,48 @@ def baseparams_h2mbnor(levels,notrace=False,center=False,center_type='box',updat
 # H1/2-mbNoR base params with eps=1 (tree environment)                       #
 ##############################################################################
 
-def baseparams_h1mbnor_eps1(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h1mbnor_eps1(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True,depth=6,seed=None,rnode=117):
     number_epi = 1
     number_trial = 1
-    depth = 6
-    seed = 1234
 
-    rtree = tree.make_rtree_env(depth,None,rnode=117)
+    rtree = tree.make_rtree_env(depth,seed=seed,rnode=rnode)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree) 
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,eps1=True,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                eps1=True,
+                                placefields=placefields,
+                                update_type=update_type,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 2
+    h['alph_leak'] = 0
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
         level_str += str(levels[i])  
 
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
-    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
 
-    bp = {'sim_name':leaky_str+'H1-mbNoR-tree_l'+level_str+trace_str+center_str,
+    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
+
+    bp = {'sim_name':sim_name,
                 'rec_type':'basic',
                 'number_trials':number_trial,
                 'number_epi':number_epi,
@@ -414,28 +491,48 @@ def baseparams_h1mbnor_eps1(levels,notrace=False,center=False,center_type='box',
 
     return bp
 
-def baseparams_h2mbnor_eps1(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h2mbnor_eps1(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True,depth=6,seed=None,rnode=117):
     number_epi = 1
     number_trial = 1
-    depth = 6
-    seed = 1234
 
-    rtree = tree.make_rtree_env(depth,None,rnode=117)
+    rtree = tree.make_rtree_env(depth,seed=seed,rnode=rnode)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree) 
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,eps1=True,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                eps1=True,
+                                placefields=placefields,
+                                update_type=update_type,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 2
+    h['alph_leak'] = 0
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
-    
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
-    leaky_str = 'leaky_' if update_type=='leaky' else ''
+        level_str += str(levels[i])  
 
-    bp = {'sim_name':leaky_str+'H2-mbNoR-tree_l'+level_str+trace_str+center_str,
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
+    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
+
+    bp = {'sim_name':sim_name,
                 'rec_type':'basic',
                 'number_trials':number_trial,
                 'number_epi':number_epi,
@@ -461,7 +558,7 @@ def baseparams_h2mbnor_eps1(levels,notrace=False,center=False,center_type='box',
 # H1/2-nAC base params (tree env)                                            #
 ##############################################################################
 
-def baseparams_h1nac(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h1nac(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     number_epi = 1
     number_trial = 1
     depth = 6
@@ -470,19 +567,39 @@ def baseparams_h1nac(levels,notrace=False,center=False,center_type='box',update_
     rtree = tree.make_rtree_env(depth,None,rnode=117)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree)
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                placefields=placefields,
+                                update_type=update_type,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 2
+    h['update_type'] = update_type if (update_type is not None) else 'leaky'
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
+        level_str += str(levels[i])  
 
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
     leaky_str = 'leaky_' if update_type=='leaky' else ''
-
-    bp = {'sim_name':leaky_str+'h1nAC-tree_l'+level_str+trace_str+center_str,
+    sim_name = leaky_str+sim_name
+    bp = {'sim_name':sim_name,
                     'rec_type':'basic',
                     'round_prec':4,
                     'number_trials':number_trial,
@@ -515,7 +632,7 @@ def baseparams_h1nac(levels,notrace=False,center=False,center_type='box',update_
 
     return bp
 
-def baseparams_h2nac(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h2nac(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     number_epi = 1
     number_trial = 1
     depth = 6
@@ -524,19 +641,40 @@ def baseparams_h2nac(levels,notrace=False,center=False,center_type='box',update_
     rtree = tree.make_rtree_env(depth,None,rnode=117)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree)
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                placefields=placefields,
+                                update_type=update_type,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 3
+    h['update_type'] = update_type if (update_type is not None) else 'leaky'
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
-    
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
-    leaky_str = 'leaky_' if update_type=='leaky' else ''
+        level_str += str(levels[i])  
 
-    bp = {'sim_name':leaky_str + 'h2nAC-tree_l'+level_str+trace_str+center_str,
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
+    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
+
+    bp = {'sim_name':sim_name,
                     'rec_type':'basic',
                     'round_prec':4,
                     'number_trials':number_trial,
@@ -573,7 +711,7 @@ def baseparams_h2nac(levels,notrace=False,center=False,center_type='box',update_
 # H1/2-nAC base params with eps=1 (tree env)                                 #
 ##############################################################################
 
-def baseparams_h1nac_eps1(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h1nac_eps1(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     number_epi = 1
     number_trial = 1
     depth = 6
@@ -582,19 +720,50 @@ def baseparams_h1nac_eps1(levels,notrace=False,center=False,center_type='box',up
     rtree = tree.make_rtree_env(depth,None,rnode=117)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree)
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,eps1=True,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                eps1=True,
+                                placefields=placefields,
+                                update_type=update_type,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 2
+    h['update_type'] = update_type if (update_type is not None) else 'leaky'
+    h['alph_leak'] = 0
+
+    # level_str = str(levels[0])
+    # for i in range(len(levels)-1):
+    #     level_str += str(levels[i])
+    
+    # trace_str = '_notrace' if notrace else ''
+    # center_str = f'_center-{center_type}' if center else ''
+    # leaky_str = f'{h["update_type"]}_'
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
-    
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
-    leaky_str = 'leaky_' if update_type=='leaky' else ''
+        level_str += str(levels[i])  
 
-    bp = {'sim_name':leaky_str+'H1-nAC-tree_l'+level_str+trace_str+center_str,
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
+    leaky_str = 'leaky_' if update_type=='leaky' else ''
+    sim_name = leaky_str+sim_name
+
+    bp = {'sim_name':sim_name,
                     'rec_type':'basic',
                     'round_prec':4,
                     'number_trials':number_trial,
@@ -627,7 +796,7 @@ def baseparams_h1nac_eps1(levels,notrace=False,center=False,center_type='box',up
 
     return bp
 
-def baseparams_h2nac_eps1(levels,notrace=False,center=False,center_type='box',update_type=None):
+def baseparams_h2nac_eps1(levels,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     number_epi = 1
     number_trial = 1
     depth = 6
@@ -636,19 +805,42 @@ def baseparams_h2nac_eps1(levels,notrace=False,center=False,center_type='box',up
     rtree = tree.make_rtree_env(depth,None,rnode=117)
     #rtree = tree.make_rtree_env(depth,seed)
     x, P, R, T = tree.tree_df2list(rtree)
-    w,h = hn.make_hierarchy(rtree,levels,notrace=notrace,center=center,center_type=center_type,eps1=True,update_type=update_type)
+    w,h,_ = hn.make_hierarchy(rtree,
+                                levels,
+                                notrace=notrace,
+                                center=center,
+                                center_type=center_type,
+                                eps1=True,
+                                placefields=placefields,
+                                update_type=update_type,
+                                join_levels=join_levels,
+                                filter_duplicates=filter_duplicates,
+                                comp_norm=comp_norm,
+                                maze_norm=maze_norm,
+                                uniform_initial=uniform_initial)
 
     h['hnov_type'] = 3
+    h['update_type'] = update_type if (update_type is not None) else 'leaky'
+    h['alph_leak'] = 0
 
     level_str = str(levels[0])
     for i in range(len(levels)-1):
-        level_str += str(levels[i])
+        level_str += str(levels[i])  
 
-    trace_str = '_notrace' if notrace else ''
-    center_str = f'_center-{center_type}' if center else ''
+    if isinstance(notrace, list) and isinstance(center, list) and isinstance(center_type, list):
+        trace_str  = ['_nt' if n else '' for n in notrace]
+        center_str = [f'_c-{ct}' if c else '' for c,ct in zip(center,center_type)]
+        level_str = [f'-l{str(l)}' for l in levels]
+        sim_name = "".join([f'{ts}{cs}{ls}' for ts,cs,ls in zip(trace_str,center_str,level_str)])
+    else:
+        trace_str = '_notrace' if notrace else ''
+        center_str = f'_center-{center_type}' if center else ''
+        sim_name = f'{trace_str}{center_str}'
+
     leaky_str = 'leaky_' if update_type=='leaky' else ''
-
-    bp = {'sim_name':leaky_str+'H2-nAC-tree_l'+level_str+trace_str+center_str,
+    sim_name = leaky_str+sim_name
+    
+    bp = {'sim_name':sim_name,
                     'rec_type':'basic',
                     'round_prec':4,
                     'number_trials':number_trial,
@@ -682,13 +874,57 @@ def baseparams_h2nac_eps1(levels,notrace=False,center=False,center_type='box',up
     return bp
 
 # Generates baseparams (sim) for 'hnac-gn' # 'hnor','hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
-def get_baseparams_all_hnac(alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',update_type=None):
+def get_baseparams_all_hnac(alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     if eps1:
-        if hnov_type==1:    bp = baseparams_h1nac_eps1(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
-        elif hnov_type==2:  bp = baseparams_h2nac_eps1(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+        if hnov_type==1:    
+            bp = baseparams_h1nac_eps1(levels,
+                                        notrace=notrace,
+                                        center=center,
+                                        center_type=center_type,
+                                        placefields=placefields,
+                                        update_type=update_type,
+                                        join_levels=join_levels,
+                                        filter_duplicates=filter_duplicates,
+                                        maze_norm=maze_norm,
+                                        comp_norm=comp_norm,
+                                        uniform_initial=uniform_initial)
+        elif hnov_type==2:  
+            bp = baseparams_h2nac_eps1(levels,
+                                        notrace=notrace,
+                                        center=center,
+                                        center_type=center_type,
+                                        placefields=placefields,
+                                        update_type=update_type,
+                                        join_levels=join_levels,
+                                        filter_duplicates=filter_duplicates,
+                                        maze_norm=maze_norm,
+                                        comp_norm=comp_norm,
+                                        uniform_initial=uniform_initial)
     else:
-        if hnov_type==1:    bp = baseparams_h1nac(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
-        elif hnov_type==2:  bp = baseparams_h2nac(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+        if hnov_type==1:    
+            bp = baseparams_h1nac(levels,
+                                    notrace=notrace,
+                                    center=center,
+                                    center_type=center_type,
+                                    placefields=placefields,
+                                    update_type=update_type,
+                                    join_levels=join_levels,
+                                    filter_duplicates=filter_duplicates,
+                                    maze_norm=maze_norm,
+                                    comp_norm=comp_norm,
+                                    uniform_initial=uniform_initial)
+        elif hnov_type==2:  
+            bp = baseparams_h2nac(levels,
+                                    notrace=notrace,
+                                    center=center,
+                                    center_type=center_type,
+                                    placefields=placefields,
+                                    update_type=update_type,
+                                    join_levels=join_levels,
+                                    filter_duplicates=filter_duplicates,
+                                    maze_norm=maze_norm,
+                                    comp_norm=comp_norm,
+                                    uniform_initial=uniform_initial)
 
     if 'gv' in alg_type: 
         bp['agent_types'] = ['gn']
@@ -698,21 +934,66 @@ def get_baseparams_all_hnac(alg_type,levels,eps1=True,hnov_type=2,notrace=False,
     return bp
 
 # Generates baseparams (sim) for 'hnac-gn' # 'hnor','hnac-gn','hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi'
-def get_baseparams_all_hnor(alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',update_type=None):
+def get_baseparams_all_hnor(alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',placefields=False,update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
     if eps1:
-        if hnov_type==1:    bp = baseparams_h1mbnor_eps1(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
-        elif hnov_type==2:  bp = baseparams_h2mbnor_eps1(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+        if hnov_type==1:    
+            bp = baseparams_h1mbnor_eps1(levels,
+                                            notrace=notrace,
+                                            center=center,
+                                            center_type=center_type,
+                                            placefields=placefields,
+                                            update_type=update_type,
+                                            join_levels=join_levels,
+                                            filter_duplicates=filter_duplicates,
+                                            comp_norm=comp_norm,
+                                            maze_norm=maze_norm,
+                                            uniform_initial=uniform_initial)
+        elif hnov_type==2:  
+            bp = baseparams_h2mbnor_eps1(levels,
+                                            notrace=notrace,
+                                            center=center,
+                                            center_type=center_type,
+                                            placefields=placefields,
+                                            update_type=update_type,
+                                            join_levels=join_levels,
+                                            filter_duplicates=filter_duplicates,
+                                            comp_norm=comp_norm,
+                                            maze_norm=maze_norm,
+                                            uniform_initial=uniform_initial)
     else:
-        if hnov_type==1:    bp = baseparams_h1mbnor(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
-        elif hnov_type==2:  bp = baseparams_h2mbnor(levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+        if hnov_type==1:    
+            bp = baseparams_h1mbnor(levels,
+                                     notrace=notrace,
+                                     center=center,
+                                     center_type=center_type,
+                                     placefields=placefields,
+                                     update_type=update_type,
+                                     join_levels=join_levels,
+                                     filter_duplicates=filter_duplicates,
+                                     comp_norm=comp_norm,
+                                     maze_norm=maze_norm,
+                                     uniform_initial=uniform_initial)
+        elif hnov_type==2:  
+            bp = baseparams_h2mbnor(levels,
+                                     notrace=notrace,
+                                     center=center,
+                                     center_type=center_type,
+                                     placefields=placefields,
+                                     update_type=update_type,
+                                     join_levels=join_levels,
+                                     filter_duplicates=filter_duplicates,
+                                     comp_norm=comp_norm,
+                                     maze_norm=maze_norm,
+                                     uniform_initial=uniform_initial)
 
     return bp
 
 # Method returns three dictionaries of hybrid parameters
-def baseparams_hybrid(path_surnor=''):
+def baseparams_hybrid(path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/'):
     params_exp = base_params_mbnortree_exp.copy()
     params_hybrid = {'w_mf':0.5, 'w_mb':0.5,'sim_name':'hybrid_balanced'}
     params_exp.update(params_hybrid)
+    # params_mb = nor.import_params_surnor(path=f'{base_path}/src/mbnor/')
     params_mb  = nor.import_exploration_params_surnor(path=path_surnor)
     params_mf  = base_params_nACtree.copy()
     return params_exp,params_mb,params_mf
@@ -720,7 +1001,7 @@ def baseparams_hybrid(path_surnor=''):
 # Method combines three dictionaries of hybrid parameters into single parameter dictionary
 def comb_params(p_exp,p_mb,p_mf):
     p_mb.update(p_exp)
-    overlap = ['rec_type','k','ntype','k_alph','h','w']
+    overlap = ['rec_type','k','ntype','h','w']
     for i in range(len(overlap)):
         if overlap[i] in p_mf.keys(): p_mf[f'mf_{overlap[i]}'] = p_mf.pop(overlap[i])
         if overlap[i] in p_mb.keys(): p_mb[f'mb_{overlap[i]}'] = p_mb.pop(overlap[i])
@@ -728,25 +1009,71 @@ def comb_params(p_exp,p_mb,p_mf):
     return p_mf
 
 # Method returns single parameter dictionary
-def baseparams_hybrid_comb(path_surnor=''):
+def baseparams_hybrid_comb(path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/'):
     p_exp, p_mb, p_mf = baseparams_hybrid(path_surnor=path_surnor)
     p_mf = comb_params(p_exp,p_mb,p_mf)
     return p_mf
 
 # Method returns three dictionaries with params for granular hybrid agent
-def baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='',update_type=None):
-    params_exp  = get_baseparams_all_hnor(mb_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+def baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',placefields=False,path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/',update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
+
+    params_exp  = get_baseparams_all_hnor(mb_alg_type,
+                                            levels,
+                                            eps1=eps1,
+                                            hnov_type=hnov_type,
+                                            notrace=notrace,
+                                            center=center,
+                                            center_type=center_type,
+                                            placefields=placefields,
+                                            update_type=update_type,
+                                            join_levels=join_levels,
+                                            filter_duplicates=filter_duplicates,
+                                            comp_norm=comp_norm,
+                                            maze_norm=maze_norm,
+                                            uniform_initial=uniform_initial)
+    
     params_mb   = nor.import_exploration_params_surnor(path=path_surnor)
-    params_mf   = get_baseparams_all_hnac(mf_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,update_type=update_type)
+
+    params_mf   = get_baseparams_all_hnac(mf_alg_type,
+                                            levels,
+                                            eps1=eps1,
+                                            hnov_type=hnov_type,
+                                            notrace=notrace,
+                                            center=center,
+                                            center_type=center_type,
+                                            placefields=placefields,
+                                            update_type=update_type,
+                                            join_levels=join_levels,
+                                            filter_duplicates=filter_duplicates,
+                                            comp_norm=comp_norm,
+                                            maze_norm=maze_norm,
+                                            uniform_initial=uniform_initial)
 
     params_hybrid = {'w_mf':0.5, 'w_mb':0.5,'sim_name':'g-hybrid_balanced'}
+
     params_exp.update(params_hybrid)
 
     return params_exp,params_mb,params_mf
 
 # Method returns single dictionary with params for granular hybrid agent
-def baseparams_all_hhybrid_comb(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',path_surnor='',update_type=None):
-    p_exp, p_mb, p_mf = baseparams_all_hhybrid(mb_alg_type,mf_alg_type,levels,eps1=eps1,hnov_type=hnov_type,notrace=notrace,center=center,center_type=center_type,path_surnor=path_surnor,update_type=update_type)
+def baseparams_all_hhybrid_comb(mb_alg_type,mf_alg_type,levels,eps1=True,hnov_type=2,notrace=False,center=False,center_type='box',placefields=False,path_surnor='/lcncluster/becker/RL_reward_novelty/src/mbnor/',update_type=None,join_levels=True,filter_duplicates=False,comp_norm=True,maze_norm=False,uniform_initial=True):
+
+    p_exp, p_mb, p_mf = baseparams_all_hhybrid(mb_alg_type,
+                                                mf_alg_type,
+                                                levels,
+                                                eps1=eps1,
+                                                hnov_type=hnov_type,
+                                                notrace=notrace,
+                                                center=center,
+                                                center_type=center_type,
+                                                path_surnor=path_surnor,
+                                                placefields=placefields,
+                                                update_type=update_type,
+                                                join_levels=join_levels,
+                                                filter_duplicates=filter_duplicates,
+                                                comp_norm=comp_norm,
+                                                maze_norm=maze_norm,
+                                                uniform_initial=uniform_initial)
     p_mf = comb_params(p_exp,p_mb,p_mf)
     return p_mf
 

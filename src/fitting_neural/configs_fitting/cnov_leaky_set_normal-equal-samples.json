@@ -1,0 +1,1 @@
+{"model": "cnov_leaky", "set_num": "", "robustness": false, "comp_type": "fit", "weighting": "equal-samples", "drop_type": "sample", "sampling_type": "normal", "run_from_cluster": false}

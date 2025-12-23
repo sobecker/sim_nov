@@ -7,14 +7,24 @@ from argparse import ArgumentParser
 import fitting_neural.fit_homann as fit_homann
 import fitting_neural.load_homann_data as load_homann
 
-### Recomputes the fit / correlation of simulated to experimental data for all grid points ###
+################################################################################################################################################
+# This scripts computes the MSE fit / correlation of simulated to experimental data for all grid points, for four different types of models:
+# 1. Leaky count-based novelty (model='cnov_leaky')
+# 2. Fixed learning rate count-based novelty (model='cnov_fr')
+# 3. Leaky similarity-based novelty (model='snov-complex-leaky')
+# 4. Fixed learning rate similarity-based novelty (model='snov-complex-fr')
+#
+# Model and fitting parameters should be specified in the config file (see make_configs_fitting.py).
+#
+# To run the script from terminal, use:
+# python -u ./src/fitting_neural/run_fit_withconfig.py --config ./src/fitting_neural/configs_fitting/<name_config>.json
 
 ################################################################################################################################################
+
 def run_fit_new_withconfig(config):
     # Specify what to compute
     comp_type  = config['comp_type'] if 'comp_type' in config else 'fit'            # 'fit' or 'corr'
     model      = config['model']     # 'cnov_leaky', 'cnov_fr' or 'snov-complex-leaky', 'snov-complex-fr'
-    nonleaky   = config['nonleaky'] if 'leaky' in model else False
     robustness = config['robustness'] if 'robustness' in config else False         # whether to fit robustness simulations (TRUE) or regular simulations (FALSE)
 
     if comp_type=='fit':    
@@ -48,23 +58,22 @@ def run_fit_new_withconfig(config):
 
     # Where to save data
     if 'cnov' in model:
-        save_path_base = '/Users/sbecker/Projects/RL_reward_novelty/data/'
-        name_proj      = '2025_05_grid_search_new'
+        save_path_base = '/Users/sbecker/Projects/sim_nov/data/'
+        name_proj      = 'grid_search_results'
         name_set       = f'{model}' 
         save_path      = save_path_base + f'{name_proj}/{name_set}/'
 
     elif 'snov' in model and robustness:
         set_num        = config['set_num'] if 'set_num' in config else 1
-        save_path_base = '/lcncluster/becker/RL_reward_novelty/data/' if run_from_cluster else '/Volumes/lcncluster/becker/RL_reward_novelty/data/'
-        # name_proj      = '2025_07_robustness_shape_width'
-        name_proj      = '2025_07_robustness2_width'
+        save_path_base = '/lcncluster/becker/sim_nov/data/' if run_from_cluster else '/Volumes/lcncluster/becker/sim_nov/data/'
+        name_proj      = 'robustness2_width'
         name_set       = f'{model}_set{set_num}_sep' 
         save_path      = save_path_base + f'{name_proj}/{name_set}/combined_data/'
 
     elif 'snov' in model and not robustness:
-        set_num        = config['set_num'] if 'set_num' in config else (9 if 'leaky' in model else 7) # 5 for leaky, 7 for fr
-        save_path_base = '/lcncluster/becker/RL_reward_novelty/data/' if run_from_cluster else '/Volumes/lcncluster/becker/RL_reward_novelty/data/'
-        name_proj      = '2025_05_grid_search_new'
+        set_num        = config['set_num'] if 'set_num' in config else (9 if 'leaky' in model else 7) 
+        save_path_base = '/lcncluster/becker/sim_nov/data/' if run_from_cluster else '/Volumes/lcncluster/becker/sim_nov/data/'
+        name_proj      = 'grid_search_results'
         name_set       = f'{model}_set{set_num}_sep' 
         save_path      = save_path_base + f'{name_proj}/{name_set}/combined_data/'
 
@@ -290,11 +299,12 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        config = json.load(open('./src/scripts/gabor_kernels/grid_search_new/configs_fitting/snov-complex-fr_set7_outerjack-cv-drop-exp-equal-exp.json'))
-
+        # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_normal-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_jackknife-loo-drop-sample-equal-samples.json'))
+        config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_outerjack-cv-drop-sample-equal-samples.json'))
+       
     print(config)
 
     run_fit_new_withconfig(config)
 
-    # run from terminal:  
-    # python -u ./src/scripts/gabor_kernels/grid_search_new/run_fit_new_withconfig.py --config ./src/scripts/gabor_kernels/grid_search_new/configs_fitting/snov-complex-fr_set7_jackknife-loo-drop-sample-equal-samples.json
+    

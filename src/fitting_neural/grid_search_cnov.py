@@ -1,29 +1,27 @@
 import numpy as np
 import pandas as pd
-
 import os
-
 import models.cnov.count_nov as cnov
 import utils.saveload as sl
 import fitting_neural.load_homann_data as load_homann
 import fitting_neural.fit_homann as fit_homann
 
+###########################################################################################
+# This scripts runs a grid search for two types of models:
+# 1. Leaky count-based novelty (model='leaky'; parameters: alph_leak, eps)
+# 2. Fixed learning rate count-based novelty (model='fr'; parameter: alph_lr)
+###########################################################################################
 
-# Run grid search for two types of models:
-# 1. Leaky counts (parameter: alph_leak, eps)
-# 2. Fixed learning rate (parameter: alph_lr)
-
-model = 'fr' # 'leaky' or 'fr'
-setname = '' # set name for the grid search (e.g. '1', '2', '3')
+model   = 'leaky' # 'leaky' or 'fr'
+setname = ''      # [OPTIONAL] set name for the grid search (e.g. '1', '2', '3'), default: ''
 
 # Specify save path for data
-save_path = f'/Users/sbecker/Projects/RL_reward_novelty/data/2025_05_grid_search_new/cnov_{model}/'
+save_path = sl.get_rootpath() / 'data' / 'grid_search_results' / f'cnov_{model}'
 sl.make_long_dir(save_path)
 
 # Define grid search parameters
 if model=='leaky':
     grid_var1 = [0, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99, 0.999] # alph_leak: leakiness of counts (0 = no leak, 1 = full leak)
-    # grid_var2 = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,5,10,20,50] # eps: prior for counts
     grid_var2 = [0.000001,0.00001,0.0001,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,5,10,20,50] # eps: prior for counts
 
 elif model=='fr':
@@ -35,7 +33,7 @@ else:
 
 grid_var3 = [0,2,10,50,500,5000] # number of additional (non-observed) states
 
-# Generate Homann input sequence (no variability)
+# Generate Homann input sequence for count-based novelty (no noise due to counting)
 params_input = {'n_fam':     [1,3,8,18,38],
                 'n_im':      [3,6,9,12],
                 'dN':        list(np.array([0,22,44,66,88,110,143])/0.3)} #[0,70,140,210,280,360,480]}
@@ -70,13 +68,13 @@ for i in range(len(grid_var1)):
             stim_unique_k = np.concatenate([stim_unique,np.arange(stim_unique[-1]+1,stim_unique[-1]+1+grid_var3[k])]) # add additional states
         
             try:
-                # Simulate tau_emerge
+                # Simulate L-experiment
                 stats_l, data_l = cnov.sim_tau_emerge2(stim_unique_k,inputs[0],params_input['n_fam'],eps=eps,alph_leak=alph_leak,k_alph=k_alph,model=model,record_steady=True)
 
-                # Simulate tau_recovery
+                # Simulate L'-experiment
                 stats_lp, data_lp = cnov.sim_tau_recovery2(stim_unique_k,inputs[1],params_input['dN'],eps=eps,alph_leak=alph_leak,k_alph=k_alph,model=model,record_steady=True)
 
-                # Simulate tau_memory
+                # Simulate M-experiment
                 stats_m, stats_m_steady, data_m = cnov.sim_tau_memory2(stim_unique_k,inputs[2],params_input['n_im'],eps=eps,alph_leak=alph_leak,k_alph=k_alph,model=model)
 
                 # Save data
@@ -98,22 +96,25 @@ for i in range(len(grid_var1)):
                 data_counts.append((stats_m['n_im'].values,stats_m['nt_norm'].values))
                 data_counts.append((stats_m_steady['n_im'].values,stats_m_steady['steady'].values))
 
-
-                pred_data, coef, shift, mse_comb, [mse_tem,mse_trec,mse_tmem,mse_steady] = fit_homann.fit_homann_exp(data_counts,homann_data,coef_steady=True,regr_meas='score',save_path='')
-                pd.DataFrame({'n_fam': pred_data[0][0],'nt_norm': pred_data[0][1]}).to_csv(os.path.join(save_path_i,'pred_data_l.csv'))
-                pd.DataFrame({'dN': pred_data[1][0],'tr_norm': pred_data[1][1]}).to_csv(os.path.join(save_path_i,'pred_data_lp.csv'))
-                pd.DataFrame({'n_im': pred_data[2][0],'nt_norm': pred_data[2][1]}).to_csv(os.path.join(save_path_i,'pred_data_m.csv'))
-                pd.DataFrame({'n_im': pred_data[2][0],'steady': pred_data[3][1]}).to_csv(os.path.join(save_path_i,'pred_data_m_steady.csv'))
-                pd.DataFrame({'coef': coef,'shift': shift},index=[0]).to_csv(os.path.join(save_path_i,'coef_fit.csv'))
+                # coef, shift, yres_df, [train_rss, train_mse, train_nmse]
+                # pred_data, coef, shift, mse_comb, [mse_tem,mse_trec,mse_tmem,mse_steady] = fit_homann.fit_homann_exp(data_counts,homann_data,coef_steady=True,save_path='')
+                # pd.DataFrame({'n_fam': pred_data[0][0],'nt_norm': pred_data[0][1]}).to_csv(os.path.join(save_path_i,'pred_data_l.csv'))
+                # pd.DataFrame({'dN': pred_data[1][0],'tr_norm': pred_data[1][1]}).to_csv(os.path.join(save_path_i,'pred_data_lp.csv'))
+                # pd.DataFrame({'n_im': pred_data[2][0],'nt_norm': pred_data[2][1]}).to_csv(os.path.join(save_path_i,'pred_data_m.csv'))
+                # pd.DataFrame({'n_im': pred_data[2][0],'steady': pred_data[3][1]}).to_csv(os.path.join(save_path_i,'pred_data_m_steady.csv'))
+                # pd.DataFrame({'coef': coef,'shift': shift},index=[0]).to_csv(os.path.join(save_path_i,'coef_fit.csv'))
             
-                mse_mean = np.nanmean([mse_tem, mse_trec, mse_tmem, mse_steady])
-                mse_fit = pd.DataFrame({'mse_comb': mse_comb,
-                                        'mse_mean': mse_mean,
-                                        'mse_tem': mse_tem,
-                                        'mse_trec': mse_trec,
-                                        'mse_tmem': mse_tmem,
-                                        'mse_steady': mse_steady},index=[0])
-                mse_fit.to_csv(os.path.join(save_path_i,'mse_fit.csv'))
+                # mse_mean = np.nanmean([mse_tem, mse_trec, mse_tmem, mse_steady])
+                # mse_fit = pd.DataFrame({'mse_comb': mse_comb,
+                #                         'mse_mean': mse_mean,
+                #                         'mse_tem': mse_tem,
+                #                         'mse_trec': mse_trec,
+                #                         'mse_tmem': mse_tmem,
+                #                         'mse_steady': mse_steady},index=[0])
+                # mse_fit.to_csv(os.path.join(save_path_i,'mse_fit.csv'))
+
+                coef, shift, _, [train_rss, train_mse, train_nmse] = fit_homann.fit_homann_exp(data_counts,homann_data,coef_steady=True,save_path='')
+                mse_fit = pd.DataFrame({'mse_comb': train_mse},index=[0])
 
                 mse_fit['grid_id']      = c_grid
                 mse_fit['alph_leak']    = alph_leak

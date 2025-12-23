@@ -2,16 +2,45 @@ import os
 import json
 import utils.saveload as sl
 
-path_configs = '/Users/sbecker/Projects/RL_reward_novelty/src/scripts/gabor_kernels/grid_search_new/configs_fitting/'
+################################################################################################################################################
+# This scripts creates the config files for run_fit_withconfig.py for four different types of models:
+# 1. Leaky count-based novelty (model='cnov_leaky')
+# 2. Fixed learning rate count-based novelty (model='cnov_fr')
+# 3. Leaky similarity-based novelty (model='snov-complex-leaky')
+# 4. Fixed learning rate similarity-based novelty (model='snov-complex-fr')
+################################################################################################################################################
+
+path_configs = sl.get_rootpath() / 'src' / 'fitting_neural' / 'configs_fitting'
 sl.make_long_dir(path_configs)
 
-models          = ['snov-complex-fr', 'snov-complex-fr', 'snov-complex-fr']
-set_num         = [[7,8], [7,8], [7,8]]
-robustness      = [False] * len(set_num)
-weighting       = ['equal-exp'] * len(set_num)
-drop_type       = ['exp'] * len(set_num)
-sampling_type   = ['jackknife-loo', 'outerjack-cv', 'normal'] 
+# Specify models and settings for which to create configs -- EDIT HERE TO CREATE DIFFERENT CONFIGS --
+# Case 1: Full fitting for leaky count-based novelty
+models          = ['cnov_leaky', 'cnov_leaky', 'cnov_leaky']
+set_num         = ['', '', '']
 
+# Case 2: Full fitting for fixed learning rate count-based novelty
+# models          = ['cnov_fr', 'cnov_fr', 'cnov_fr']
+# set_num         = ['', '', '']
+
+# Case 3: Full fitting for leaky similarity-based novelty
+# models          = ['snov-complex-leaky', 'snov-complex-leaky', 'snov-complex-leaky']
+# set_num         = [[7,8], [7,8], [7,8]]
+
+# Case 4: Full fitting for fixed learning rate similarity-based novelty
+# models          = ['snov-complex-fr', 'snov-complex-fr', 'snov-complex-fr']
+# set_num         = [[7,8], [7,8], [7,8]]
+
+# Three different fits: 
+# (i) normal fitting (MSE), 
+# (ii) cross-validation (jackknife resampling), 
+# (iii) jackknife resampling of the cross-validation fit
+sampling_type   = ['normal', 'jackknife-loo', 'outerjack-cv'] 
+robustness      = [False] * len(set_num)                # set to TRUE for robustness control
+weighting       = ['equal-samples'] * len(set_num)
+drop_type       = ['sample'] * len(set_num)
+run_from_cluster = False  # whether to run the fitting from cluster (True) or locally (False)
+
+################################################################################################################################################
 for i, (m,sn,rb,w,d,st) in enumerate(zip(models, set_num, robustness, weighting, drop_type, sampling_type)):
     # Create config
     config = {'model':          m,  
@@ -21,7 +50,7 @@ for i, (m,sn,rb,w,d,st) in enumerate(zip(models, set_num, robustness, weighting,
               'weighting':      w,   
               'drop_type':      d,            
               'sampling_type':  st, 
-              'run_from_cluster': True  
+              'run_from_cluster': run_from_cluster  
              }
     
     # Create config name
