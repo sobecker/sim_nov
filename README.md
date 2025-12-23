@@ -30,3 +30,25 @@ sim_nov/
 └── README.md
 ```
 
+## Reproducing article results
+
+- Toy example (Figure 1, Figure S1): Run python notebook sim_nov/src/scripts/gabor_orientations/toy_example.ipynb
+
+- V1 novelty responses (Figure 2):
+    1. Run grid search.
+          - For count-based novelty: Run sim_nov/src/fitting_neural/grid_search_cnov.py
+          - For similarity-based novelty: Run sim_nov/src/fitting_neural/grid_search_snov.py with config files. Config files created in: sim_nov/src/fitting_neural/make_configs_snov.py
+    2. Run fitting to neural data
+          - If grid search results for a given model were saved in separate folders (e.g. to simplify parallelization), combine data with sim_nov/src/fitting_neural/combine_data_snov.py as needed.
+          - Run sim_nov/src/fitting_neural/run_fit_withconfig.py with config files. Config files created in sim_nov/src/fitting_neural/make_configs_fitting.py
+    4. Create visualizations.
+          - Run sim_nov/src/scripts/homann_analysis/plot_crossvalidation.ipynb 
+  
+- Controls for V1 novelty responses (Figure S3-S4):
+    - Parameter robustness (Fig. S3 A-E): Accesses same data as Figure 2. Run python notebook sim_nov/src/scripts/homann_analysis/plot_gridsearch_robustness.ipynb
+    - Component width variation (Fig. S3 F): Run grid search (sim_nov/src/fitting_neural/grid_search_snov.py) with config files created in sim_nov/src/fitting_neural/make_configs_robustness2.py
+    - Comparison with fixed-rate models: Run grid search, fitting and visualization as for Figure 2 but for fixed-rate count-based novelty and fixed-rate similarity-based novelty models.
+ 
+- Exploration behavior (Figure 3, Figure S5): 
+
+- Sum-of-parts protocol (Figure 4, Figure S6):
