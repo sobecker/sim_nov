@@ -1,0 +1,6 @@
+1590: S = 13 + 0, alph_leak = 0.999, eps = 50, k_alph = None.
+ Singular matrix
+1591: S = 13 + 2, alph_leak = 0.999, eps = 50, k_alph = None.
+ Singular matrix
+1594: S = 13 + 500, alph_leak = 0.999, eps = 50, k_alph = None.
+ Singular matrix

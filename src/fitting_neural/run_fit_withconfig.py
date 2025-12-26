@@ -301,7 +301,19 @@ if __name__=="__main__":
     else: 
         # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_normal-equal-samples.json'))
         # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_jackknife-loo-drop-sample-equal-samples.json'))
-        config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_outerjack-cv-drop-sample-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_leaky_set_outerjack-cv-drop-sample-equal-samples.json'))
+
+        # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_fr_set_normal-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/cnov_fr_set_jackknife-loo-drop-sample-equal-samples.json'))
+        config = json.load(open('./src/fitting_neural/configs_fitting/cnov_fr_set_outerjack-cv-drop-sample-equal-samples.json'))
+
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-leaky_set1_normal-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-leaky_set1_jackknife-loo-drop-sample-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-leaky_set1_outerjack-cv-drop-sample-equal-samples.json'))
+
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-fr_set1_normal-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-fr_set1_jackknife-loo-drop-sample-equal-samples.json'))
+        # config = json.load(open('./src/fitting_neural/configs_fitting/snov-complex-fr_set1_outerjack-cv-drop-sample-equal-samples.json'))
        
     print(config)
 

@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import multiprocessing as mp
 from scipy.special import binom
-import itertools
 
 import json
 from argparse import ArgumentParser
@@ -17,8 +16,18 @@ import fitting_neural.create_homann_input as h_in
 import fitting_neural.load_homann_data as load_homann
 import fitting_neural.fit_homann as fit_homann
 
+################################################################################################################################################
+# This scripts runs a grid search for two types of models:
+# 1. Leaky similarity-based novelty (model='leaky'; parameters: alph_leak, eps)
+# 2. Fixed learning rate similarity-based novelty (model='fr'; parameter: alph_lr)
 
-## This script runs a grid search over the parameters of the simple cell kernel novelty model, simulating several samples of the Homann experiments for each parameter combination. ##
+# For each grid point, several instantiations of the Homann experiments (source of randomness: images ~ 40 random Gabors) are simulated.
+
+# Parameters for the grid search (including model specifications) should be specified in config files (see make_configs_snov.py).
+
+# Running grid search from terminal:  
+# # python -u ./src/fitting_neural/grid_search_snov.py --config ./src/fitting_neural/configs_gridsearch/<name_set>/<name_config>.json  
+################################################################################################################################################
 
 ############################################################################################################
 #               Function to simulate single L-experiment (tau emerge)                                      #
@@ -543,20 +552,14 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        # config = json.load(open('./src/scripts/gabor_kernels/grid_search_new/configs/snov-complex-fr_set2_sep/job-0_test.json'))
-        # config = json.load(open('./src/scripts/gabor_kernels/grid_search_new/configs/snov-complex-fr_set2_sep/job-0_test2.json'))
-        # config = json.load(open('./src/scripts/gabor_kernels/grid_search_new/configs/2025_07_robustness_shape_width/snov-complex-fr_set1_sep/job-0-test.json'))
-        config = json.load(open('./src/scripts/gabor_kernels/grid_search_new/configs/snov-simple-leaky_set1_sep/job-0-test.json'))
+        # config = json.load(open('./src/fitting_neural/configs_gridsearch/snov-complex-leaky_set1_sep/job-0_test.json'))
+        # config = json.load(open('./src/fitting_neural/configs_gridsearch/snov-complex-fr_set1_sep/job-0_test.json'))
 
+        config = json.load(open('./src/fitting_neural/configs_robustness/gridsearch_robustness_width/snov-complex-leaky_set2_sep/job-0_test.json'))
+        
     print(config)
 
     run_grid_search_config(config)
-
-    # run from terminal:  
-    # python -u ./src/scripts/MLE/mle_fit.py --config ./src/scripts/MLE/mle_fit_configs/mle_nor-naive_lambda_N.json
-
-
-        
 
     
 

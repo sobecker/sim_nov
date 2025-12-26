@@ -15,20 +15,20 @@ sl.make_long_dir(path_configs)
 
 # Specify models and settings for which to create configs -- EDIT HERE TO CREATE DIFFERENT CONFIGS --
 # Case 1: Full fitting for leaky count-based novelty
-models          = ['cnov_leaky', 'cnov_leaky', 'cnov_leaky']
-set_num         = ['', '', '']
+# models          = ['cnov_leaky', 'cnov_leaky', 'cnov_leaky']
+# set_num         = ['', '', '']
 
 # Case 2: Full fitting for fixed learning rate count-based novelty
 # models          = ['cnov_fr', 'cnov_fr', 'cnov_fr']
 # set_num         = ['', '', '']
 
 # Case 3: Full fitting for leaky similarity-based novelty
-# models          = ['snov-complex-leaky', 'snov-complex-leaky', 'snov-complex-leaky']
-# set_num         = [[7,8], [7,8], [7,8]]
+models          = ['snov-complex-leaky', 'snov-complex-leaky', 'snov-complex-leaky']
+set_num         = [1, 1, 1]
 
 # Case 4: Full fitting for fixed learning rate similarity-based novelty
 # models          = ['snov-complex-fr', 'snov-complex-fr', 'snov-complex-fr']
-# set_num         = [[7,8], [7,8], [7,8]]
+# set_num         = [1, 1, 1]
 
 # Three different fits: 
 # (i) normal fitting (MSE), 

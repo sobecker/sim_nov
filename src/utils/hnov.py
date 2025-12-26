@@ -1,8 +1,10 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors
 from matplotlib import cm
+import itertools
 import os
 import sys
 import utils.tree_env as tree
@@ -86,89 +88,250 @@ def assign_av(mytree):
     return tr, mp, mp_matrix
 
 # Make hierarchy with arbitrary number of levels
-def make_hierarchy(rtree,levels,hnov_type=None,update_type=None,notrace=False,center=False,center_type='box',eps1=True):                       # levels is list of tree levels whose nodes are centers, e.g. [0,2,4,6], center_type='box' or 'triangle'
+def make_hierarchy(rtree,levels,join_levels=True,filter_duplicates=False,hnov_type=None,update_type=None,notrace=False,center=False,center_type='box',placefields=False,comp_norm=True,maze_norm=False,eps1=True,uniform_initial=True):                       # levels is list of tree levels whose nodes are centers, e.g. [0,2,4,6], center_type='box' or 'triangle'
+
+    ## Create maze environment ########################################################
     x, P, R, T = tree.tree_df2list(rtree)  
-
     tr, mp, mp_matrix = assign_av(rtree)                # action vector representation
-    w = list(1/len(levels)*np.ones(len(levels)))   # weights balancing novelties on different levels of the hierarchy; (list of len(h))
-    
-    # Initialize kernel weights, centers and widths (if applicable)
-    if notrace:
-        h_kc_k = [rtree.loc[rtree.level==levels[i],'state'].values for i in range(len(levels))]                 # Leaf kernel centers
-        h_ki_k = [[levels[i]+1]*len(h_kc_k[i]) for i in range(len(levels))]                                     # Leaf kernel widths
-        if center:
-            h_kc_s_all = [rtree.loc[(rtree.level>=0) & (rtree.level<levels[i]),'state'].values for i in range(len(levels))]                  # All states outside of the leaf kernels
-            h_kc_s = [np.append(np.array([0]),rtree.loc[rtree.level==0,'state'].values) for i in range(len(levels))]       # Center kernel center
-            h_ki_s = [[1] + [levels[i]]*len(h_kc_s[i]) for i in range(len(levels))]                                           # Center kernel width
-        else:
-            h_kc_s = [rtree.loc[rtree.level<levels[i],'state'].values for i in range(len(levels))]                      # All states outside of the leaf kernels = separate kernels
-            h_ki_s = [[1]*len(h_kc_s[i]) for i in range(len(levels))]                                                   # Kernel widths = 1 for all
-        h_kc = [np.append(h_kc_k[i],h_kc_s[i]) for i in range(len(levels))]                                     # Kernel centers for each level of the hierarchy (list of arrays of len(h))
-        h_ki = [np.append(h_ki_k[i],h_ki_s[i]) for i in range(len(levels))]                                     # Kernel widths for each level of the hierarchy (list of arrays of len(h))
-    else:
-        if center:
-            h_kc_s_all = [rtree.loc[(rtree.level>=0) & (rtree.level<levels[i]),'state'].values for i in range(len(levels))]                  # All states outside of the leaf kernels
-            h_kc   = [np.append(np.array([1,0]),rtree.loc[rtree.level==i,'state'].values) for i in levels]            # kernel centers for each level of the hierarchy (list of arrays of len(h))
-            h_ki   = [[levels[i],1]+[levels[i]+1]*(len(h_kc[i])-2) for i in range(len(levels))]                               # kernel widths for each level of the hierarchy (list of len(h))
-        else:
-            h_kc   = [np.append(np.array([0]),rtree.loc[rtree.level==i,'state'].values) for i in levels]            # kernel centers for each level of the hierarchy (list of arrays of len(h))
-            h_ki   = [[1]+[levels[i]+1]*(len(h_kc[i])-1) for i in range(len(levels))]                               # kernel widths for each level of the hierarchy (list of len(h))
-    
-    h_w    = [1/len(h_kc[i])*np.ones(len(h_kc[i])) for i in range(len(w))]                           # initial kernel mixture weights for each level of the hierarchy (list of arrays of len(h))
-    if eps1:
-        eps    = [1]*len(h_w)                                                           
-    else:
-        eps    = [1/(len(h_w[i])**2) for i in range(len(h_w))]                                       
 
-    # Create kernel matrices for each level of the hierarchy
-    k_list = []
-    for i in range(len(h_w)):
-        k = np.zeros((len(x),len(h_w[i])))
-        if notrace:
+    ## Assign relative weights of different levels of the hierarchy ###################
+    if join_levels:
+        w = [1]                                        # weights balancing novelties on different levels of the hierarchy; (list of len(h))
+    else:
+        w = list(1/len(levels)*np.ones(len(levels)))   # weights balancing novelties on different levels of the hierarchy; (list of len(h))
+    
+    ## Adjust format of input parameters to multi-level ################################
+    comp_spec = dict(zip(['notrace','center','center_type','placefields'],[notrace,center,center_type,placefields])) # dictionary of component specifications
+    for k_cs, v_cs in comp_spec.items():
+        if not isinstance(v_cs, list):
+            comp_spec[k_cs] = [v_cs]*len(levels) # make list of length levels if single value provided
+
+    ## Make components for each level ##################################################
+    df_level        = [] # component information for each level
+    h_kc_all        = [] # component centers for each level
+    h_ki_all        = [] # component widths for each level
+    k_list          = [] # component activation matrix for each level
+    w_factors_list  = [] # normalization factors for each level
+    for ll in range(len(levels)):
+
+        ## Initialize kernel weights, centers and widths (if applicable) ##############
+        if comp_spec['placefields'][ll]:  
+
+            h_kc_s = rtree['state'].values       # Centers for width-1 components (all states in the maze, 'small' place fields)
+            h_ki_s = [1]*len(h_kc_s)             # Widths for width-1 components
+
+            h_kc_k = rtree.loc[rtree.level==levels[ll],'state'].values   # Centers for width-2 components (only on given level, 'large' place fields)
+            h_ki_k = [levels[ll]+1]*len(h_kc_k)                          # Widths for width-2 components
+            h_kc_kminus = rtree.loc[rtree.level==levels[ll]+2,'state'].values   # Center for components to subtract (for computation of width-2 components)
+            h_ki_kminus = [levels[ll]+3]*len(h_kc_kminus)                            # Widths for components to subtract (for computation of width-2 components)
+
+            h_kc = np.append(h_kc_k,h_kc_s)        # Kernel centers for current level of the hierarchy
+            h_ki = np.append(h_ki_k,h_ki_s)        # Kernel widths for current level of the hierarchy
+            h_kc_all.append(h_kc)
+            h_ki_all.append(h_ki)
+
+            df_level_i = pd.DataFrame({'center': h_kc, \
+                                        'width': h_ki, \
+                                        'level_id': [ll]*len(h_kc), \
+                                        'level': [levels[ll]]*len(h_kc), \
+                                        'type': ['placefields']*len(h_kc), \
+                                        'small_comp': [False]*len(h_kc_k) + [True]*len(h_kc_s), \
+                                        'large_comp': [True]*len(h_kc_k) + [False]*len(h_kc_s)})
+            df_level.append(df_level_i)
+
+        elif comp_spec['notrace'][ll]:
+
+            h_kc_k = rtree.loc[rtree.level==levels[ll],'state'].values              # Leaf kernel centers
+            h_ki_k = [levels[ll]+1]*len(h_kc_k)                                     # Leaf kernel widths
+
+            if comp_spec['center'][ll]:
+                h_kc_s_all = rtree.loc[(rtree.level>=0) & (rtree.level<levels[ll]),'state'].values      # All states outside of the leaf kernels
+                h_kc_s     = np.append(np.array([0]),rtree.loc[rtree.level==0,'state'].values)          # Center kernel center
+                h_ki_s     = [1] + [levels[ll]]*(len(h_kc_s)-1)                                         # Center kernel width
+
+            else:
+                h_kc_s = rtree.loc[rtree.level<levels[ll],'state'].values            # All states outside of the leaf kernels = separate kernels
+                h_ki_s = [1]*len(h_kc_s)                                             # Kernel widths = 1 for all
+
+            h_kc = np.append(h_kc_k,h_kc_s)        # Kernel centers for current level of the hierarchy
+            h_ki = np.append(h_ki_k,h_ki_s)        # Kernel widths for current level of the hierarchy
+            h_kc_all.append(h_kc)
+            h_ki_all.append(h_ki)
+
+            df_level_i = pd.DataFrame({'center': h_kc, \
+                                        'width': h_ki, \
+                                        'level_id': [ll]*len(h_kc), \
+                                        'level': [levels[ll]]*len(h_kc), \
+                                        'type': ['box']*len(h_kc), \
+                                        'leaf_comp': [comp_j in h_kc_k for comp_j in h_kc], \
+                                        'center_comp': [comp_j in h_kc_s for comp_j in h_kc]})
+            df_level.append(df_level_i)
+
+        else:
+            if comp_spec['center'][ll]:
+                h_kc_s_all = rtree.loc[(rtree.level>=0) & (rtree.level<levels[ll]),'state'].values            # All states outside of the leaf kernels
+                h_kc       = np.append(np.array([1,0]),rtree.loc[rtree.level==levels[ll],'state'].values)     # kernel centers for current level of the hierarchy 
+                h_ki       = [[levels[ll],1]+[levels[ll]+1]*(len(h_kc)-2)]
+            else:
+                h_kc   = np.append(np.array([0]),rtree.loc[rtree.level==levels[ll],'state'].values)           # kernel centers for current level of the hierarchy
+                h_ki   = [1]+[levels[ll]+1]*(len(h_kc)-1)                                                     # kernel widths for current level of the hierarchy
+                h_kc_all.append(h_kc)
+                h_ki_all.append(h_ki)
+
+            df_level_i = pd.DataFrame({'center': h_kc, \
+                                    'width': h_ki, \
+                                    'level_id': [ll]*len(h_kc), \
+                                    'level': [levels[ll]]*len(h_kc), \
+                                    'type': ['triangle']*len(h_kc), \
+                                    'leaf_comp': [True]*len(h_kc), \
+                                    'center_comp': [True]*len(h_kc)})
+
+            if comp_spec['center'][ll]:
+                df_level_i.loc[df_level_i.center.isin(h_kc_s_all),'leaf_comp'] = False
+
+            df_level.append(df_level_i)
+        
+        ## Create kernel matrices for each level of the hierarchy #####################
+        k = np.zeros((len(x),len(h_kc))) # Initialize kernel matrix for level i, shape (|S|, number of kernels on level i)
+
+        if comp_spec['placefields'][ll]:
+            # Make 'large' placefield components
+            if len(h_kc_kminus)==0:
+                kminus_all = np.ones((len(x),), dtype=bool) # if no smaller placefields exist, do not subtract anything
+            else:
+                kminus = []
+                for j in range(len((h_kc_kminus))):
+                    kmin = 1/(2**(h_ki_kminus[j]))*np.prod(np.abs(mp_matrix[:,:h_ki_kminus[j]]+mp_matrix[h_kc_kminus[j],:h_ki_kminus[j]]),axis=1)
+                    kminus.append(kmin<1)
+                kminus_all = np.prod(np.array(kminus),axis=0) # shape (|S|), True for states inside any of the smaller placefields to be subtracted
+
+            # Initialize kernel matrix for level i, shape (|S|, number of kernels on level i)
+            for j in range(len((h_kc_k))):
+                kj1 = 1/(2**(h_ki_k[j]))*np.prod(np.abs(mp_matrix[:,:h_ki_k[j]]+mp_matrix[h_kc_k[j],:h_ki_k[j]]),axis=1) # shape (|S|) -- activations of a single component
+                k[:,j] = (kj1>=1) & (kminus_all)  # subtract outer part of box component
+            
+            # Make 'small' placefield components
+            for j in range(len((h_kc_s))):
+                k[:,len(h_kc_k)+j] = [1 if x==h_kc_s[j] else 0 for x in x]
+
+        elif comp_spec['notrace'][ll]:
             # Make leaf kernels (without trace, i.e. 'box' kernels)
-            for j in range(len((h_kc_k[i]))):
-                kj = 1/(2**h_ki_k[i][j])*np.prod(np.abs(mp_matrix[:,:h_ki_k[i][j]]+mp_matrix[h_kc_k[i][j],:h_ki_k[i][j]]),axis=1)
+            for j in range(len((h_kc_k))):
+                kj = 1/(2**h_ki_k[j])*np.prod(np.abs(mp_matrix[:,:h_ki_k[j]]+mp_matrix[h_kc_k[j],:h_ki_k[j]]),axis=1) # shape (|S|) -- activations of a single component
                 k[:,j] = kj>=1
             # Test: [np.where(k[:,ii]!=0) for ii in range(len(h_kc_k[i]))]
-            if center:
+
+            if comp_spec['center'][ll]:
                 # Make home cage kernel 
-                k[:,len(h_kc_k[i])] = [1 if x==0 else 0 for x in x]
-                if center_type=='triangle':
+                k[:,len(h_kc_k)] = [1 if x==0 else 0 for x in x]
+                if comp_spec['center_type'][ll]=='triangle':
                     # Make triangle kernels for states outside of the leaf kernels
-                    k[:,len(h_kc_k[i])+1] = 1/2**(np.sum(np.abs(mp_matrix[:]),axis=1)-1) * np.isin(x,h_kc_s_all[i]) 
+                    k[:,len(h_kc_k)+1] = 1/2**(np.sum(np.abs(mp_matrix[:]),axis=1)-1) * np.isin(x,h_kc_s_all) 
                 else: 
                     # Make box kernels for states outside of the leaf kernels
-                    k[:,len(h_kc_k[i])+1] = np.isin(x,h_kc_s_all[i]) 
+                    k[:,len(h_kc_k)+1] = np.isin(x,h_kc_s_all) 
+
             else:
                 # Make separate kernels for each state outside of the leaf kernels
-                for j in range(len(h_kc_s[i])):
-                    k[:,len(h_kc_k[i])+j] = [1 if x==h_kc_s[i][j] else 0 for x in x]
+                for j in range(len(h_kc_s)):
+                    k[:,len(h_kc_k)+j] = [1 if x==h_kc_s[j] else 0 for x in x]
+
         else:
-            if center:
+            if comp_spec['center'][ll]:
                 # Make leaf kernels (with trace, i.e. 'triangle' kernels)
-                for j in range(1,len(h_w[i])):
-                    k[:,j] = 1/(2**h_ki[i][j])*np.prod(np.abs(mp_matrix[:,:h_ki[i][j]]+mp_matrix[h_kc[i][j],:h_ki[i][j]]),axis=1)
-                if center_type=='triangle':
+                for j in range(1,len(h_kc)):
+                    k[:,j] = 1/(2**h_ki[j])*np.prod(np.abs(mp_matrix[:,:h_ki[j]]+mp_matrix[h_kc[j],:h_ki[j]]),axis=1)
+                if comp_spec['center_type'][ll]=='triangle':
                     # Make triangle kernels for states outside of the leaf kernels
-                    k[:,0] = 1/2**(np.sum(np.abs(mp_matrix[:]),axis=1)-1) * np.isin(x,h_kc_s_all[i])
+                    k[:,0] = 1/2**(np.sum(np.abs(mp_matrix[:]),axis=1)-1) * np.isin(x,h_kc_s_all)
                 else: 
                     # Make box kernels for states outside of the leaf kernels
-                    k[:,0] = np.isin(x,h_kc_s_all[i]) 
+                    k[:,0] = np.isin(x,h_kc_s_all) 
+
             else:
                 # Make leaf kernels (with trace, i.e. 'triangle' kernels)
-                for j in range(len(h_w[i])):
-                    k[:,j] = 1/(2**h_ki[i][j])*np.prod(np.abs(mp_matrix[:,:h_ki[i][j]]+mp_matrix[h_kc[i][j],:h_ki[i][j]]),axis=1)
-        # Normalize kernels
-        k = k/np.sum(k,axis=0)
-        #print(f"Kernel normalization check: sums of kernels across all states on level {i} are {[np.round(np.sum(k,axis=0),4)]}.\n") 
-        k_list.append(k)
+                for j in range(len(h_kc)):
+                    k[:,j] = 1/(2**h_ki[j])*np.prod(np.abs(mp_matrix[:,:h_ki[j]]+mp_matrix[h_kc[j],:h_ki[j]]),axis=1)
+
+        # Normalize kernels, so they sum to 1 across all states
+        if comp_norm:
+            w_factors = np.nansum(k,axis=0,keepdims=True)
+            k = k/w_factors
+            #print(f"Kernel normalization check: sums of kernels across all states on level {i} are {[np.round(np.sum(k,axis=0),4)]}.\n") 
+        else: 
+            w_factors = np.ones((1,k.shape[1]))
+
+        if maze_norm:
+            k = k/np.nanmean(k)
         
+        w_factors_list.append(w_factors)
+        k_list.append(k)
+
+    ## Join components levels if specified ############################################ 
+    if join_levels:
+
+        # Join lists of kernel centers and widths 
+        h_kc = [list(itertools.chain.from_iterable(h_kc_all))] # join all kernel centers of all levels
+        h_ki = [list(itertools.chain.from_iterable(h_ki_all))] # join all kernel widths of all levels                                
+
+        # Join dataframes with kernel info of all levels
+        df_level = pd.concat(df_level, ignore_index=True)
+
+        # Join kernel matrices of all levels
+        k_list         = [np.concatenate(k_list, axis=1)]           # shape (|S|, total number of kernels on all levels)
+        w_factors_list = [np.concatenate(w_factors_list, axis=1)]   # shape (1, total number of kernels on all levels)
+
+        # Identify duplicate kernels (same center and width) that appear on different levels of the hierarchy
+        valc      = df_level[['center','width']].value_counts()
+        valc.name = 'duplicates'
+        df_level  = df_level.merge(valc, on=['center','width'], how='left')
+
+        if filter_duplicates:
+            keep_idx = np.array(df_level.drop_duplicates(subset=['center','width'], keep='first').index.to_list())
+            df_level['keep'] = np.isin(np.arange(len(df_level)),keep_idx)
+            h_kc = [[h_kc_cc for idx_cc, h_kc_cc in enumerate(h_kc[0]) if idx_cc in keep_idx]]
+            h_ki = [[h_ki_cc for idx_cc, h_ki_cc in enumerate(h_ki[0]) if idx_cc in keep_idx]]
+            w_factors_list = [w_factors_list[0][:,keep_idx]]
+            k_list = [k_list[0][:,keep_idx]]
+
+        # Recompute weight normalization factors
+        sum_per_state = np.sum(k_list[0], axis=1)                   # sum of components per state
+        norm_per_state = 1/sum_per_state                            # normalization per state
+        w_factors = []
+        for j in range(k_list[0].shape[1]):
+            states_j = k_list[0][:,j]!=0
+            norm_j = norm_per_state[states_j]
+            if len(np.unique(norm_j))>1:
+                print(f'Warning: component {j} has variable normalization across states: {norm_j}\n')
+                w_factor_j = np.nanmean(norm_j)
+            else:
+                w_factor_j = np.unique(norm_j)[0]
+            w_factors.append(w_factor_j)
+        w_factors_list = [np.array(w_factors).reshape((1,-1))]
+        
+        df_level = [df_level]
+
+    ## Set component weights and epsilons #############################################
+    if uniform_initial:
+        h_w = [(w_factors_list[i]/np.sum(w_factors_list[i])).flatten() for i in range(len(w_factors_list))] # initial component weights are given as w_j^(0) = integral k_j(s) ds / sum_l integral k_l(s) ds
+        eps = [len(h_w[i])*h_w[i] for i in range(len(w_factors_list))] # epsilon needs to scale N*w0 the same (for leaky novelty!)
+    else:
+        h_w = [1/len(h_kc[i])*np.ones(len(h_kc[i])) for i in range(len(w))]  # initial kernel mixture weights for each level of the hierarchy (list of arrays of len(h))
+        eps = [len(h_w[i])*h_w[i] for i in range(len(h_w))]
+        # if eps1:
+        #     eps = [1]*len(h_w)  
+        # else: 
+        #     eps = h_w.copy()                                                         
+        # else:
+        #     eps = [1/(len(h_w[i])**2) for i in range(len(h_w))]  
+        
+    ## Combine all return information into dictionary #################################
     h={'h_k':None,'h_ki':h_ki,'h_kc':h_kc,'h_w':h_w,'mp':mp_matrix,'kmat':k_list,'eps':eps,'k_alph':0.1}
 
     if hnov_type: h['hnov_type']=hnov_type
     if update_type: h['update_type']=update_type
     
-    return w, h
+    return w, h, df_level
 
 # Plot maze
 def plot_maze(mytree,fig=None,ax=None,plot_walls=True,plot_state=True,plot_reward=True,plot_actions=False,partition=[]):

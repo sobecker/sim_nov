@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import itertools
 import matplotlib.pyplot as plt
+import models.snov.kernel_nov as knov
 import models.snov.run_gabor_knov2 as gknov2
 import models.snov.kernel_nov_vec as knov_vec  
 import models.snov.gabor_stimuli as gs

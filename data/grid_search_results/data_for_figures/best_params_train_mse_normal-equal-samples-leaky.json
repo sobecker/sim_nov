@@ -1,0 +1,1 @@
+[["cnov_leaky", {"alph_leak": 0.01, "eps": 5.0, "num_states_model": 5013.0, "train_mse": 1.9984534412685823e-06, "grid_id": 323.0}], ["snov-complex-leaky", {"alph_leak": 0.2, "eps": 1e-06, "cdens": 8.0, "knum": 2.0, "train_mse": 7.294218269199547e-07, "grid_id": 233.0}]]

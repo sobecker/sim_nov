@@ -237,6 +237,7 @@ class critic():
     def __init__(self,S,tauM,RM,w0,gamma,alph,lam,round_prec):
         self.round_prec = round_prec
         self.max_w      = 1.0e+300
+        self.range_TD   = [-sys.float_info.max, sys.float_info.max]
         
         #self.c          = rate_neuron(tauM,RM)
         self.c          = linear_unit()
@@ -296,7 +297,7 @@ class critic():
     def computeTD(self,v,v_next,M):
         TD      = M + self.gamma*v_next - v
         self.TD = TD
-        return round(TD,self.round_prec)
+        return np.clip(round(TD,self.round_prec), self.range_TD[0], self.range_TD[1])
     
 
     # Evaluate the critic based on the new state and the associated reward
@@ -328,9 +329,9 @@ class critic():
 
 class granular_n_critic(granular_critic):
         
-    def __init__(self,S,tauM,RM,w0,gamma,alph,lam,k,ntype,k_alph,h,w,round_prec):
+    def __init__(self,S,tauM,RM,w0,gamma,alph,lam,k,ntype,h,w,round_prec):
         super().__init__(S,h['kmat'][0],tauM,RM,w0,gamma,alph,lam,round_prec)
-        self.pc = pc(S,k,ntype,k_alph,h,w)
+        self.pc = pc(S,k,ntype,h,w)
         
     def evalMod(self,s_next,r):
         return self.pc.computeNovelty(s_next)
@@ -371,263 +372,400 @@ class r_critic(critic):
 class pc():
     ''' Perirhinal cortex (novelty-computing) unit'''
         
-    def __init__(self,S,k,ntype,k_alph=1,h=[],w=[]):
+    def __init__(self,S,k,ntype,h=[],w=[]):
         self.S      = S
         self.k      = k
         self.ntype  = ntype
-        self.counts = np.zeros(self.S)
         self.t      = 0                 # for novelty based on t
         #self.t      = np.zeros(self.S) # for novelty based on dt
-
-        if self.ntype=='N-ktemp':
-            self.kint   = np.zeros(len(self.counts))
-            if len(h)==0 or not 'n_buffer' in h.keys():
-                self.n_buffer = 5
-            else:
-                self.n_buffer = h['n_buffer']
-            self.buffer = np.zeros((len(self.counts),self.n_buffer))
-
-        if self.ntype=='N-kmix':
-            self.kint   = 0
-            if len(h)==0 or not 'n_buffer' in h.keys():
-                self.n_buffer = 5
-            else:
-                self.n_buffer = h['n_buffer']
-            self.buffer = np.zeros(self.n_buffer)
-
-        # Set weights (w), kernel hierarchy (h) and kernel hierarchy weights (wh)
-        if self.ntype=='hN':
-            # Set hnov type
-            hnov_type = h['hnov_type'] if (len(h)>0 and'hnov_type' in h.keys()) else 2
-            if hnov_type==2:
-                self.compute_hnov = self.compute_hnov2
-            elif hnov_type==3:
-                self.compute_hnov = self.compute_hnov3
-
-        if self.ntype=='hN-k':
-            hnov_type = 3
-            self.compute_hnov = self.compute_hnov3_kpop
+        self.range_nov = [-sys.float_info.max, sys.float_info.max]
+        self.range_fam = [sys.float_info.min, sys.float_info.max]
 
         if 'hN' in self.ntype:
             # Set update type (fixed/variable learning rate for novelty signal)
             self.update_type = h['update_type'] if (len(h)>0 and 'update_type' in h.keys()) else 'var'
-            if self.update_type=='fix':
-                self.update_hnov = self.update_hnov_fixedrate
+            self.update_hnov = eval(f'self.update_hnov_{self.update_type}rate')
+
+            # Set hnov type
+            if self.ntype=='hN-k':
+                hnov_type = 3
+                self.compute_hnov = self.compute_hnov3_kpop
+            else:
+                hnov_type = h['hnov_type'] if (len(h)>0 and'hnov_type' in h.keys()) else 2
+                # self.compute_hnov = eval(f'self.compute_hnov{hnov_type}')
+                if self.update_type=='fixed':
+                    self.compute_hnov = eval(f'self.compute_hnov{hnov_type}_log')
+                else:
+                    self.compute_hnov = eval(f'self.compute_hnov{hnov_type}')
+
+            # Set weights (w), kernel hierarchy (h) and kernel hierarchy weights (wh)
+            self.w      = w
+            self.mp     = h['mp'] # coordinate mapping (here: from states to action vectors)
+            self.h_k    = h['h_k'] # kernel functions
+            self.h_ki   = h['h_ki'] # kernel widths
+            self.h_kc   = h['h_kc'] # kernel centers
+            self.h_w    = h['h_w'] # kernel mixture weights
+            self.kmat   = h['kmat'] # kernel function matrix (list of matrices |S|xlen(av))
+
+            if self.update_type=='fixed':
+                self.eps       = None  
+                self.alph_leak = None
+                self.k_alph    = h['k_alph'] if 'k_alph' in h.keys() else 0.1
+                self.h_g       = None
+                self.h_w       = [np.log(self.h_w[i]) for i in range(len(self.h_w))]    # logspace weights
+                self.kmat      = [np.log(self.kmat[i]) for i in range(len(self.kmat))]  # logspace kernel matrices
+
+            elif self.update_type=='leaky':
+                self.eps       = h['eps_leak'] if 'eps_leak' in h.keys() else [1/(len(self.h_w[i])**2) for i in range(len(self.h_w))] 
+                self.alph_leak = h['alph_leak'] if 'alph_leak' in h.keys() else 0 
+                self.k_alph    = None
+                self.tt        = 0
+                self.h_g = [np.zeros(self.h_w[i].shape) for i in range(len(self.h_w))]  # integrated responsibilities
+
             elif self.update_type=='var':
-                self.update_hnov = self.update_hnov_varrate
-
-            self.w = w
-            self.mp = h['mp'] # coordinate mapping (here: from states to action vectors)
-            self.h_k = h['h_k'] # kernel functions
-            self.h_ki = h['h_ki'] # kernel widths
-            self.h_kc = h['h_kc'] # kernel centers
-            self.h_w = h['h_w'] # kernel mixture weights
-            self.kmat = h['kmat'] # kernel function matrix (list of matrices |S|xlen(av))
-            self.eps = h['k_alph'] if self.update_type=='fix' else h['eps'] # prior or fixed learning rate for novelty
-            if self.eps==None:
-                self.eps = [1/(len(self.h_w[i])**2) for i in range(len(self.h_w))]   
-            self.h_g = None
+                self.eps       = h['eps'] if 'eps' in h.keys() else [1/(len(self.h_w[i])**2) for i in range(len(self.h_w))] 
+                self.alph_leak = None
+                self.k_alph    = None
+                self.h_g = None
+   
         else:
-            self.w = None
-            self.mp = None
-            self.h_k = None
-            self.h_ki = None
-            self.h_kc = None
-            self.h_w = None
-            self.kmat = None
-            self.eps = k_alph # leakiness of counts; 1=not leaky (default)
-            self.h_g = None
+            # Set update type (fixed/variable learning rate for novelty signal)
+            self.update_type  = h['update_type'] if (len(h)>0 and 'update_type' in h.keys()) else 'var'
+            self.update_nov   = eval(f'self.update_nov_{self.update_type}rate')
+            self.compute_nov  = eval(f'self.compute_nov_{self.update_type}rate')
 
-    def compute_hnov2(self):
+            if self.ntype=='N-ktemp':
+                self.kint   = np.zeros(len(self.counts))
+                if len(h)==0 or not 'n_buffer' in h.keys():
+                    self.n_buffer = 5
+                else:
+                    self.n_buffer = h['n_buffer']
+                self.buffer = np.zeros((len(self.counts),self.n_buffer))
+
+            if self.ntype=='N-kmix':
+                self.kint   = 0
+                if len(h)==0 or not 'n_buffer' in h.keys():
+                    self.n_buffer = 5
+                else:
+                    self.n_buffer = h['n_buffer']
+                self.buffer = np.zeros(self.n_buffer)
+                    
+            # Set remaining params
+            if self.update_type=='fixed':
+                self.eps        = None
+                self.alph_leak  = None
+                self.k_alph     = h['k_alph'] if 'k_alph' in h.keys() else 0.1
+                # self.p          = 1/self.S * np.ones(S)
+                self.p          = np.log(1/self.S) * np.ones(S)
+            elif self.update_type=='leaky':
+                self.eps        = h['eps_leak'][0] if 'eps_leak' in h.keys() else 1
+                self.alph_leak  = h['alph_leak'] if 'alph_leak' in h.keys() else None
+                self.k_alph     = None
+                self.counts     = np.zeros(self.S)
+            elif self.update_type=='var':
+                self.eps        = 1
+                self.alph_leak  = None
+                self.k_alph     = None
+                self.counts     = np.zeros(self.S)
+
+            self.h_g = None
+            self.h_w = None
+
+    ### Novelty computation (snov) ####################################
+    def compute_hnov2(self): 
+
+        # Initialize
         nov_vec = np.zeros((np.size(self.kmat[-1],axis=0),len(self.kmat)))
-        nov = np.zeros(np.size(self.kmat[-1],axis=0))
-        for i in range(len(self.h_w)):       # for each level i in the hierarchy
+        nov     = np.zeros(np.size(self.kmat[-1],axis=0))
+
+        # Compute novelty for each level in the hierarchy + sum
+        for i in range(len(self.h_w)): 
             nov_vec[:,i] = -np.log(np.sum(self.kmat[i]*self.h_w[i],axis=1))-self.k 
-            nov += self.w[i]*nov_vec[:,i]      # summed novelty 
+            nov += self.w[i]*nov_vec[:,i]
+
         hnov = nov_vec
         #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(np.sum(self.kmat[i]*self.h_w[i],axis=1)),4) for i in range(len(self.h_w))]}.\n")
         return hnov, nov
 
     def compute_hnov3(self):
+
+        # Initialize
         nov_vec = np.zeros((np.size(self.kmat[-1],axis=0),len(self.kmat)))
-        nov = np.zeros(np.size(self.kmat[-1],axis=0))
-        for i in range(len(self.h_w)):           # for each level i in the hierarchy
+        nov     = np.zeros(np.size(self.kmat[-1],axis=0))
+
+        # Compute familiarity for each level in the hierarchy + sum 
+        for i in range(len(self.h_w)):           
             nov_vec[:,i] = np.sum(self.kmat[i]*self.h_w[i],axis=1)  
-            nov += self.w[i]*nov_vec[:,i]      # summed novelty (before log)
+            nov += self.w[i]*nov_vec[:,i] 
+
         hnov = nov_vec
-        nov = -np.log(nov)-self.k
+        nov  = -np.log(nov)-self.k # compute novelty (combined across hierarchy)
+        #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(nov_vec[:,i]),4) for i in range(len(self.h_w))]}.\n")
+        return hnov, nov
+    
+    def compute_hnov2_log(self): # kmat, hw in logspace
+
+        # Initialize
+        nov_vec = np.zeros((np.size(self.kmat[-1],axis=0),len(self.kmat)))
+        nov     = np.zeros(np.size(self.kmat[-1],axis=0))
+
+        # Compute novelty for each level in the hierachy + sum (log space)
+        for i in range(len(self.h_w)):      
+            nov_vec[:,i] = -np.log(np.sum(np.exp(self.kmat[i] + self.h_w[i]),axis=1))-self.k 
+            nov += self.w[i]*nov_vec[:,i] 
+
+        hnov = nov_vec
+        #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(np.sum(self.kmat[i]*self.h_w[i],axis=1)),4) for i in range(len(self.h_w))]}.\n")
+        return hnov, nov
+    
+    def compute_hnov3_log(self): # kmat, hw in logspace
+
+        # Initialize
+        nov_vec = np.zeros((np.size(self.kmat[-1],axis=0),len(self.kmat)))
+        nov     = np.zeros(np.size(self.kmat[-1],axis=0))
+
+        # Compute familiarity for each level in the hierachy + sum (log space)
+        for i in range(len(self.h_w)): 
+            nov_vec[:,i] = np.sum(np.exp(self.kmat[i] + self.h_w[i]),axis=1)  
+            nov += self.w[i]*nov_vec[:,i] 
+
+        hnov = nov_vec
+        nov  = -np.log(nov)-self.k
         #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(nov_vec[:,i]),4) for i in range(len(self.h_w))]}.\n")
         return hnov, nov
 
     def compute_hnov3_kpop(self):
+
+        # Initialize
         nov_vec = np.zeros((np.size(self.kmat[-1],axis=0),len(self.kmat)))
-        nov = np.zeros(np.size(self.kmat[-1],axis=0))
-        for i in range(len(self.h_w)):           # for each level i in the hierarchy
+        nov     = np.zeros(np.size(self.kmat[-1],axis=0))
+
+        # Compute familiarity for each level in the hierarchy
+        for i in range(len(self.h_w)):           
             nov_vec[:,i] = np.sum(self.kmat[i]*self.h_w[i],axis=1)  
-            nov += self.w[i]*nov_vec[:,i]      # summed novelty (before log)
+            nov += self.w[i]*nov_vec[:,i]   
+
         hnov = nov_vec
-        nov = -np.log(nov)
-        nov = nov-np.mean(nov)
+        nov  = -np.log(nov)
+        nov  = nov-np.mean(nov) # mean-normalized novelty
         #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(nov_vec[:,i]),4) for i in range(len(self.h_w))]}.\n")
         return hnov, nov
+    
+    ### Novelty computation (cnov) ####################################
+    def compute_nov_varrate(self):
+        return np.log((self.t+self.S)/(self.counts+1))  
 
+    def compute_nov_fixedrate(self): # p in logspace
+        return -self.p
+    
+    # def compute_nov_fixedrate(self):
+    #     return -np.log(self.p)
+
+    def compute_nov_leakyrate(self):
+        return np.log((self.t+self.S*self.eps)/(self.counts+self.eps))
+
+    ### Novelty computation (overall) #################################
     def computeNovelty(self,s):
         hnov = None
-        if self.ntype=='N':
-            nov = -np.log((self.counts[s]+1)/(self.t+self.S))
-        elif self.ntype=='-1/N':
-            nov = 1/np.log((self.counts[s]+1)/(self.t+self.S))
-        elif self.ntype=='N-k': 
-            nov = -np.log((self.counts[s]+1)/(self.t+self.S))-self.k
-        elif self.ntype=='N-ktemp':
-            nov = -np.log((self.counts[s]+1)/(self.t+self.S))-self.kint[s]
-        elif self.ntype=='N-kpop':
-            nov_vec = -np.log((self.counts+1)/(self.t+self.S))
-            nov = nov_vec[s]-np.mean(nov_vec)
-        elif self.ntype=='N-kmix':
-            nov = -np.log((self.counts[s]+1)/(self.t+self.S))-self.kint
-        elif 'hN' in self.ntype:
+
+        if 'hN' in self.ntype:
             hnov_vec, nov_vec = self.compute_hnov()
-            nov = nov_vec[s]
+            nov  = nov_vec[s]
             hnov = hnov_vec[s,:]
-            #h_w_temp = self.h_w.copy() # gamma_old vector
-            #h_w_temp,h_g_temp = self.update_h_w(h_w_temp,s) # gamma_new vector: this should include updating the responsibilities
-            # nov_vec = np.zeros(len(self.h_w)) 
-            # nov = 0
-            # for i in range(len(self.h_w)): # for each level i in the hierarchy
-            #     if self.kmat:
-            #         p_i_vec = self.h_w[i]*self.kmat[i]
-            #     elif self.h_k:
-            #         p_i_vec = np.zeros(len(self.h_w[i])) 
-            #         for j in range(len(self.h_w[i])): # for each kernel j at hierarchy level i
-            #             # Compute new novelty for state s
-            #             p_i_vec[j] = (self.h_w[i][j]*self.h_k[i](s,self.h_kc[i][j],self.h_ki[i],self.mp)) 
-            #     p_i = np.sum(p_i_vec) # empirical frequency for kernel i
-            #     # nov_vec[i] = -np.log((p_i+1)/(self.t+len(self.h_w[i])))-self.k # this is wrong! would be ok if p_i were the counts
-            #     nov_vec[i] = -np.log((p_i+1))-self.k
-            #     nov += self.w[i]*nov_vec[i] # summed novelty 
-            # hnov = nov_vec    
+            hnov = np.clip(hnov, self.range_nov[0], self.range_nov[1])
+
+        elif 'N' in self.ntype:
+            nov_vec = self.compute_nov()
+
+            if self.ntype=='N':
+                nov = nov_vec[s]
+            if self.ntype=='-1/N':
+                nov = 1/nov_vec[s]
+            elif self.ntype=='N-k': 
+                nov = nov_vec[s]-self.k
+            elif self.ntype=='N-ktemp':
+                nov = nov_vec[s]-self.kint[s]
+            elif self.ntype=='N-kpop':
+                nov = nov_vec[s]-np.mean(nov_vec)
+            elif self.ntype=='N-kmix':
+                nov = nov_vec[s]-self.kint
+
         else:
-            nov = 0  
-        # -1/N using dt (abandoned)
-        #nov = 1/np.log((self.counts[s]+1)/(self.t[s]+self.S))
-        # N-k using dt (abandoned)
-        #nov = -np.log((self.counts[s]+1)/(self.t[s]+self.S))-self.k
-        
+            nov = 0 
+
+        # Keep novelty values inside range
+        nov  = np.clip(nov, self.range_nov[0], self.range_nov[1])
+
         return nov, hnov, self.h_w, self.h_g
     
     def computeNoveltyAll(self):
         hnov = None
-        if self.ntype=='N':
-            nov = -np.log((self.counts+1)/(self.t+self.S))
-        elif self.ntype=='-1/N':
-            nov = 1/np.log((self.counts+1)/(self.t+self.S))
-        elif self.ntype=='N-k': 
-            nov = -np.log((self.counts+1)/(self.t+self.S))-self.k
-        elif self.ntype=='N-ktemp':
-            nov = -np.log((self.counts+1)/(self.t+self.S))-self.kint[s]
-        elif self.ntype=='N-kpop':
-            nov_vec = -np.log((self.counts+1)/(self.t+self.S))
-            nov = nov_vec-np.mean(nov_vec)
-        elif self.ntype=='N-kmix':
-            nov = -np.log((self.counts+1)/(self.t+self.S))-self.kint
-        elif 'hN' in self.ntype:
+
+        if 'hN' in self.ntype:
             hnov_vec, nov_vec = self.compute_hnov()
-            nov = nov_vec
+            nov  = nov_vec
             hnov = hnov_vec
-            #h_w_temp = self.h_w.copy() # gamma_old vector
-            #h_w_temp,h_g_temp = self.update_h_w(h_w_temp,s) # gamma_new vector: this should include updating the responsibilities
-            # nov_vec = np.zeros(len(self.h_w)) 
-            # nov = 0
-            # for i in range(len(self.h_w)): # for each level i in the hierarchy
-            #     if self.kmat:
-            #         p_i_vec = self.h_w[i]*self.kmat[i]
-            #     elif self.h_k:
-            #         p_i_vec = np.zeros(len(self.h_w[i])) 
-            #         for j in range(len(self.h_w[i])): # for each kernel j at hierarchy level i
-            #             # Compute new novelty for state s
-            #             p_i_vec[j] = (self.h_w[i][j]*self.h_k[i](s,self.h_kc[i][j],self.h_ki[i],self.mp)) 
-            #     p_i = np.sum(p_i_vec) # empirical frequency for kernel i
-            #     # nov_vec[i] = -np.log((p_i+1)/(self.t+len(self.h_w[i])))-self.k # this is wrong! would be ok if p_i were the counts
-            #     nov_vec[i] = -np.log((p_i+1))-self.k
-            #     nov += self.w[i]*nov_vec[i] # summed novelty 
-            # hnov = nov_vec    
+            hnov = np.clip(hnov, self.range_nov[0], self.range_nov[1])
+
+        elif 'N' in self.ntype:
+            nov_vec = self.compute_nov()
+
+            if self.ntype=='N':
+                nov = nov_vec
+            elif self.ntype=='-1/N':
+                nov = 1/nov_vec
+            elif self.ntype=='N-k': 
+                nov = nov_vec-self.k
+            elif self.ntype=='N-ktemp':
+                nov = nov_vec-self.kint ## only kint[s]??
+            elif self.ntype=='N-kpop':
+                nov = nov_vec-np.mean(nov_vec)
+            elif self.ntype=='N-kmix':
+                nov = nov_vec-self.kint
+        
         else:
             nov = 0  
-        # -1/N using dt (abandoned)
-        #nov = 1/np.log((self.counts[s]+1)/(self.t[s]+self.S))
-        # N-k using dt (abandoned)
-        #nov = -np.log((self.counts[s]+1)/(self.t[s]+self.S))-self.k
-        
+
+        # Keep novelty values inside range
+        nov  = np.clip(nov, self.range_nov[0], self.range_nov[1])
+
         return nov, hnov, self.h_w, self.h_g
     
-    def update_hnov_varrate(self,h_w,s):
-        h_w_new = []
-        gamma_new = []
-        for i in range(len(h_w)):
+    ### Novelty update (snov) #########################################
+    def update_hnov_varrate(self,s):
+        # Update cumulative time steps
+        self.t += 1
+
+        h_w_new     = []
+        gamma_new   = []
+        for i in range(len(self.h_w)):
+
             # Update the responsibilities
-            gamma_i_nom = h_w[i]*self.kmat[i][s,:]
-            gamma_i_denom = np.sum(gamma_i_nom)
-            gamma_i = gamma_i_nom/gamma_i_denom
-            gamma_new.append(gamma_i.copy())
+            gamma_i_nom     = self.h_w[i]*self.kmat[i][s,:]
+            gamma_i_denom   = np.sum(gamma_i_nom)
+            gamma_i         = gamma_i_nom/gamma_i_denom
+            gamma_i         = np.clip(gamma_i, None, self.range_fam[1]) # clip gamma (upper bound: infinity)
+            gamma_new.append(gamma_i)
             
             # Update weights (incremental update rule with prior)
-            h_w_i = h_w[i] + 1/(self.t+len(h_w[i])*self.eps[i])*(gamma_i-h_w[i])
             #h_w_i = h_w[i] + 1/(self.t+len(self.kmat[0])*self.eps[i])*(gamma_i-h_w[i])
+            h_w_i = self.h_w[i] + 1/(self.t+len(self.h_w[i]) * self.eps[i]) * (gamma_i-self.h_w[i])
+            h_w_i = np.clip(h_w_i, self.range_fam[0], self.range_fam[1]) # clip weights (lower bound: zero)
             h_w_new.append(h_w_i)
-        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
-        return h_w_new, gamma_new
 
-    def update_hnov_fixedrate(self,h_w,s):
-        h_w_new = []
-        gamma_new = []
-        for i in range(len(h_w)):
+        self.h_w = h_w_new.copy()
+        self.h_g = gamma_new.copy()
+        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+    
+    def update_hnov_leakyrate(self,s):
+        # Update cumulative time steps
+        self.t = (1-self.alph_leak)*self.t + 1
+
+        h_w_new       = []
+        gamma_cum_new = []
+        for i in range(len(self.h_w)):
+
+            # Update cumulative responsibilities
+            gamma_i_nom     = self.h_w[i]*self.kmat[i][s,:]
+            gamma_i_denom   = np.sum(gamma_i_nom)
+            gamma_i         = gamma_i_nom/gamma_i_denom
+            self.h_g[i]     = np.clip((1-self.alph_leak)*self.h_g[i] + gamma_i, None, self.range_fam[1]) # clip gamma (upper bound: infinity)
+
+            # Compute new weights (based on integrated responsibilities and time)
+            h_w_i = (self.h_g[i] + self.eps[i])/(self.t+len(self.h_w[i])*self.eps[i])
+            h_w_i = np.clip(h_w_i, self.range_fam[0], None) # clip weights (lower bound: zero)
+            h_w_new.append(h_w_i)
+
+        self.h_w = h_w_new.copy()
+        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+
+    # def update_hnov_fixedrate(self,s):
+    #     h_w_new = []
+    #     gamma_new = []
+    #     for i in range(len(self.h_w)):
+    #         # Update the responsibilities
+    #         gamma_i_nom = self.h_w[i]*self.kmat[i][s,:] # gamma_i = h_w[i] * kmat[s,:] 
+    #         gamma_i_denom = np.sum(gamma_i_nom) 
+    #         gamma_i = gamma_i_nom/gamma_i_denom 
+    #         gamma_new.append(gamma_i.copy())
+            
+    #         # Update weights (incremental update rule with prior)
+    #         h_w_i = self.h_w[i] + self.k_alph*(gamma_i-self.h_w[i]) 
+    #         h_w_new.append(h_w_i)
+    #     self.h_w = h_w_new.copy()
+    #     self.h_g = gamma_new.copy()
+    #     # print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+    
+    def update_hnov_fixedrate(self,s): # kmat, h_w and gamma in logspace
+
+        h_w_new       = []
+        gamma_new     = []
+        for i in range(len(self.h_w)):
+
             # Update the responsibilities
-            gamma_i_nom = h_w[i]*self.kmat[i][s,:]
-            gamma_i_denom = np.sum(gamma_i_nom)
-            gamma_i = gamma_i_nom/gamma_i_denom
+            gamma_i_nom     = self.h_w[i] + self.kmat[i][s,:]     # gamma_i = h_w[i] * kmat[s,:] ==> in logspace: gamma_i = log(h_w[i]) + log(kmat[s,:])
+            if (np.exp(gamma_i_nom)==0).all(): # if all entries are zero, assume equal responsibilities across all (?)
+                gamma_i = np.log(1/len(gamma_i_nom))*np.ones(len(gamma_i_nom)) # if all entries are zero, set gamma to zero (in logspace: -infinity)
+            else:
+                gamma_i_denom   = np.log(np.sum(np.exp(gamma_i_nom))) # gamma_sum = sum(gamma_i) ==> in logspace: log(sum(exp(gamma_i)))
+                gamma_i         = gamma_i_nom - gamma_i_denom           # gamma_i = gamma_i / gamma_sum ==> in logspace: gamma_i - gamma_sum
             gamma_new.append(gamma_i.copy())
             
             # Update weights (incremental update rule with prior)
-            h_w_i = h_w[i] + self.eps[i]*(gamma_i-h_w[i]) 
+            h_w_i = np.log(np.exp(self.h_w[i] + np.log(1-self.k_alph)) + np.exp(gamma_i + np.log(self.k_alph)))   # h_w[i] = h_w[i] + k_alph*(gamma_i - h_w[i]) ==> in logspace: log(h_w[i]) + log(1-k_alph), then: log(exp(log(h_w[i])) + k_alph*exp(gamma_i)))
+            h_w_i = np.clip(h_w_i, -self.range_fam[1], None) # clip weights (lower bound: 0 ==> in logspace: - infinity)
             h_w_new.append(h_w_i)
-        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
-        return h_w_new, gamma_new
 
-    def updateNovelty(self,s):
-        # Update for novelty based on t
-        if isinstance(self.eps,(list,np.ndarray)):
-            self.t = self.eps[0]*self.t + 1
-            self.counts *= self.eps[0]
-        else:
-            self.t = self.eps*self.t + 1
-            self.counts *= self.eps
-        self.counts[s] +=1
+        self.h_w = h_w_new.copy()
+        self.h_g = gamma_new.copy()
+        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+
+    ### Novelty update (snov) #########################################
+    ### Novelty update (cnov) #########################################
+    def update_nov_varrate(self,s):
+        self.counts[s] += 1
+        self.t         += 1
+    
+    def update_nov_leakyrate(self,s):
+        self.counts     = self.counts*(1-self.alph_leak)
+        self.counts[s] += 1
+        self.t          = self.t*(1-self.alph_leak) + 1
+
+    # def update_nov_fixedrate(self,s):
+    #     self.p = (1-self.k_alph)*self.p
+    #     self.p[s] += self.k_alph
+
+    def update_nov_fixedrate(self,s): # p in logspace)
+        self.p      = np.clip(self.p + np.log(1-self.k_alph), -self.range_fam[1], None)           # p = (1-k_alph)*p ==> in log space: p = p + log(1-k_alph)
+        self.p[s]   = np.clip(np.log(np.exp(self.p[s]) + self.k_alph), -self.range_fam[1], None)  # p + p + k_alph ==> in log space: p = log(exp(p) + k_alph)
+
+    ### Novelty update (overall) ######################################
+    def updateNovelty(self,s): 
+
+        if 'hN' in self.ntype:
+            self.update_hnov(s)
+
+        elif 'N' in self.ntype:
+            self.update_nov(s)
 
         if self.ntype=='N-ktemp':
             self.buffer[s,0:-1] = self.buffer[s,1:]
-            self.buffer[s,-1] = -np.log((self.counts[s]+1)/(self.t+self.S))
-            self.kint[s] = np.mean(self.buffer[s,:])
+            self.buffer[s,-1]   = -np.log((self.counts[s]+1)/(self.t+self.S))
+            self.kint[s]        = np.mean(self.buffer[s,:])
             #self.buffer[:,-1] = -np.log((self.counts+1)/(self.t+self.S))
             #self.kint = np.mean(self.buffer,axis=1)
 
         if self.ntype=='N-kmix':
-            self.buffer[0:-1] = self.buffer[1:]
-            self.buffer[-1] = -np.log((self.counts[s]+1)/(self.t+self.S))
-            self.kint = np.mean(self.buffer)
-        
-        if 'hN' in self.ntype:
-            self.h_w,self.h_g = self.update_hnov(self.h_w,s)
-        # Update for novelty based on dt
-        #self.t          += 1
-        #self.counts[s]  += 1
-        #self.t[s]        = 0 
+            self.buffer[0:-1]   = self.buffer[1:]
+            self.buffer[-1]     = -np.log((self.counts[s]+1)/(self.t+self.S))
+            self.kint           = np.mean(self.buffer)
+
 
 class n_critic(critic):
         
-    def __init__(self,S,tauM,RM,w0,gamma,alph,lam,k,ntype,k_alph,h,w,round_prec):
+    def __init__(self,S,tauM,RM,w0,gamma,alph,lam,k,ntype,h,w,round_prec):
         super().__init__(S,tauM,RM,w0,gamma,alph,lam,round_prec)
-        self.pc = pc(S,k,ntype,k_alph,h,w)
+        self.pc = pc(S,k,ntype,h,w)
         
     def evalMod(self,s_next,r):
         return self.pc.computeNovelty(s_next)
@@ -752,7 +890,8 @@ class actor():
         out_rates = np.array([self.a[i].computeRate() if ~np.isnan(self.w[s][i]) else np.NaN for i in range(len(self.a))])
         not_nan = (~np.isnan(out_rates)).nonzero()
         #p_softmax = np.exp(out_rates/self.temp) / np.sum(np.exp(out_rates/self.temp), axis=0)
-        p_softmax = softmax(out_rates[list(not_nan[0])]/self.temp,axis=0)
+        # p_softmax = softmax(out_rates[list(not_nan[0])]/self.temp,axis=0) # with temperature
+        p_softmax = softmax(out_rates[list(not_nan[0])] * self.temp,axis=0)
         #print(p_softmax)
         if self.temp==0 or np.isnan(p_softmax).any():
             print(f"{out_rates}, {self.temp}, {p_softmax}\n")
@@ -809,6 +948,7 @@ class agent():
         self.decision_weights   = params['decision_weights']
         self.critics            = []
         self.actors             = []
+        self.range_m            = [-sys.float_info.max, sys.float_info.max]
         
         for i,t in enumerate(self.types):
             if 'n' in t:
@@ -816,20 +956,18 @@ class agent():
                     params['h']=[]
                 if not ('w' in params.keys()):
                     params['w']=[]
-                if not 'k_alph' in params.keys():
-                    params['k_alph'] = 1
-                if len(params['h'])==0 or not 'kmat' in params['h'].keys():
+                if len(params['h'])==0 or not 'kmat' in params['h'].keys(): #??
                     t='n'
 
                 if t=='n':
                     self.critics.append(n_critic(params['S'],params['tauM'][i],params['RM'][i],
                                              params['c_w0'][i],params['gamma'][i],params['c_alph'][i],
-                                             params['c_lam'][i],params['k'],params['ntype'],params['k_alph'],params['h'],params['w'],
+                                             params['c_lam'][i],params['k'],params['ntype'],params['h'],params['w'],
                                              self.round_prec))
                 elif t=='gn':
                     self.critics.append(granular_n_critic(params['S'],params['tauM'][i],params['RM'][i],
                                              params['c_w0'][i],params['gamma'][i],params['c_alph'][i],
-                                             params['c_lam'][i],params['k'],params['ntype'],params['k_alph'],params['h'],params['w'],
+                                             params['c_lam'][i],params['k'],params['ntype'],params['h'],params['w'],
                                              self.round_prec))
 
             elif t=='r':
@@ -875,10 +1013,10 @@ class agent():
         mg_list = []
         for i in range(len(self.critics)):
             m, mh, mw, mg = self.critics[i].evalMod(s_next,r)
-            m = round(m,self.round_prec)
+            m = np.clip(round(m,self.round_prec), self.range_m[0], self.range_m[1])
             m_list.append(m)
             if mh:
-                mh = [round(mh[j],self.round_prec) for j in range(len(mh))]
+                mh = [np.clip(round(mh[j],self.round_prec), self.range_m[0], self.range_m[1]) for j in range(len(mh))]
                 mh_list.extend(mh)
             if mw:
                 mw_list.extend(mw)
@@ -893,7 +1031,7 @@ class agent():
         m_list = []
         for i in range(len(self.critics)):
             m,_,_,_ = self.critics[i].evalModAll()
-            m = np.round(m,self.round_prec)
+            m = np.clip(np.round(m,self.round_prec), self.range_m[0], self.range_m[1])
             m_list.append(m)
         
         return m_list

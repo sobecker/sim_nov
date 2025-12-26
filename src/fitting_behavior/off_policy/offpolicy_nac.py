@@ -77,7 +77,8 @@ def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
         # Record time and transition variables
         all_t.append(it)
-        all_tt.append(agent.critics[0].pc.t)
+        if agent.critics[0].pc.update_type=='leaky':
+            all_tt.append(agent.critics[0].pc.t)
         all_s.append(s_current)
         all_s_new.append(s_new_env)
 
@@ -87,8 +88,12 @@ def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
         all_nov_s_pre.append(m_current[0])
         all_nov_s_new_pre.append(m[0])
         if rec_counts:
-            all_c_s_pre.append(agent.critics[0].pc.counts[s_current])
-            all_c_s_new_pre.append(agent.critics[0].pc.counts[s_new])
+            if agent.critics[0].pc.update_type=='fixed':
+                all_c_s_pre.append(agent.critics[0].pc.p[s_current])
+                all_c_s_new_pre.append(agent.critics[0].pc.p[s_new])
+            else:
+                all_c_s_pre.append(agent.critics[0].pc.counts[s_current])
+                all_c_s_new_pre.append(agent.critics[0].pc.counts[s_new])
         
         # Learn from novelty signal received
         agent.updateMod(s_new_env)       
@@ -100,8 +105,12 @@ def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
         all_nov_s_post.append(m_current[0])
         all_nov_s_new_post.append(m[0])
         if rec_counts:
-            all_c_s_post.append(agent.critics[0].pc.counts[s_current])
-            all_c_s_new_post.append(agent.critics[0].pc.counts[s_new])
+            if agent.critics[0].pc.update_type=='fixed':
+                all_c_s_post.append(agent.critics[0].pc.p[s_current])
+                all_c_s_new_post.append(agent.critics[0].pc.p[s_new])
+            else:
+                all_c_s_post.append(agent.critics[0].pc.counts[s_current])
+                all_c_s_new_post.append(agent.critics[0].pc.counts[s_new])
 
         # Record q-values after learning from N(s_new)
         if rec_qvals:   all_qvals.append(np.array(new_was))
@@ -124,7 +133,6 @@ def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
     
     # Format recording
     rec = {'time': all_t,
-           'leaky_time': all_tt,
            'state': all_s,
            'next_state': all_s_new,
            'nov_s_pre': all_nov_s_pre,
@@ -132,6 +140,8 @@ def offpolicy_nac(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
            'nov_s_post': all_nov_s_post,
             'nov_s_new_post': all_nov_s_new_post
            }
+    if agent.critics[0].pc.update_type=='leaky':
+        rec['leaky_time'] = all_tt
     if rec_counts: 
         rec['counts_s_pre'] = all_c_s_pre
         rec['counts_s_new_pre'] = all_c_s_new_pre

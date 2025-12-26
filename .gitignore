@@ -1,12 +1,6 @@
 .DS_Store
 __pycache__/
 
-data/*
-data/grid_search_results/*
-data/grid_search_results/cnov_leaky/*
-data/grid_search_results/cnov_fr/*
-data/grid_search_results/snov_leaky/*
-data/grid_search_results/snov_fr/*
 data/recovery/*
 
 output/*
@@ -14,3 +8,9 @@ output/figures_paper/*
 output/figures_paper/fig_toy_example/*
 
 logs/*
+
+src/fitting_neural/make_configs_cluster_snov.py
+src/scripts/homann_analysis/plot_width_robustness_full.ipynb
+src/fitting_neural/make_configs_cluster_robustness.py
+src/fitting_neural/make_configs_cluster_robustness_refit.py
+.DS_Store

@@ -6,7 +6,10 @@ import timeit
 import datetime
 import pickle
 import csv
+import subprocess
+
 import models.mf_agent.ac as ac
+import utils.visualization as vis
 import utils.saveload as sl
 
 ### Helper functions ########################################################################################
@@ -20,17 +23,28 @@ def auto_seeds(trials):
     return list(range(trials))
 
 def import_exploration_params_surnor(path=''):
-    
-    params_dict = import_params_surnor(path=path)
+    if not path:
+        full_path = './src/mbnor/fittedparams_mbnor.csv'
+    else:
+        if str(path)[-1]=='/': full_path=path / 'fittedparams_mbnor.csv'
+        else: full_path=path / 'fittedparams_mbnor.csv'
+    params_df = pd.read_csv(full_path,sep=';')
+    params_df['Value'] = params_df['Value'].str.replace(',','.')
+    params_df['Error'] = params_df['Error'].str.replace(',','.')
+    params_df['Value'] = pd.to_numeric(params_df['Value'],downcast='float')
+    params_df['Error'] = pd.to_numeric(params_df['Error'],downcast='float')
+    params_dict = dict(zip(params_df['Parameter'],params_df['Value']))
+
     params_dict['beta_N1']=1; params_dict['lambda_R']=0
 
     return params_dict
 
 def import_params_surnor(path=''):
-    if len(str(path))==0:
-        full_path = sl.get_rootpath() / 'src' / 'models' / 'mb_agent' / 'fittedparams_mbnor.csv'
+    if not path:
+        full_path = './src/mbnor/fittedparams_mbnor.csv'
     else:
-        full_path = path / 'fittedparams_mbnor.csv'
+        if str(path)[-1]=='/': full_path=path / 'fittedparams_mbnor.csv'
+        else: full_path=path / 'fittedparams_mbnor.csv'
     params_df = pd.read_csv(full_path,sep=';')
     params_df['Value'] = params_df['Value'].str.replace(',','.')
     params_df['Error'] = params_df['Error'].str.replace(',','.')
@@ -64,14 +78,18 @@ def beta1r_to_beta1(beta1r):
 
 ### Recorder ################################################################################################
 class surnor_recorder():
-    
+
     def __init__(self,params,rec_type='basic'):
         self.rec_type = rec_type
         self.data_basic = []
+        self.cols_basic = ['subID','epi','it','state','action','next_state','reward']
+        if params['h']['update_type'] == 'leaky':
+            self.cols_basic += ['leaky_time']
+        
         if params['ntype']=='hN':
-            self.cols_basic = ['subID','epi','it','state','action','next_state','reward','novelty','novelty_vector','foundGoal']
+            self.cols_basic += ['novelty','foundGoal'] #['novelty','novelty_vector','foundGoal']
         else:
-            self.cols_basic = ['subID','epi','it','state','action','next_state','reward','leaky_time','counts','novelty','foundGoal']
+            self.cols_basic += ['novelty','foundGoal'] #['counts','novelty','foundGoal']
         
         if self.rec_type=='advanced':
             # self.beliefs = []
@@ -103,9 +121,9 @@ class surnor_recorder():
         
         data_basic = self.readoutData_basic()
         if format_data=='df':
-            data_basic.to_pickle(dir_data / f'{data_name}.pickle')  
+            data_basic.to_pickle(dir_data+f'/{data_name}.pickle')  
         elif format_data=='csv':
-            data_basic.to_csv(dir_data / f'{data_name}.csv',sep='\t')
+            data_basic.to_csv(dir_data+f'/{data_name}.csv',sep='\t')
 
         if self.rec_type=='advanced':
             # b,q = self.readoutData_advanced()
@@ -113,72 +131,86 @@ class surnor_recorder():
             if format_data=='df':
                 #np.save(dir_data+'/beliefs.npy',b)
                 # np.save(dir_data+'/qvals.npy',q)
-                q.to_pickle(dir_data / 'qvals.pickle')  
+                q.to_pickle(dir_data+'/qvals.pickle')  
             elif format_data=='csv':
                 #np.savetxt(dir_data+'/beliefs.csv',b.reshape(len(b[:,0,0,0]),-1),delimiter='\t')
                 # np.savetxt(dir_data+'/qvals.csv',q.reshape(len(q[:,0,0]),-1),delimiter='\t')
-                q.to_csv(dir_data / 'qvals.csv',sep='\t')
+                q.to_csv(dir_data+'/qvals.csv',sep='\t')
         
         end_save = timeit.default_timer()
         
     def saveParams(self,params,dir_params,format_params='dict',params_name='params'):
-        if not dir_params.exists():
+        if not os.path.isdir(dir_params):
             os.mkdir(dir_params)
         
         if format_params=='dict':
-            with open(dir_params / f'{params_name}.pickle', 'wb') as f:
+            with open(dir_params+f'/{params_name}.pickle', 'wb') as f:
                 pickle.dump(params,f)   
         elif format_params=='csv':
-            with open(dir_params / f'{params_name}.csv', 'w') as csvfile:
+            with open(dir_params+f'/{params_name}.csv', 'w') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=params.keys())
                 writer.writeheader()
                 writer.writerow(params)
         elif format_params=='txt':
-            with open(dir_params / f'{params_name}.txt', 'w') as f: 
+            with open(dir_params+f'/{params_name}.txt', 'w') as f: 
                 for key, value in params.items(): 
                     f.write('%s:%s\n' % (key, value))
         # elif format_params=='json':
         #     with open(dir_params+'/params.json', 'w') as f: 
         #         json.dump(params,f,sort_keys=True,indent=2)
+    
+    def saveCodeVersion(self,dir_cv):
+        if not os.path.isdir(dir_cv):
+            os.mkdir(dir_cv)
+        
+        with open(dir_cv+'/code_version.txt','w') as f:
+            cv = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+            f.write(cv)
         
 ### Experiment ##############################################################################################
 def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnData=False,dirData=''):
     # Create folder to save data
     dataFolder = None
     if saveData:
-        if len(str(dirData))==0:
-            dirData = sl.get_rootpath() / 'data' / 'auxiliary_simulations'
+        if len(dirData)==0:
+            dirData = sl.get_datapath()
             print(f"Directory to save data not specified. Data is saved in current directory:\n{dirData}\n")
         if verbose: print(f"Start making folder to save data.\n")
-        dataFolder = dirData / f'{datetime.datetime.now().strftime("%Y_%m_%d_%H-%M-%S")}_{params_exp["sim_name"]}'
-        sl.make_long_dir(dataFolder)
+        dataFolder = sl.make_long_dir(os.path.join(dirData,datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']))
 
     # Start timer
     if verbose: print(f"Start running experiment.\n")
     start_exp = timeit.default_timer()
     
-    # Create environment
+    # Create environment 
     if verbose: print('Creating environment.\n')
-    S = params_exp['S']; A = params_exp['A']; P = params_exp['P']; R = params_exp['R']
+    S       = params_exp['S'] 
+    A       = params_exp['A']
+    P       = params_exp['P']
+    R       = params_exp['R']
     T       = (params_exp['T'] if 'T' in params_exp.keys() else np.array([]))   # Set terminal states
     t_deact = (params_exp['t_deact'] if 't_deact' in params_exp.keys() else 0)  # Set reward deactivation
     env     = ac.env(S,list(P),list(R),T,t_deact)
     sg      = env.getGoal()
     t_deact = env.getTDeact()
 
-    # Save params
+    # Extract parameters
+    if not 'ntype' in params_exp.keys():  
+        params_exp['ntype'] = 'N'
+    if not 'k' in params_exp.keys():      
+        params_exp['k']     = 0
+
     eps     = params_model['epsilon']
     lamR    = params_model['lambda_R']
     lamN    = params_model['lambda_N']
     Tps     = params_model['T_PS']
     beta    = params_model['beta_1']
     k_leak  = params_model['k_leak']
-    if not 'ntype' in params_exp.keys():  params_exp['ntype'] = 'N'
-    if not 'k' in params_exp.keys():      params_exp['k']     = 0
-    if not 'k_alph' in params_exp.keys(): params_exp['k_alph'] = 1
     ntype   = params_exp['ntype']
     k       = params_exp['k']
-    k_alph  = params_exp['k_alph'] # leakiness of counts; k_alph = 1 means no leakiness
+
+    # if not 'k_alph' in params_exp.keys(): params_exp['k_alph'] = 1
+    # k_alph  = params_exp['k_alph'] # leakiness of counts; k_alph = 1 means no leakiness
     #if verbose: print(f"eps:{eps}\n lamR:{lamR}\n lamN:{lamN}\n beta:{beta}\n")
 
     # Create recorder (fixed across subjects)
@@ -207,48 +239,85 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
                 
                 # Initialize  novelty variables
                 if ntype=='hN':
-                    # Set hnov type
-                    if 'hnov_type' in params_exp['h'].keys():
-                        hnov_type = params_exp['h']['hnov_type']
-                    elif 'hnov_type' in params_exp.keys():
-                        hnov_type = params_exp['hnov_type']
-                    else: 
-                        hnov_type = 2
-
-                    if hnov_type==2:
-                        compute_hnov = compute_hnov2
-                    elif hnov_type==3:
-                        compute_hnov = compute_hnov3
-
+                    # Set hnov type and update function (only matters when using hierarchical novelty)
+                    # type 2: apply -log on each level of the hierachy, then compute weighted sum of novelty per level
+                    # type 3: compute weighted sum of familiarity per level, then apply -log on the sum    
+                    hnov_type    = params_exp['h']['hnov_type'] if 'hnov_type' in params_exp['h'].keys() else params_exp['hnov_type'] if 'hnov_type' in params_exp.keys() else 2
+                    compute_hnov = eval(f'compute_hnov{hnov_type}')
+            
                     # Set update type (fixed/variable learning rate for novelty signal)
-                    if 'update_type' in params_exp['h'].keys():
-                        update_type = params_exp['h']['update_type']
-                    elif 'update_type' in params_exp.keys():
-                        update_type = params_exp['update_type']
-                    else:
-                        update_type = 'var'
-
-                    if update_type=='fix':
-                        update_hnov = update_hnov_fixedrate
-                    elif update_type=='var':
-                        update_hnov = update_hnov_varrate
+                    update_type = params_exp['h']['update_type'] if 'update_type' in params_exp['h'].keys() else params_exp['update_type'] if 'update_type' in params_exp.keys() else 'var'
+                    update_hnov = eval(f'update_hnov_{update_type}rate')  # update_hnov_fixedrate, update_hnov_varrate, update_hnov_leakyrate
                     
                     # Set remaining hnov params
                     w       = params_exp['w']
                     h       = params_exp['h']       
                     h_w     = h['h_w']              # kernel mixture weights
                     kmat    = h['kmat']             # kernel function matrix (list of matrices |S|xlen(av))
-                    h_eps   = h['k_alph'] if update_type=='fix' else h['eps'] # prior or fixed learning rate for novelty
-                    if h_eps==None: h_eps = [1/(len(h_w[i])**2) for i in range(len(h_w))] 
+
+                    if update_type=='fixed':
+                        h_eps       = None  
+                        h_alph_leak = None
+                        k_alph      = h['k_alph'] if 'k_alph' in h.keys() else 0.1
+                        if not isinstance(k_alph, list):
+                            k_alph = [k_alph]
+                        if len(k_alph)!=len(h_w):
+                            k_alph = k_alph*len(h_w)
+                    
+                    elif update_type=='leaky':
+                        h_eps       = h['eps_leak'] if 'eps_leak' in h.keys() else [1]
+                        if not isinstance(h_eps, list):
+                            h_eps = [h_eps]
+                        if len(h_eps)!=len(h_w):
+                            h_eps = h_eps*len(h_w)
+                        h_eps       = [h_eps[i] * h['eps'][i] for i in range(len(h_eps))] # scale epsilon with initial weights
+                        h_alph_leak = h['alph_leak'] if 'alph_leak' in h.keys() else [0]
+                        if not isinstance(h_alph_leak, list):
+                            h_alph_leak = [h_alph_leak]
+                        if len(h_alph_leak)!=len(h_w):
+                            h_alph_leak = h_alph_leak*len(h_w)
+                        k_alph      = None
+                        gg          = [np.zeros(h_w[i].shape) for i in range(len(h_w))]
+
+                    elif update_type=='var':
+                        h_eps       = h['eps'] if 'eps' in h.keys() else [1]
+                        if not isinstance(h_eps, list):
+                            h_eps = [h_eps]
+                        if len(h_eps)!=len(h_w):
+                            h_eps = h_eps*len(h_w)   
+                        h_alph_leak = None
+                        k_alph      = None
+                    
                 else:
-                    c      = np.zeros(S)
-                
+                    # Set update type (fixed/variable learning rate for novelty signal)
+                    update_type  = params_exp['h']['update_type'] if 'update_type' in params_exp['h'].keys() else 'var'
+                    update_nov   = eval(f'update_nov_{update_type}rate')  # update_nov_fixedrate, update_nov_varrate, update_nov_leakyrate
+                    compute_nov  = eval(f'compute_nov_{update_type}rate')
+                    
+                    # Set remaining params
+                    if update_type=='fixed':
+                        c_eps = None
+                        c_alph_leak = None
+                        k_alph = params_exp['h']['k_alph'] if 'k_alph' in params_exp['h'].keys() else 0.1
+                        # p = 1/S * np.ones(S)
+                        p = np.log(1/S) * np.ones(S)
+                    elif update_type=='leaky':
+                        c_eps = params_exp['h']['eps_leak'][0] if 'eps_leak' in params_exp['h'].keys() else 1
+                        c_alph_leak = params_exp['h']['alph_leak'] if 'alph_leak' in params_exp['h'].keys() else None
+                        k_alph = None
+                        c = np.zeros(S)
+                    elif update_type=='var':
+                        c_eps = 1
+                        c_alph_leak = None
+                        k_alph = None
+                        c = np.zeros(S)
+
                 # Compute initial novelty
                 if ntype=='hN': 
-                    N0_vec, N0 = compute_hnov(h_w,kmat,k,w)
+                    _, N0 = compute_hnov(h_w,kmat,k,w)
                     N0 = N0/(1-lamN) 
                 else: 
-                    N0 = np.log(S)/(1-lamN)*np.ones(S)
+                    N0 = np.log(S)/(1-lamN)*np.ones(S) 
                 uN = N0
                 qN = N0.reshape(-1,1)*np.ones(np.shape(env.P))
 
@@ -267,20 +336,50 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
             env.setAgentLoc(params_exp['x0'][trial][e])
             s        = env.agentLoc
             Tmax     = params_exp['max_it']
-            t        = 1
-            tt       = 1
+            t        = 1  # absolute time
+            if update_type=='leaky':
+                if ntype=='hN':
+                    tt   = [0]*len(h_w)
+                else:
+                    tt   = 0  # leaky time integrator
 
             # Update novelty counts / weights
-            if ntype=='hN':     h_w,_ = update_hnov(h_w,kmat,h_eps,s,t)
-            else:               c[s] +=1
+            if ntype=='hN':   
+                if update_type=='fixed':
+                    h_w, _ = update_hnov(h_w,kmat,s,k_alph)  
+                elif update_type=='leaky':
+                    h_w, gg, tt = update_hnov(h_w,kmat,s,h_eps,tt,gg,h_alph_leak)
+                elif update_type=='var':
+                    h_w, _ = update_hnov(h_w,kmat,s,h_eps,t)
+            else:   
+                if update_type=='fixed':
+                    p = update_nov(p,s,k_alph)
+                elif update_type=='leaky':
+                    c, tt = update_nov(c,s,tt,c_alph_leak)
+                elif update_type=='var':
+                    c = update_nov(c,s)            
 
             # Compute initial novelty
-            if ntype=='hN':     Nvec, N = compute_hnov(h_w,kmat,k,w)
-            else:               N = np.log((tt+S)/(c+1)) 
+            if ntype=='hN':     
+                Nvec, N = compute_hnov(h_w,kmat,k,w)
+            else:  
+                if update_type=='fixed':
+                    N = compute_nov(p)
+                elif update_type=='leaky':
+                    N = compute_nov(c,tt,S,c_eps)
+                elif update_type=='var':
+                    N = compute_nov(c,tt,S)                  
 
             # Record initial variables
-            if ntype=='hN':     rec_basic = [trial,e,t-1,s,np.NaN,s,0,N,Nvec,(s in sg)]
-            else:               rec_basic = [trial,e,t-1,s,np.NaN,s,0,tt,c,N,(s in sg)]
+            if update_type=='leaky':
+                rec_basic = [trial,e,t-1,s,np.NaN,s,0,tt]
+            else:
+                rec_basic = [trial,e,t-1,s,np.NaN,s,0]
+            if ntype=='hN':     
+                rec_basic = rec_basic + [Nvec[s,:],(s in sg)] #[N,Nvec,(s in sg)]
+            else:               
+                rec_basic = rec_basic + [N[s],(s in sg)] #[c,N,(s in sg)]
+
             if rec.rec_type=='basic':
                 rec.recordData(rec_basic)
             elif rec.rec_type=='advanced':
@@ -299,17 +398,29 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
                 s_new, r = env.evalAction(a,s)
 
                 # Update time
-                tt = tt*k_alph + 1
                 t  = t + 1
 
                 # Update novelty variables and recompute novelty
-                if ntype=='hN':
-                    h_w,_   = update_hnov(h_w,kmat,h_eps,s,t)
-                    Nvec,N  = compute_hnov(h_w,kmat,k,w)
-                else:     
-                    c *= k_alph               
-                    c[s_new]+=1
-                    N = np.log((tt+S)/(c+1))  
+                if ntype=='hN':  
+                    # Update novelty weights 
+                    if update_type=='fixed':
+                        h_w, _ = update_hnov(h_w,kmat,s_new,k_alph)   #s_new??
+                    elif update_type=='leaky':
+                        h_w, gg, tt = update_hnov(h_w,kmat,s_new,h_eps,tt,gg,h_alph_leak)
+                    elif update_type=='var':
+                        h_w, _ = update_hnov(h_w,kmat,s_new,h_eps,t)
+                    # Compute novelty
+                    Nvec, N = compute_hnov(h_w,kmat,k,w)
+                else:   
+                    if update_type=='fixed':
+                        p = update_nov(p,s_new,k_alph)
+                        N = compute_nov(p)
+                    elif update_type=='leaky':
+                        c, tt = update_nov(c,s_new,tt,c_alph_leak)
+                        N = compute_nov(c,tt,S,c_eps)
+                    elif update_type=='var':
+                        c = update_nov(c,s_new)    
+                        N = compute_nov(c,tt,S)  
                 
                 # Run mbNoR update step
                 alph[s][a][:] = k_leak*alph[s][a][:] + (1-k_leak)*eps
@@ -324,28 +435,26 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
                     qR, uR = prioritized_sweeping(qR,uR,r,lamR,theta,Tps)
 
                 # Record variables
-                if ntype=='hN':
-                    rec_basic = [trial,e,t-1,s,a,s_new,r,N,Nvec,(s_new in sg)]
+                if update_type=='leaky':
+                    rec_basic = [trial,e,t-1,s,a,s_new,r,tt]
                 else:
-                    rec_basic = [trial,e,t-1,s,a,s_new,r,tt,c,N,(s_new in sg)]
-                
+                    rec_basic = [trial,e,t-1,s,a,s_new,r]
+                if ntype=='hN':     
+                    rec_basic = rec_basic + [Nvec[s_new,:], (s_new in sg)] #[N,Nvec,(s_new in sg)]
+                else:   
+                    if update_type=='fixed':  
+                        rec_basic = rec_basic + [N[s_new], (s_new in sg)] #[p,N,(s_new in sg)]   
+                    else:       
+                        rec_basic = rec_basic + [N[s_new], (s_new in sg)] #[c,N,(s_new in sg)]
+
                 if rec.rec_type=='basic':
                     rec.recordData(rec_basic)
                 elif rec.rec_type=='advanced':
                     # rec.recordData(rec_basic,theta,qN)
-                    rec.recordData(rec_basic,qN)
+                    rec.recordData(rec_basic,qN)    
 
                 # Update state for next iteration
                 s = s_new
-
-            # # Record variables in final step of episode
-            # if ntype=='hN':     rec_basic = [trial,e,t,s,a,s_new,r,N,Nvec,(s in sg)]
-            # else:               rec_basic = [trial,e,t,s,a,s_new,r,N,(s in sg)]
-            # if rec.rec_type=='basic':
-            #     rec.recordData(rec_basic)
-            # elif rec.rec_type=='advanced':
-            #     # rec.recordData(rec_basic,theta,qN)
-            #     rec.recordData(rec_basic,qN)
 
             end_epi = timeit.default_timer()
             if verbose: print(f"Simulated episode {e} in {end_epi-start_epi} s.\n")
@@ -381,7 +490,7 @@ def run_surnor_exp(params_exp,params_model,verbose=True,saveData=False,returnDat
         #     dataFolder = './data/'+datetime.datetime.now().strftime('%Y_%m_%d_%H-%M-%S')+'_'+params_exp['sim_name']
         rec.saveParams(all_params,dataFolder,'dict')
         rec.saveParams(all_params,dataFolder,'csv')
-        sl.saveCodeVersion(dataFolder)
+        rec.saveCodeVersion(dataFolder)
         # rec.saveParams(all_params,dataFolder,'json')
         rec.saveData(dataFolder,format_data='df')
         rec.saveData(dataFolder,format_data='csv')
@@ -441,11 +550,54 @@ def compute_hnov3(h_w,kmat,k,w):
     #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(nov_vec[:,i]),4) for i in range(len(h_w))]}.\n")
     return hnov, nov
 
-def update_hnov_varrate(h_w,kmat,eps,s,t):
+def compute_hnov2_log(h_w,kmat,k,w): # kmat, hw in logspace
+
+    # Initialize
+    nov_vec = np.zeros((np.size(kmat[-1],axis=0),len(kmat)))
+    nov     = np.zeros(np.size(kmat[-1],axis=0))
+
+    # Compute novelty for each level in the hierachy + sum (log space)
+    for i in range(len(h_w)):      
+        nov_vec[:,i] = -np.log(np.sum(np.exp(kmat[i] + h_w[i]),axis=1))-k 
+        nov += w[i]*nov_vec[:,i] 
+
+    hnov = nov_vec
+    #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(np.sum(self.kmat[i]*self.h_w[i],axis=1)),4) for i in range(len(self.h_w))]}.\n")
+    return hnov, nov
+    
+def compute_hnov3_log(h_w,kmat,k,w): # kmat, hw in logspace
+
+    # Initialize
+    nov_vec = np.zeros((np.size(kmat[-1],axis=0),len(kmat)))
+    nov     = np.zeros(np.size(kmat[-1],axis=0))
+
+    # Compute familiarity for each level in the hierachy + sum (log space)
+    for i in range(len(h_w)): 
+        nov_vec[:,i] = np.sum(np.exp(kmat[i] + h_w[i]),axis=1)  
+        nov += w[i]*nov_vec[:,i] 
+
+    hnov = nov_vec
+    nov  = -np.log(nov)-k
+    #print(f"H-Nov check: probability sums for each level are {[np.round(np.sum(nov_vec[:,i]),4) for i in range(len(self.h_w))]}.\n")
+    return hnov, nov
+
+def compute_nov_varrate(c,tt,S):
+    return np.log((tt+S)/(c+1))  
+
+# def compute_nov_fixedrate(p):
+#     return -np.log(p)
+
+def compute_nov_fixedrate(plog):
+    return -plog
+
+def compute_nov_leakyrate(c,tt,S,eps):
+    return np.log((tt+S*eps)/(c+eps))
+
+def update_hnov_varrate(h_w,kmat,s,eps,t):
     h_w_new = []
     gamma_new = []
     for i in range(len(h_w)):
-        # Update the responsibilities
+        # Compute new responsibilities
         gamma_i_nom = h_w[i]*kmat[i][s,:]
         gamma_i_denom = np.sum(gamma_i_nom)
         gamma_i = gamma_i_nom/gamma_i_denom
@@ -458,21 +610,89 @@ def update_hnov_varrate(h_w,kmat,eps,s,t):
     #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
     return h_w_new, gamma_new
 
-def update_hnov_fixedrate(h_w,kmat,alph,s,t):
-    h_w_new = []
-    gamma_new = []
+def update_nov_varrate(c,s):
+    c[s] += 1
+    return c
+
+def update_hnov_leakyrate(h_w,kmat,s,eps,t_cum,gamma_cum,alph_leak):
+    t_cum_new       = []
+    h_w_new         = []
+    gamma_cum_new   = []
     for i in range(len(h_w)):
-        # Update the responsibilities
-        gamma_i_nom = h_w[i]*kmat[i][s,:]
-        gamma_i_denom = np.sum(gamma_i_nom)
-        gamma_i = gamma_i_nom/gamma_i_denom
-        gamma_new.append(gamma_i.copy())
+
+        # Update cumulative time steps
+        t_cum_new.append((1-alph_leak[i])*t_cum[i] + 1)
+
+        # Update cumulative responsibilities
+        gamma_i_nom     = h_w[i]*kmat[i][s,:]
+        gamma_i_denom   = np.sum(gamma_i_nom)
+        gamma_i         = gamma_i_nom/gamma_i_denom
+        gamma_cum_i     = (1-alph_leak[i])*gamma_cum[i] + gamma_i
+        gamma_cum_new.append(gamma_cum_i.copy())
         
-        # Update weights (incremental update rule with prior)
-        h_w_i = h_w[i] + alph[i]*(gamma_i-h_w[i]) 
+        # Compute new weights (based on integrated responsibilities and time)
+        h_w_i = (gamma_cum_i + eps[i])/(t_cum_new[i]+np.sum(eps[i]))
+        # h_w_i = (gamma_cum_i + eps[i])/(t_cum+len(h_w[i])*eps[i])
         h_w_new.append(h_w_i)
     #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
-    return h_w_new, gamma_new
+    return h_w_new, gamma_cum_new, t_cum_new
+
+def update_nov_leakyrate(c,s,tt,alph_leak):
+    c = c*(1-alph_leak)
+    c[s] += 1
+    tt = tt*(1-alph_leak) + 1
+    return c, tt
+
+# def update_hnov_fixedrate(h_w,kmat,s,alph):
+
+#     h_w_new = []
+#     gamma_new = []
+#     for i in range(len(h_w)):
+
+#         # Update the responsibilities
+#         gamma_i_nom = h_w[i]*kmat[i][s,:]
+#         gamma_i_denom = np.sum(gamma_i_nom)
+#         gamma_i = gamma_i_nom/gamma_i_denom
+#         gamma_new.append(gamma_i.copy())
+        
+#         # Update weights (incremental update rule with prior)
+#         h_w_i = h_w[i] + alph*(gamma_i-h_w[i]) 
+#         h_w_new.append(h_w_i)
+#     #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+#     return h_w_new, gamma_new
+
+def update_hnov_fixedrate(h_w,kmat,s,alph): # kmat, h_w and gamma in logspace
+
+        h_w_new       = []
+        gamma_new     = []
+        for i in range(len(h_w)):
+
+            # Update the responsibilities
+            gamma_i_nom     = h_w[i] + kmat[i][s,:]     # gamma_i = h_w[i] * kmat[s,:] ==> in logspace: gamma_i = log(h_w[i]) + log(kmat[s,:])
+            if (np.exp(gamma_i_nom)==0).all(): # if all entries are zero, assume equal responsibilities across all (?)
+                gamma_i = np.log(1/len(gamma_i_nom))*np.ones(len(gamma_i_nom)) # if all entries are zero, set gamma to zero (in logspace: -infinity)
+            else:
+                gamma_i_denom   = np.log(np.sum(np.exp(gamma_i_nom))) # gamma_sum = sum(gamma_i) ==> in logspace: log(sum(exp(gamma_i)))
+                gamma_i         = gamma_i_nom - gamma_i_denom           # gamma_i = gamma_i / gamma_sum ==> in logspace: gamma_i - gamma_sum
+            gamma_new.append(gamma_i.copy())
+            
+            # Update weights (incremental update rule with prior)
+            h_w_i = np.log(np.exp(h_w[i] + np.log(1-alph[i])) + np.exp(gamma_i + np.log(alph[i])))   # h_w[i] = h_w[i] + k_alph*(gamma_i - h_w[i]) ==> in logspace: log(h_w[i]) + log(1-k_alph), then: log(exp(log(h_w[i])) + k_alph*exp(gamma_i)))
+            h_w_i = np.clip(h_w_i, -sys.float_info.max, None) # clip weights (lower bound: 0 ==> in logspace: - infinity)
+            h_w_new.append(h_w_i)
+
+        #print(f"H-Nov update check: sum of new weights for each level are {[np.round(np.sum(h_w_new[i]),4) for i in range(len(h_w_new))]}.\n") 
+        return h_w_new, gamma_new
+
+# def update_nov_fixedrate(p,s,k_alph):
+#     p = (1-k_alph)*p
+#     p[s] += k_alph
+#     return p
+
+def update_nov_fixedrate(plog,s,k_alph):
+    plog = plog + np.log(1-k_alph)
+    plog[s] = np.log(np.exp(plog[s]) + k_alph)
+    return plog
 
 #############################################################################################################
 if __name__ == "__main__":

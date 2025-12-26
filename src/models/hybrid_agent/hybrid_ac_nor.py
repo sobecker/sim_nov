@@ -32,7 +32,10 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
     
     # Create environment
     if verbose: print('Creating environment.\n')
-    S = params_exp['S']; A = params_exp['A']; P = params_exp['P']; R = params_exp['R']
+    S       = params_exp['S']
+    A       = params_exp['A']
+    P       = params_exp['P']
+    R       = params_exp['R']
     T       = (params_exp['T'] if 'T' in params_exp.keys() else np.array([]))   # Set terminal states
     t_deact = (params_exp['t_deact'] if 't_deact' in params_exp.keys() else 0)  # Set reward deactivation
     env     = ac.env(S,list(P),list(R),T,t_deact)
@@ -41,26 +44,27 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
     term    = env.getTerminal()
     term    = env.getTerminal()
 
-    # Save params MB
+    # Extract params MB
+    if not 'ntype' in params_mb.keys():  
+        params_mb['mb_ntype'] = 'N'
+    if not 'k' in params_mb.keys():      
+        params_mb['mb_k']     = 0
     mb_eps     = params_mb['epsilon']
     mb_lamR    = params_mb['lambda_R']
     mb_lamN    = params_mb['lambda_N']
     mb_Tps     = params_mb['T_PS']
     mb_beta    = params_mb['beta_1']
     mb_k_leak  = params_mb['k_leak']
-    if not 'ntype' in params_exp.keys(): params_exp['ntype'] = 'N'
-    if not 'k' in params_exp.keys():     params_exp['k']     = 0
-    if not 'k_alph' in params_exp.keys(): params_exp['k_alph'] = 1
-    mb_ntype   = params_exp['ntype']
-    mb_k       = params_exp['k']
-    mb_k_alph  = params_exp['k_alph'] # leakiness of counts; k_alph = 1 means no leakiness
+
+    mb_ntype   = params_mb['ntype']
+    mb_k       = params_mb['k']
 
     # Save params MF
     mf_temp    = params_mf['temp']
 
     # Save params hybrid
     w_mf = params_exp['w_mf']
-    w_mb = params_exp['w_mb']
+    w_mb = 1-params_exp['w_mf'] #params_exp['w_mb'] if 'w_mb' in params_exp.keys() else 1-params_exp['w_mf']
 
     # Set hierarchical
     mf_hierarchical = ('n' in params_mf['agent_types'] and params_mf['ntype']=='hN')
@@ -86,18 +90,52 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
         mb_alph   = mb_eps*np.ones((S,A,S))
 
         # Initialize  novelty variables
-        if mb_hierarchical:                 
+        if mb_hierarchical:  
             mb_hnov_type, mb_compute_hnov, mb_update_type, mb_update_hnov = set_hnov(params_exp)
+
             mb_w       = params_exp['w']
-            mb_h       = params_exp['h']       
+            mb_h       = params_exp['h']                      
             mb_h_w     = mb_h['h_w']              # kernel mixture weights
             mb_kmat    = mb_h['kmat']             # kernel function matrix (list of matrices |S|xlen(av))
-            mb_h_eps   = mb_h['k_alph'] if mb_update_type=='fix' else mb_h['eps'] # prior or fixed learning rate for novelty
-            if mb_h_eps==None: mb_h_eps = [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]  
-        else:
-            mb_c      = np.zeros(S)
 
-        # Compute initial novelty (MB)
+            if mb_update_type=='fixed':
+                mb_h_eps       = None  
+                mb_h_alph_leak = None
+                mb_k_alph      = mb_h['k_alph'] if 'k_alph' in mb_h.keys() else 0.1
+            elif mb_update_type=='leaky':
+                mb_h_eps       = mb_h['eps_leak'] if 'eps_leak' in mb_h.keys() else [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]
+                mb_h_alph_leak = mb_h['alph_leak'] if 'alph_leak' in mb_h.keys() else 0 
+                mb_k_alph      = None
+                mb_gg          = [np.zeros(mb_h_w[i].shape) for i in range(len(mb_h_w))]
+            elif mb_update_type=='var':
+                mb_h_eps       = mb_h['eps'] if 'eps' in mb_h.keys() else [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]  
+                mb_h_alph_leak = None
+                mb_k_alph      = None
+            
+        else:
+            # Set update type (fixed/variable learning rate for novelty signal)
+            mb_update_type  = params_exp['h']['update_type'] if 'update_type' in params_exp['h'].keys() else 'var'
+            mb_update_nov   = eval(f'nor.update_nov_{mb_update_type}rate')  # update_nov_fixedrate, update_nov_varrate, update_nov_leakyrate
+            mb_compute_nov  = eval(f'nor.compute_nov_{mb_update_type}rate')
+
+            # Set remaining params
+            if mb_update_type=='fixed':
+                mb_c_eps        = None
+                mb_c_alph_leak  = None
+                mb_k_alph       = params_mb['h']['k_alph'] if 'k_alph' in params_mb['h'].keys() else 0.1
+                mb_p            = 1/S * np.ones(S)
+            elif mb_update_type=='leaky':
+                mb_c_eps        = params_mb['h']['eps_leak'][0] if 'eps_leak' in params_mb['h'].keys() else 1
+                mb_c_alph_leak  = params_mb['h']['alph_leak'] if 'alph_leak' in params_mb['h'].keys() else None
+                mb_k_alph       = None
+                mb_c            = np.zeros(S)
+            elif mb_update_type=='var':
+                mb_c_eps        = 1
+                mb_c_alph_leak  = None
+                mb_k_alph       = None
+                mb_c            = np.zeros(S)
+
+        # Compute initial novelty
         if mb_hierarchical: 
             _, mb_N0 = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
             mb_N0 = mb_N0/(1-mb_lamN) 
@@ -136,8 +174,9 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
             env.setAgentLoc(params_exp['x0'][trial][e])
             Tmax          = params_exp['max_it']
             foundTerminal = False
-            mb_t          = 1
-            mb_tt         = 1
+            mb_t          = 1  # absolute time
+            if mb_update_type=='leaky':
+                mb_tt     = 0
             s             = env.agentLoc
 
             # Update novelty MF agent
@@ -146,28 +185,55 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
             mf_agent.resetTraces()  
             mf_m, mf_mh, mf_mw, mf_mg  = mf_agent.evalMod(s,0)          
 
-            # Update novelty MB agent
-            if mb_hierarchical:     
-                mb_h_w,_ = mb_update_hnov(mb_h_w,mb_kmat,mb_h_eps,s,mb_t)
+            # Update novelty counts / weights (MB agent)
+            if mb_hierarchical:   
+                if mb_update_type=='fixed':
+                    mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s,mb_k_alph)  
+                elif mb_update_type=='leaky':
+                    mb_h_w, mb_gg, mb_tt = mb_update_hnov(mb_h_w,mb_kmat,s,mb_h_eps,mb_tt,mb_gg,mb_h_alph_leak)
+                elif mb_update_type=='var':
+                    mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s,mb_h_eps,mb_t)
+                
                 mb_Nvec, mb_N = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
-            else:                   
-                mb_c[s] +=1
-                mb_N = np.log((mb_tt+S)/(mb_c+1)) 
+            else:   
+                if mb_update_type=='fixed':
+                    mb_p = mb_update_nov(mb_p,s,mb_k_alph)
+                    mb_N = mb_compute_nov(mb_p)
+                elif mb_update_type=='leaky':
+                    mb_c, mb_tt = mb_update_nov(mb_c,s,mb_tt,mb_c_alph_leak)
+                    mb_N = mb_compute_nov(mb_c,mb_tt,S,mb_c_eps)
+                elif mb_update_type=='var':
+                    mb_c = mb_update_nov(mb_c,s)     
+                    mb_N = mb_compute_nov(mb_c,mb_tt,S)     
 
             # Compute novelty (MF, only for recording)
             nov_post = mf_agent.evalModAll()
 
             if rec_init:
                 # Record initial variables MB (after s0 = s_init)
-                if mb_hierarchical:     rec_basic = [trial,0,mb_t-1,s,np.NaN,s,0,mb_N,mb_Nvec,(s in sg)]
-                else:                   rec_basic = [trial,0,mb_t-1,s,np.NaN,s,0,mb_tt,mb_c,mb_N,(s in sg)]
+                rec_basic = [trial,0,mb_t-1,s,np.NaN,s,0]
+                if mb_update_type=='leaky':
+                    rec_basic += [mb_tt]
+                if mb_hierarchical:     
+                    rec_basic += [mb_N, (s in sg)] #[mb_N,mb_Nvec,(s in sg)]
+                else:  
+                    if mb_update_type=='fixed':
+                        rec_basic += [mb_N,(s in sg)] #[mb_p,mb_N,(s in sg)]
+                    else:
+                        rec_basic += [mb_N,(s in sg)] #[mb_c,mb_N,(s in sg)]
                 if mb_rec.rec_type=='basic':        mb_rec.recordData(rec_basic)
                 elif mb_rec.rec_type=='advanced':   mb_rec.recordData(rec_basic,mb_qN) # rec.recordData(rec_basic,theta,qN)
+
                 # Record initial variables MF (after s0 = s_init)
-                rec_list = [trial,0,mb_t-1,s,np.NaN,s,0,0,(s in sg)]
+                if mf_agent.critics[0].pc.update_type=='leaky':
+                    rec_list = [trial,0,mb_t-1,mf_agent.critics[0].pc.t,s,np.NaN,s,0,0,(s in sg)]
+                else:
+                    rec_list = [trial,0,mb_t-1,s,np.NaN,s,0,0,(s in sg)]
+
                 if mf_rec.rec_type == 'advanced1' or mf_rec.rec_type == 'advanced2':
                     if mf_hierarchical:    rec_list = rec_list + mf_m + [0] + mf_mh + mf_mw + mf_mg + nov_post
                     else:                  rec_list = rec_list + mf_m + [0] + nov_post
+
                 if mf_rec.rec_type == 'advanced2':
                     wc_notnan = (~np.isnan(mf_agent.critics[0].w)).nonzero()[0]
                     wa_notnan = (~np.isnan(mf_agent.actors[0].w.flatten())).nonzero()[0]
@@ -217,17 +283,29 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
                 nov_post = mf_agent.evalModAll()
 
                 # Update MB time
-                mb_tt = mb_tt*mb_k_alph + 1
                 mb_t  = mb_t + 1
 
-                # Update novelty (MB)
-                if mb_hierarchical:
-                    mb_h_w,_   = mb_update_hnov(mb_h_w,mb_kmat,mb_h_eps,s_new,mb_t)
-                    mb_Nvec,mb_N  = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
-                else:
-                    mb_c *= mb_k_alph   
-                    mb_c[s_new]+=1
-                    mb_N = np.log((mb_tt+S)/(mb_c+1))  
+                # Update novelty variables and recompute novelty
+                if mb_hierarchical:  
+                    # Update novelty weights 
+                    if mb_update_type=='fixed':
+                        mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_k_alph)   #s_new??
+                    elif mb_update_type=='leaky':
+                        mb_h_w, mb_gg, mb_tt = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_h_eps,mb_tt,mb_gg,mb_h_alph_leak)
+                    elif mb_update_type=='var':
+                        mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_h_eps,mb_t)
+                    # Compute novelty
+                    mb_Nvec, mb_N = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
+                else:   
+                    if mb_update_type=='fixed':
+                        mb_p = mb_update_nov(mb_p,s_new,mb_k_alph)
+                        mb_N = mb_compute_nov(mb_p)
+                    elif mb_update_type=='leaky':
+                        mb_c, mb_tt = mb_update_nov(mb_c,s_new,mb_tt,mb_c_alph_leak)
+                        mb_N = mb_compute_nov(mb_c,mb_tt,S,mb_c_eps)
+                    elif mb_update_type=='var':
+                        mb_c = mb_update_nov(mb_c,s_new)    
+                        mb_N = mb_compute_nov(mb_c,mb_tt,S) 
 
                 # Update values (MB)
                 mb_alph[s][a][:] = mb_k_leak*mb_alph[s][a][:] + (1-mb_k_leak)*mb_eps
@@ -242,8 +320,16 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
                     mb_qR, mb_uR = nor.prioritized_sweeping(mb_qR,mb_uR,r,mb_lamR,mb_theta,mb_Tps)
 
                 # Record variables (MB)
-                if mb_hierarchical:     rec_basic = [trial,e,mb_t-1,s,a,s_new,r,mb_N,mb_Nvec,(s_new in sg)]
-                else:                   rec_basic = [trial,e,mb_t-1,s,a,s_new,r,mb_tt,mb_c,mb_N,(s_new in sg)]
+                rec_basic = [trial,e,mb_t-1,s,a,s_new,r]
+                if mb_update_type=='leaky':
+                    rec_basic += [mb_tt]
+                if mb_hierarchical:     
+                    rec_basic += [mb_N, (s_new in sg)] #[mb_N,mb_Nvec,(s_new in sg)]
+                else:  
+                    if mb_update_type=='fixed':
+                        rec_basic += [mb_N,(s_new in sg)] #[mb_p,mb_N,(s_new in sg)]
+                    else:
+                        rec_basic += [mb_N,(s_new in sg)] #[mb_c,mb_N,(s_new in sg)]
 
                 if mb_rec.rec_type=='basic':
                     mb_rec.recordData(rec_basic)
@@ -261,7 +347,10 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
                     if verbose: print(f"Episode ended in terminal state after {mb_t} iterations.\n")
 
                 # Record step (MF)
-                rec_list = [trial,e,mb_t-1,s,a,s_new,foundGoal,foundTerminal,(r!=0)]
+                if mf_agent.critics[0].pc.update_type=='leaky':
+                    rec_list = [trial,e,mb_t-1,mf_agent.critics[0].pc.t,s,a,s_new,foundGoal,foundTerminal,(r!=0)]
+                else:
+                    rec_list = [trial,e,mb_t-1,s,a,s_new,foundGoal,foundTerminal,(r!=0)]
                 if mf_rec.rec_type == 'advanced1' or mf_rec.rec_type == 'advanced2':
                     if mf_hierarchical:    rec_list = rec_list + mf_m + mf_tds + mf_mh + mf_mw + mf_mg + nov_post
                     else:               rec_list = rec_list + mf_m + mf_tds + nov_post
@@ -351,20 +440,15 @@ def run_hybrid_exp(params_exp,params_mb, params_mf,verbose=True,saveData=False,r
 
 
 def set_hnov(params):
-    # Set hnov type 
-    if 'hnov_type' in params['h'].keys():   hnov_type = params['h']['hnov_type']
-    elif 'hnov_type' in params.keys():      hnov_type = params['hnov_type']
-    else:                                       hnov_type = 2
 
-    if hnov_type==2:    compute_hnov = nor.compute_hnov2
-    elif hnov_type==3:  compute_hnov = nor.compute_hnov3
-
+    # Set hnov type and update function (only matters when using hierarchical novelty)
+    # type 2: apply -log on each level of the hierachy, then compute weighted sum of novelty per level
+    # type 3: compute weighted sum of familiarity per level, then apply -log on the sum
+    hnov_type    = params['h']['hnov_type'] if 'hnov_type' in params['h'].keys() else params['hnov_type'] if 'hnov_type' in params.keys() else 2
+    compute_hnov = eval(f'nor.compute_hnov{hnov_type}')
+    
     # Set update type (fixed/variable learning rate for novelty signal)
-    if 'update_type' in params['h'].keys():     update_type = params['h']['update_type']
-    elif 'update_type' in params.keys():        update_type = params['update_type']
-    else:                                           update_type = 'var'
-
-    if update_type=='fix':      update_hnov = nor.update_hnov_fixedrate
-    elif update_type=='var':    update_hnov = nor.update_hnov_varrate
-
+    update_type = params['h']['update_type'] if 'update_type' in params['h'].keys() else params['update_type'] if 'update_type' in params.keys() else 'var'
+    update_hnov = eval(f'nor.update_hnov_{update_type}rate')  # update_hnov_fixedrate, update_hnov_varrate, update_hnov_leakyrate
+    
     return hnov_type, compute_hnov, update_type, update_hnov

@@ -9,12 +9,12 @@ path_exp = sl.get_rootpath() / 'exp' / 'mle' / 'fits'             # path to save
 sl.make_long_dir(path_exp)
 
 # Standard setting [reproducing the paper results]
-alg_type    = ['hnac-gn-goi','hnor','hhybrid2']                                     # algorithms to fit: ... 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi' 
-levels      = [1,2,3,4,5,6]                                                     # granularity levels to fit for each algorithm
-opt_type    = 'mice' # 'mice','opt','naive'                                     # which data to fit to 
-opt_alg     = ['Nelder-Mead'] # 'Nelder-Mead','L-BFGS-B','SLSQP'                # optimization algorithm
-comb_type   = ['app'] # '','sep','app'                                          # fitting mode: fit each animals separately (sep) or together (app)
-maxit       = False                                                             
+# alg_type    = ['hnac-gn-goi','hnor','hhybrid2']                                     # algorithms to fit: ... 'hnac-gn-gv','hnac-gn-goi','hnac-gn-gv-goi' 
+# levels      = [1,2,3,4,5,6]                                                     # granularity levels to fit for each algorithm
+# opt_type    = 'mice' # 'mice','opt','naive'                                     # which data to fit to 
+# opt_alg     = ['Nelder-Mead'] # 'Nelder-Mead','L-BFGS-B','SLSQP'                # optimization algorithm
+# comb_type   = ['app'] # '','sep','app'                                          # fitting mode: fit each animals separately (sep) or together (app)
+# maxit       = False                                                             
 
 # alg_type    = ['hnor_notrace_center-box','hnac-gn_notrace_center-box','hhybrid2_notrace_center-box','hnor_center-triangle','hnac-gn_center-triangle','hhybrid2_center-triangle'] #['hnor_notrace','hnac-gn_notrace','hhybrid2_notrace']
 # levels      = [0,1,2,3,4,5,6]
@@ -23,17 +23,54 @@ maxit       = False
 # comb_type   = [''] # '','sep','app'
 # maxit       = False
 
+leakiness_type = 'leaky'
+alg_type    = [
+               f'{leakiness_type}_hnor_notrace_center-box',
+            #    f'{leakiness_type}_hnac-gn_notrace_center-box',
+            #    f'{leakiness_type}_hhybrid2_notrace_center-box',
+               f'{leakiness_type}_hnor_notrace',
+            #    f'{leakiness_type}_hnac-gn_notrace',
+            #    f'{leakiness_type}_hhybrid2_notrace',
+               f'{leakiness_type}_hnor_triangle',
+            #    f'{leakiness_type}_hnac-gn_triangle',
+            #    f'{leakiness_type}_hhybrid2_triangle',
+            #    f'{leakiness_type}_hnor_center-triangle',
+            #    f'{leakiness_type}_hnac-gn_center-triangle',
+            #    f'{leakiness_type}_hhybrid2_center-triangle'
+               ] 
+
+# leakiness_type = 'leaky_eps1'
+# alg_type    = [
+#             #    f'{leakiness_type}_hnor_notrace_center-box_nocompnorm',
+#                f'{leakiness_type}_hhybrid2_notrace_nocompnorm',
+#                f'{leakiness_type}_hhybrid2_triangle_nocompnorm',
+#             #    f'{leakiness_type}_hnor_notrace_nocompnorm',
+#             #    f'{leakiness_type}_hnor_triangle_nocompnorm',
+#             #    f'{leakiness_type}_hnor_center-triangle_nocompnorm'
+#                ]
+
+levels      = [1,2,3,4,5,6]
+opt_type    = 'mice' # 'mice','opt','naive'
+opt_alg     = ['Nelder-Mead'] # 'Nelder-Mead','L-BFGS-B','SLSQP'
+comb_type   = ['app','sep'] # '','sep','app'
+maxit       = False
+
+name_proj = 'MLE5'
+
+path = f'/Volumes/lcncluster/becker/RL_reward_novelty/exps/mle/'; sl.make_dir(path)
+path = path+'Fits/'; sl.make_dir(path)
+
 for aa in range(len(alg_type)):
     for oo in range(len(opt_alg)):
         for cc in range(len(comb_type)):
             clink = '-' if len(comb_type[cc])>0 else ''
             str_maxit = '-maxit' if maxit else ''
-            save_name1 = f'mle{str_maxit}_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}'
+            save_name1 = f'{name_proj.lower()}{str_maxit}_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}'
             path_i = path_exp / save_name1 
             sl.make_long_dir(path_i)
 
             for ll in range(len(levels)):
-                save_name2 = f'mle{str_maxit}_{alg_type[aa]}-l{levels[ll]}-{opt_type}_{opt_alg[oo]}'
+                save_name2 = f'mle_{alg_type[aa]}-l{levels[ll]}-{opt_type}_{opt_alg[oo]}'
                 with open (path_i / f'{save_name2}{clink}{comb_type[cc]}.sh', 'w') as rsh:
                     rsh.write(f'''\
 #!/bin/bash

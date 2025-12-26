@@ -9,12 +9,12 @@ path_exp = sl.get_rootpath() / 'exp' / 'mle' / 'fits'             # path to save
 sl.make_long_dir(path_exp)
 
 # Standard settings [reproducing the paper results]
-alg_type    = ['nac','nor','hybrid2']
-opt_type    = 'mice' # opt, naive
-opt_alg     = ['Nelder-Mead']
-comb_type   = ['app']
-multistart  = False
-maxit       = [False, False, True]
+# alg_type    = ['nac','nor','hybrid2']
+# opt_type    = 'mice' # opt, naive
+# opt_alg     = ['Nelder-Mead']
+# comb_type   = ['app']
+# multistart  = False
+# maxit       = [False, False, True]
 
 # Additional MF tests
 # alg_type    = ['nac-nooi','nac-kpop','nac-kpop-t','nac-kmix','nac-kmix-t']
@@ -34,12 +34,27 @@ maxit       = [False, False, True]
 # comb_type   = ['']
 # multistart  = True
 
+leakiness_type = 'leaky'
+alg_type    = [f'{leakiness_type}_nor',
+                # f'{leakiness_type}_hybrid2',
+                # f'{leakiness_type}_nac'
+                ]
+opt_type    = 'mice' # mice, opt, naive
+opt_alg     = ['Nelder-Mead']
+comb_type   = ['app', 'sep']
+multistart  = False
+
+name_proj = 'MLE4'
+
+path = f'/Volumes/lcncluster/becker/RL_reward_novelty/exps/mle/'; sl.make_dir(path)
+path = path+'Fits/'; sl.make_dir(path)
+
 for aa in range(len(alg_type)):
     for oo in range(len(opt_alg)):
         for cc in range(len(comb_type)):
             clink = '-' if len(comb_type[cc])>0 else ''
             multi = '_multi' if multistart else ''
-            save_name1 = f'mle{"-maxit" if maxit[aa] else ""}_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
+            save_name1 = f'mle_{alg_type[aa]}-{opt_type}_{opt_alg[oo]}{multi}'
             path_i = path_exp / save_name1 
             sl.make_long_dir(path_i)
 

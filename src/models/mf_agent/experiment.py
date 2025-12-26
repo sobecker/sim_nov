@@ -24,7 +24,11 @@ class recorder():
     def __init__(self,params,rec_type='basic'):
         self.rec_type   = rec_type
         self.data_basic = []
-        self.cols_basic = ['subID','epi','it','state','action','next_state','reward','terminal','reward active']
+        update_type = params['h']['update_type'] if ('h' in params.keys() and 'update_type' in params['h'].keys()) else 'var'
+        if update_type=='leaky':
+            self.cols_basic = ['subID','epi','it','tt','state','action','next_state','reward','terminal','reward active']
+        else:
+            self.cols_basic = ['subID','epi','it','state','action','next_state','reward','terminal','reward active']
         
         if self.rec_type=='advanced1' or self.rec_type=='advanced2':
             for i in range(len(params['agent_types'])):
@@ -344,7 +348,10 @@ class experiment():
             #td = td(k) (td error resulting from taking action a(k) in state x(k-1))
             #w = w(k) (weights after k updates)
             #e = e(k) (traces after one update, i.e. remembering state x0 or the action a0)
-        rec_list = [trial,epi,it,s_current,a,s_next,flag_foundGoal,flag_foundTerminal,(r!=0)]
+        if self.agent.critics[0].pc.update_type=='leaky':
+            rec_list = [trial,epi,it,self.agent.critics[0].pc.t,s_current,a,s_next,flag_foundGoal,flag_foundTerminal,(r!=0)]
+        else:
+            rec_list = [trial,epi,it,s_current,a,s_next,flag_foundGoal,flag_foundTerminal,(r!=0)]
         if self.rec.rec_type == 'advanced1' or self.rec.rec_type == 'advanced2':
             if self.hierarchical:
                 rec_list = rec_list + m + tds + mh + mw + mg + nov_post

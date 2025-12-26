@@ -1,0 +1,9 @@
+ksig,cdens,knum,type_complex,alph_leak,eps,num_complex,grid_id,save_path
+0.5,8.0,2.0,8,0.2,1e-06,2.6666666666666665,0,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_0/
+0.6,8.0,2.0,8,0.2,1e-06,2.6666666666666665,1,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_1/
+0.7,8.0,2.0,8,0.2,1e-06,2.6666666666666665,2,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_2/
+0.25,8.0,2.0,8,0.2,1e-06,2.6666666666666665,3,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_3/
+0.75,8.0,2.0,8,0.2,1e-06,2.6666666666666665,4,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_4/
+0.775,8.0,2.0,8,0.2,1e-06,2.6666666666666665,5,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_5/
+0.8,8.0,2.0,8,0.2,1e-06,2.6666666666666665,6,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_6/
+0.825,8.0,2.0,8,0.2,1e-06,2.6666666666666665,7,/Users/sbecker/Projects/sim_nov/data/gridsearch_robustness_width/snov-complex-leaky_set1_sep/job-0_test/grid_7/

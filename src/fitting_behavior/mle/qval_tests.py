@@ -1,5 +1,3 @@
-import sys
-
 import utils.saveload as sl
 import fitting_behavior.optimization.base_params_opt as bpo
 

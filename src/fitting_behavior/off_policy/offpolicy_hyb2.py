@@ -1,9 +1,13 @@
 import numpy as np
 import pandas as pd
 import scipy
+import os
+import timeit
+import datetime
 from scipy.special import softmax
 
 import models.mf_agent.ac as ac
+import models.mf_agent.experiment as exp
 import models.mb_agent.mb_surnor as nor
 import models.hybrid_agent.hybrid_ac_nor as hyb
 
@@ -11,7 +15,10 @@ import models.hybrid_agent.hybrid_ac_nor as hyb
 def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
     # Create environment ######################################################################
-    S = params['S']; A = params['A']; P = params['P']; R = params['R']
+    S       = params['S']
+    A       = params['A']
+    P       = params['P']
+    R       = params['R']
     T       = (params['T'] if 'T' in params.keys() else np.array([]))   # Set terminal states
     t_deact = (params['t_deact'] if 't_deact' in params.keys() else 0)  # Set reward deactivation
     env     = ac.env(S,list(P),list(R),T,t_deact)
@@ -20,25 +27,25 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
     term    = env.getTerminal()
     term    = env.getTerminal()
 
-    # Save params #############################################################################
-    # Save params MB
+    # Extract params ##########################################################################
+    if not 'ntype' in params.keys():  
+        params['mb_ntype'] = 'N'
+    if not 'k' in params.keys():      
+        params['mb_k']     = 0
     mb_eps     = params['epsilon']
     mb_lamR    = params['lambda_R']
     mb_lamN    = params['lambda_N']
     mb_Tps     = params['T_PS']
     mb_beta    = params['beta_1']
     mb_k_leak  = params['k_leak']
-    if not 'mb_ntype' in params.keys():  params['mb_ntype'] = 'N'
-    if not 'mb_k' in params.keys():      params['mb_k']     = 0
-    if not 'mb_k_alph' in params.keys(): params['mb_k_alph'] = 1
+
     mb_ntype   = params['mb_ntype']
     mb_k       = params['mb_k']
-    mb_k_alph  = params['mb_k_alph']
 
-    # Save params MF
+    # Extract params MF
     mf_temp    = params['temp']
 
-    # Save params hybrid
+    # Extract params hybrid
     w_mf = params['w_mf']
     w_mb = 1-params['w_mf']
 
@@ -79,10 +86,12 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
     # Initialize agents #######################################################################
     # Initialize MF agent
-    params_mf = params.copy(); overlap = ['mf_rec_type','mf_k','mf_ntype','mf_k_alph','mf_h','mf_w']
+    params_mf = params.copy()
+    overlap = ['mf_rec_type','mf_k','mf_ntype','mf_k_alph','mf_h','mf_w']
     for i in range(len(overlap)):
         if overlap[i] in params_mf.keys(): params_mf[f'{overlap[i].replace("mf_","")}'] = params_mf.pop(overlap[i])
-    mf_agent    = ac.agent(params_mf)           
+    mf_agent    = ac.agent(params_mf)  
+    mf_update_type = params_mf['h']['update_type'] if 'update_type' in params_mf['h'].keys() else 'var'         
 
     # Initialize MB agent
     mb_uR     = np.zeros(S)
@@ -90,19 +99,55 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
     mb_alph   = mb_eps*np.ones((S,A,S))
 
     # Initialize  novelty variables
+    params_mb = params.copy()
+    overlap = ['mb_rec_type','mb_k','mb_ntype','mb_h','mb_w']
+    for i in range(len(overlap)):
+        if overlap[i] in params_mb.keys(): params_mb[f'{overlap[i].replace("mb_","")}'] = params_mb.pop(overlap[i])  
+
     if mb_hierarchical:  
-        params_mb = params.copy(); overlap = ['mb_rec_type','mb_k','mb_ntype','mb_k_alph','mb_h','mb_w']
-        for i in range(len(overlap)):
-            if overlap[i] in params_mb.keys(): params_mb[f'{overlap[i].replace("mb_","")}'] = params_mb.pop(overlap[i])                
         mb_hnov_type, mb_compute_hnov, mb_update_type, mb_update_hnov = hyb.set_hnov(params_mb)
+
         mb_w       = params_mb['w']
         mb_h       = params_mb['h']                      
         mb_h_w     = mb_h['h_w']              # kernel mixture weights
         mb_kmat    = mb_h['kmat']             # kernel function matrix (list of matrices |S|xlen(av))
-        mb_h_eps   = mb_h['k_alph'] if mb_update_type=='fix' else mb_h['eps']
-        if mb_h_eps==None: mb_h_eps = [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]  
+
+        if mb_update_type=='fixed':
+            mb_h_eps       = None  
+            mb_h_alph_leak = None
+            mb_k_alph      = mb_h['k_alph'] if 'k_alph' in mb_h.keys() else 0.1
+        elif mb_update_type=='leaky':
+            mb_h_eps       = mb_h['eps_leak'] if 'eps_leak' in mb_h.keys() else [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]
+            mb_h_alph_leak = mb_h['alph_leak'] if 'alph_leak' in mb_h.keys() else 0 
+            mb_k_alph      = None
+            mb_gg          = [np.zeros(mb_h_w[i].shape) for i in range(len(mb_h_w))]
+        elif mb_update_type=='var':
+            mb_h_eps       = mb_h['eps'] if 'eps' in mb_h.keys() else [1/(len(mb_h_w[i])**2) for i in range(len(mb_h_w))]  
+            mb_h_alph_leak = None
+            mb_k_alph      = None
+        
     else:
-        mb_c      = np.zeros(S)
+        # Set update type (fixed/variable learning rate for novelty signal)
+        mb_update_type  = params['update_type'] if 'update_type' in params.keys() else 'var'
+        mb_update_nov   = eval(f'nor.update_nov_{mb_update_type}rate')  # update_nov_fixedrate, update_nov_varrate, update_nov_leakyrate
+        mb_compute_nov  = eval(f'nor.compute_nov_{mb_update_type}rate')
+
+        # Set remaining params
+        if mb_update_type=='fixed':
+            mb_c_eps        = None
+            mb_c_alph_leak  = None
+            mb_k_alph       = params_mb['k_alph'] if 'k_alph' in params_mb.keys() else 0.1
+            mb_p            = 1/S * np.ones(S)
+        elif mb_update_type=='leaky':
+            mb_c_eps        = params_mb['eps_leak'] if 'eps_leak' in params_mb.keys() else 1
+            mb_c_alph_leak  = params_mb['alph_leak'] if 'alph_leak' in params_mb.keys() else None
+            mb_k_alph       = None
+            mb_c            = np.zeros(S)
+        elif mb_update_type=='var':
+            mb_c_eps        = 1
+            mb_c_alph_leak  = None
+            mb_k_alph       = None
+            mb_c            = np.zeros(S)
 
     # Initialize Q-values with initial novelty
     if mb_hierarchical: 
@@ -141,50 +186,78 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
         Tmax          = params['max_it']
         foundTerminal = False
         mb_t          = 1  # absolute time
-        mb_tt         = 1  # leaky time integrator
+        if mb_update_type=='leaky':
+            mb_tt     = 0
 
         # Record initial variables (MF, pre)
         m0_s,_,_,_ = mf_agent.evalMod(s,0)
-        c0_s = mf_agent.critics[0].pc.counts[s]
         all_nov_s_pre_mf.append(m0_s[0])
         all_nov_s_new_pre_mf.append(m0_s[0])
         if rec_counts:
+            if mf_update_type=='fixed':
+                c0_s = mf_agent.critics[0].pc.p[s]
+            else:
+                c0_s = mf_agent.critics[0].pc.counts[s]
             all_c_s_pre_mf.append(c0_s)
             all_c_s_new_pre_mf.append(c0_s)
     
-        # Update state + novelty MF agent
+        # Update state + novelty (MF agent)
         env.setAgentLoc(s)
         mf_agent.giveStateInput(s)
         mf_agent.updateMod(s)
         mf_agent.resetTraces()  
-        m1_s,_,_,_ = mf_agent.evalMod(s,0)
-        c1_s = mf_agent.critics[0].pc.counts[s]          
 
-        # Update novelty MB agent
-        if mb_hierarchical:     
-            mb_h_w,_ = mb_update_hnov(mb_h_w,mb_kmat,mb_h_eps,s,mb_t)
+        m1_s,_,_,_ = mf_agent.evalMod(s,0)
+        all_nov_s_post_mf.append(m1_s[0])
+        all_nov_s_new_post_mf.append(m1_s[0])
+        if rec_counts:
+            if mf_update_type=='fixed':
+                c1_s = mf_agent.critics[0].pc.p[s]
+            else:
+                c1_s = mf_agent.critics[0].pc.counts[s]  
+            all_c_s_post_mf.append(c1_s)
+            all_c_s_new_post_mf.append(c1_s)        
+
+        # Update novelty counts / weights (MB agent)
+        if mb_hierarchical:   
+            if mb_update_type=='fixed':
+                mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s,mb_k_alph)  
+            elif mb_update_type=='leaky':
+                mb_h_w, mb_gg, mb_tt = mb_update_hnov(mb_h_w,mb_kmat,s,mb_h_eps,mb_tt,mb_gg,mb_h_alph_leak)
+            elif mb_update_type=='var':
+                mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s,mb_h_eps,mb_t)
+            
             mb_Nvec, mb_N = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
-        else:             
-            mb_c[s] +=1
-            mb_N = np.log((mb_tt+S)/(mb_c+1)) 
+        else:   
+            if mb_update_type=='fixed':
+                mb_p = mb_update_nov(mb_p,s,mb_k_alph)
+                mb_N = mb_compute_nov(mb_p)
+            elif mb_update_type=='leaky':
+                mb_c, mb_tt = mb_update_nov(mb_c,s,mb_tt,mb_c_alph_leak)
+                mb_N = mb_compute_nov(mb_c,mb_tt,S,mb_c_eps)
+            elif mb_update_type=='var':
+                mb_c = mb_update_nov(mb_c,s)     
+                mb_N = mb_compute_nov(mb_c,mb_tt,S)     
 
         # Record initial variables
         all_t_mb.append(mb_t-1)
-        all_tt_mb.append(mb_tt)
+        if mb_update_type=='leaky':
+            all_tt_mb.append(mb_tt)
         all_t_mf.append(0)
-        all_tt_mf.append(0)
+        if mf_update_type=='leaky':
+            all_tt_mf.append(0)
         all_s.append(s)
         all_s_new.append(s)
 
         all_nov_s_mb.append(mb_N[s])
         all_nov_s_new_mb.append(mb_N[s])
-        all_nov_s_post_mf.append(m1_s[0])
-        all_nov_s_new_post_mf.append(m1_s[0])
         if rec_counts:
-            all_c_s_mb.append(mb_c[s])
-            all_c_s_new_mb.append(mb_c[s])
-            all_c_s_post_mf.append(c1_s)
-            all_c_s_new_post_mf.append(c1_s)
+            if mb_update_type=='fixed':
+                all_c_s_mb.append(mb_p[s])
+                all_c_s_new_mb.append(mb_p[s])
+            else:
+                all_c_s_mb.append(mb_c[s])
+                all_c_s_new_mb.append(mb_c[s])
         if rec_qvals:   
             all_qvals_mb.append(mb_qN)
             all_qvals_mf.append(mf_agent.actors[0].w)
@@ -229,7 +302,8 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
             # Record time and transition variables
             all_t_mf.append(it)
-            all_tt_mf.append(mf_agent.critics[0].pc.t)
+            if mf_update_type=='leaky':
+                all_tt_mf.append(mf_agent.critics[0].pc.t)
             all_s.append(s)
             all_s_new.append(s_new)
 
@@ -239,8 +313,12 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
             all_nov_s_pre_mf.append(mf_m_current[0])
             all_nov_s_new_pre_mf.append(mf_m[0])
             if rec_counts:
-                all_c_s_pre_mf.append(mf_agent.critics[0].pc.counts[s])
-                all_c_s_new_pre_mf.append(mf_agent.critics[0].pc.counts[s_new])
+                if mf_update_type=='fixed':
+                    all_c_s_pre_mf.append(mf_agent.critics[0].pc.p[s])
+                    all_c_s_new_pre_mf.append(mf_agent.critics[0].pc.p[s_new])
+                else:
+                    all_c_s_pre_mf.append(mf_agent.critics[0].pc.counts[s])
+                    all_c_s_new_pre_mf.append(mf_agent.critics[0].pc.counts[s_new])
 
             # Update novelty + values (MF)
             mf_agent.updateMod(s_new)                      # update state of modulator (e.g. state count, time count for novelty)
@@ -252,8 +330,12 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
             all_nov_s_post_mf.append(mf_m_current[0])
             all_nov_s_new_post_mf.append(mf_m[0])
             if rec_counts:
-                all_c_s_post_mf.append(mf_agent.critics[0].pc.counts[s])
-                all_c_s_new_post_mf.append(mf_agent.critics[0].pc.counts[s_new])
+                if mf_update_type=='fixed':
+                    all_c_s_post_mf.append(mf_agent.critics[0].pc.p[s])
+                    all_c_s_new_post_mf.append(mf_agent.critics[0].pc.p[s_new])
+                else:
+                    all_c_s_post_mf.append(mf_agent.critics[0].pc.counts[s])
+                    all_c_s_new_post_mf.append(mf_agent.critics[0].pc.counts[s_new])
 
             # Record q-values after learning from N(s_new)
             if rec_qvals:   
@@ -261,16 +343,28 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
             # Update time (MB)
             mb_t  = mb_t + 1
-            mb_tt = mb_tt*mb_k_alph + 1
 
-            # Update novelty (MB)
-            if mb_hierarchical:
-                mb_h_w,_   = mb_update_hnov(mb_h_w,mb_kmat,mb_h_eps,s_new,mb_t)
-                mb_Nvec,mb_N  = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
-            else:
-                mb_c *= mb_k_alph
-                mb_c[s_new]+=1
-                mb_N = np.log((mb_tt+S)/(mb_c+1))  
+            # Update novelty variables and recompute novelty
+            if mb_hierarchical:  
+                # Update novelty weights 
+                if mb_update_type=='fixed':
+                    mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_k_alph)   #s_new??
+                elif mb_update_type=='leaky':
+                    mb_h_w, mb_gg, mb_tt = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_h_eps,mb_tt,mb_gg,mb_h_alph_leak)
+                elif mb_update_type=='var':
+                    mb_h_w, _ = mb_update_hnov(mb_h_w,mb_kmat,s_new,mb_h_eps,mb_t)
+                # Compute novelty
+                mb_Nvec, mb_N = mb_compute_hnov(mb_h_w,mb_kmat,mb_k,mb_w)
+            else:   
+                if mb_update_type=='fixed':
+                    mb_p = mb_update_nov(mb_p,s_new,mb_k_alph)
+                    mb_N = mb_compute_nov(mb_p)
+                elif mb_update_type=='leaky':
+                    mb_c, mb_tt = mb_update_nov(mb_c,s_new,mb_tt,mb_c_alph_leak)
+                    mb_N = mb_compute_nov(mb_c,mb_tt,S,mb_c_eps)
+                elif mb_update_type=='var':
+                    mb_c = mb_update_nov(mb_c,s_new)    
+                    mb_N = mb_compute_nov(mb_c,mb_tt,S)   
 
             # Update values (MB)
             mb_alph[s][a][:] = mb_k_leak*mb_alph[s][a][:] + (1-mb_k_leak)*mb_eps
@@ -286,12 +380,17 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
             
             # Recording of data
             all_t_mb.append(mb_t-1)
-            all_tt_mb.append(mb_tt)
+            if mb_update_type=='leaky':
+                all_tt_mb.append(mb_tt)
             all_nov_s_mb.append(mb_N[s])
             all_nov_s_new_mb.append(mb_N[s_new])
             if rec_counts:  
-                all_c_s_mb.append(mb_c[s])
-                all_c_s_new_mb.append(mb_c[s_new])
+                if mb_update_type=='fixed':
+                    all_c_s_mb.append(mb_p[s])
+                    all_c_s_new_mb.append(mb_p[s_new])
+                else:
+                    all_c_s_mb.append(mb_c[s])
+                    all_c_s_new_mb.append(mb_c[s_new])
             if rec_qvals:   
                 all_qvals_mb.append(mb_q) 
             if rec_ll:      
@@ -316,9 +415,7 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
 
     # Format recording
     rec = {'mb_time': all_t_mb,
-           'mb_leaky_time': all_tt_mb,
            'mf_time': all_t_mf,
-           'mf_leaky_time': all_tt_mf,
            'state': all_s,
            'next_state': all_s_new,
            'mb_nov_s': all_nov_s_mb,
@@ -328,12 +425,16 @@ def offpolicy_hyb2(params,data,rec_counts=False,rec_qvals=False,rec_ll=False):
            'mf_nov_s_post': all_nov_s_post_mf,
            'mf_nov_s_new_post': all_nov_s_new_post_mf
            }
+    if mb_update_type=='leaky':
+        rec['mb_leaky_time'] = all_tt_mb
+    if mf_update_type=='leaky':
+        rec['mf_leaky_time'] = all_tt_mf
     if rec_counts: 
-        rec['mb_counts_s'] = all_c_s_mb
-        rec['mb_counts_s_new'] = all_c_s_new_mb
-        rec['mf_counts_s_pre'] = all_c_s_pre_mf
-        rec['mf_counts_s_new_pre'] = all_c_s_new_pre_mf
-        rec['mf_counts_s_post'] = all_c_s_post_mf
+        rec['mb_counts_s']          = all_c_s_mb
+        rec['mb_counts_s_new']      = all_c_s_new_mb
+        rec['mf_counts_s_pre']      = all_c_s_pre_mf
+        rec['mf_counts_s_new_pre']  = all_c_s_new_pre_mf
+        rec['mf_counts_s_post']     = all_c_s_post_mf
         rec['mf_counts_s_new_post'] = all_c_s_new_post_mf
     if rec_ll: rec['LL'] = all_ll
     rec = pd.DataFrame(rec)

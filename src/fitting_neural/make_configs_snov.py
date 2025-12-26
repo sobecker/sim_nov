@@ -1,30 +1,31 @@
 import json
 import numpy as np
 import pandas as pd
-
 import utils.saveload as sl
 import os
+
+# This script creates config files for grid search of similarity-based novelty (Homann experiments).
 
 #############################################################################
 #                 Set grid search hyper-parameters and paths                #
 #############################################################################
-cluster         = True # set True if running on cluster
+cluster         = True  # set True if running on cluster
 input_seq_mode  = 'sep' # 'sep': run Homann exp. with the same image sets for each parameter value (e.g. different values of M), independently; 'app': appended format of the experiment, with different image sets per parameter value.
-num_sim         = 50        # number of homann simulations for each trial (i.e. in each optimization step)
-start_id        = 0
+num_sim         = 50    # number of homann simulations for parameter combination
+start_id        = 0     # start id for simulations per grid point
 num_cpu         = 24
 resume          = False # set True if resuming a previous run
-append_mode     = False
-init_seed       = 98765
-parallel_exp    = False
-parallel_grid   = True
+append_mode     = False # set True if appending to previous results
+init_seed       = 98765 # random seed for reproducibility
+parallel_exp    = False # parallelization of experiments (for a single grid point)
+parallel_grid   = True  # parallelization of grid search (multiple grid points in parallel) 
 
 #############################################################################
 #                 Specify model for which to run grid search                #
 #############################################################################
-name_proj       = '2025_05_grid_search_new'
-type_cells      = 'simple' # 'complex', 'simple'
-type_update     = 'leaky' # 'fr', 'leaky'
+name_proj       = 'grid_search_results'
+type_cells      = 'complex' # 'complex', 'simple'
+type_update     = 'fr' # 'fr', 'leaky'
 name_model      = f'snov-{type_cells}-{type_update}'
 
 # Parameters for input stimuli (fixed)
@@ -42,16 +43,9 @@ params_input = {'num_gabor': 40,
 set_num         = 1
 name_set        = f'{name_model}_set{set_num}_{input_seq_mode}' 
 
-if set_num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]: 
-    # set 1: basic grid search - fr / leaky
-    # set 2: basic grid search (less params) - fr / leaky
-    # set 3: small epsilon - leaky
-    # set 4: more small epsilon - leaky
-    # set 6: missing values of cdens, knum for small epsilon as in set 3 and 4 - leaky
-    # set 7: grid search with equidist_fixed sampling, first 50 samples - fr (full grid, input seed = 98765) / leaky (partial grid, input seed = 98765)
-    # set 8: grid search with equidist_fixed sampling, second 50 samples - fr (full grid, input seed = 23456) / leaky (missing grid points, input seed = 98765)
-    # set 9: grid search with equidist_fixed sampling - leaky (combined set 7 and 8, input seed = 98765)
-    # set 10: grid search with equidist_fixed sampling, second 50 samples - leaky (full grid, input seed = 23456)
+if set_num in [1, 2]: 
+    # set 1: full grid search with 50 samples / grid point (input seed = 98765)
+    # set 2: full grid search with 50 samples / grid point (input seed = 12345) 
 
     # Fixed model parameters
     k_type         = 'triangle' # 'box', 'triangle'
@@ -81,9 +75,7 @@ if set_num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
         k_params_ext['flr'] = True # fixed learning rate (fr model)
 
     elif type_update=='leaky':
-        grid['alph_leak']   = [0, 0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-        # grid['alph_leak']   = [0.3, 0.4, 0.6, 0.7] #[0, 0.01,0.1,0.2,0.5,0.8,0.9] # leakiness (leaky model): 0 = no leak, 1 = full leak
-        # grid['eps']         = [0.1,1,10] # prior (leaky model)
+        grid['alph_leak']   = [0, 0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9] # leakiness (leaky model): 0 = no leak, 1 = full leak
         grid['eps']         = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6] # prior (leaky model)
         # grid['alph_leak']   = [0, 0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99, 0.999] # leakiness (leaky model): 0 = no leak, 1 = full leak
         # grid['eps']         = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,5,10,20,50] # prior (leaky model)
@@ -119,43 +111,43 @@ while c_start<len(df_grid):
 #############################################################################
 #                 Set paths                                                 #
 #############################################################################
-path_config_summary = './src/scripts/gabor_kernels/grid_search_new/configs/'
-path_config         = f'{path_config_summary}{name_set}/'
-path_exp            = f'/Volumes/lcncluster/becker/RL_reward_novelty/exps/{name_proj}/{name_set}/' 
-path_runai          = f'/Users/sbecker/runai_cli_files/rlnet/{name_proj}/{name_set}/'
-path_results        = ('/lcncluster/becker/RL_reward_novelty/data/' if cluster else '/Users/sbecker/Projects/RL_reward_novelty/data/') + f'{name_proj}/{name_set}/'
-
+path_config_summary = sl.get_rootpath() / 'src' / 'fitting_neural' / 'configs_gridsearch'
+path_config         = path_config_summary / f'{name_set}'
 sl.make_long_dir(path_config)
+
+path_exp            = sl.get_rootpath() / 'exp' / 'gridsearch' / f'{name_set}'
 sl.make_long_dir(path_exp)  
-sl.make_long_dir(path_runai)
+
+path_results        = ('/lcncluster/becker/sim_nov/data/' if cluster else '/Users/sbecker/Projects/sim_nov/data/') + f'{name_proj}/{name_set}/'
 
 for i in range(len(grid_dicts)):
     # Build config file #################################################################################################################
     job_name   = f'job-{i}'
 
     config = {'job_name': job_name,
-              'grid': grid_dicts[i],
-              'k_params_ext': k_params_ext,
-              'num_sim': num_sim,  
-              'params_input': params_input,
-              'init_seed': init_seed,
-              'parallel_exp': parallel_exp,
-              'parallel_grid': parallel_grid,
-              'save_path': f'{path_results}{job_name}/',
-              'comp_fit': False,
-              'comp_corr': False,
-              'cluster': cluster,
-              'resume': resume,
-              'input_corrected': True,
-              'input_sequence_mode': input_seq_mode,
-              'kwargs': kwargs_ext,
-              'num_cpu': num_cpu
-              }
+            'grid': grid_dicts[i],
+            'k_params_ext': k_params_ext,
+            'num_sim': num_sim,  
+            'params_input': params_input,
+            'init_seed': init_seed,
+            'parallel_exp': parallel_exp,
+            'parallel_grid': parallel_grid,
+            'save_path': f'{path_results}{job_name}/',
+            'comp_fit': False,
+            'comp_corr': False,
+            'cluster': cluster,
+            'resume': resume,
+            'input_corrected': True,
+            'input_sequence_mode': input_seq_mode,
+            'kwargs': kwargs_ext,
+            'num_cpu': num_cpu
+            }
 
     name_config = job_name
 
     with open(os.path.join(path_config,f'{name_config}.json'), 'w') as fp:
         json.dump(config, fp)
+
     print(f'Config file saved as {os.path.join(path_config,f"{name_config}.json")}')
 
     # Build exp file ####################################################################################################################
@@ -166,7 +158,7 @@ for i in range(len(grid_dicts)):
 #!/bin/bash
 echo "creating directory"
 log_folder="$(date +'%Y-%m-%d_%H-%M-%S')_{name_exp}"
-base_path="/lcncluster/becker/RL_reward_novelty"
+base_path="/lcncluster/becker/sim_nov"
 echo "folder name: ${{log_folder}}"
 mkdir -p ${{base_path}}/logs/{name_proj}
 mkdir -p ${{base_path}}/logs/{name_proj}/{name_set}
@@ -176,40 +168,11 @@ echo "activating conda environment"
 source activate rlnet_cluster
 
 echo "build {name_exp}"
-python -u -b ${{base_path}}/src/scripts/gabor_kernels/grid_search_new/grid_search_snov.py -c ${{base_path}}/src/scripts/gabor_kernels/grid_search_new/configs/{name_set}/{name_config}.json | tee ${{base_path}}/logs/{name_proj}/{name_set}/${{log_folder}}/log.txt
+python -u -b ${{base_path}}/src/fitting_neural/grid_search_snov.py -c ${{base_path}}/src/fitting_neural/configs_gridsearch/{name_set}/{name_config}.json | tee ${{base_path}}/logs/{name_proj}/{name_set}/${{log_folder}}/log.txt
 ''')
         
     print(f'Exp file saved as {os.path.join(path_exp,f"{name_exp}.sh")}')
 
-    # Build runai client file ##########################################################################################################
-    name_runai_job = name_set.replace('_','-').lower()+f'-{job_name}'
-    if len(name_runai_job)>62:
-        name_runai_job = name_runai_job[-62:]
-
-    with open (os.path.join(path_runai,f'submit_{name_exp}.sh'), 'w') as rsh:
-        rsh.write(f'''\
-runai submit \
-  --name {name_runai_job} \
-  --image nvcr.io/nvidia/pytorch:25.03-py3 \
-  --gpu 0 \
-  --cpu {num_cpu} \
-  --cpu-limit {num_cpu} \
-  --memory 40Gi \
-  --memory-limit 80Gi \
-  --large-shm \
-  --node-pools default,h100 \
-  --environment HOME="/lcncluster/becker/.caas_HOME" \
-  --run-as-uid 229361 \
-  --run-as-gid 20184 \
-  --run-as-user \
-  --existing-pvc claimname=lcn1-lcncluster,path=/lcncluster \
-  --existing-pvc claimname=lcn1-scratch,path=/scratch \
-  --working-dir /lcncluster \
-  --command \
-  -- /bin/bash /lcncluster/becker/RL_reward_novelty/exps/{name_proj}/{name_set}/{name_exp}.sh
-''')
-        
-    print(f'Exp file saved as {os.path.join(path_runai,f"submit_{name_exp}.sh")}')
 
 # Save dataframe with simulation info ###############################################################################################
 info = {'study_name': name_set,
@@ -219,10 +182,9 @@ info = {'study_name': name_set,
         'grid_num_sim': num_sim,
         'grid_init_seed': init_seed,
         'path_results': path_results,
-        'path_config': path_config,
-        'path_exp': path_exp,
-        'path_runai': path_runai
+        'path_config': str(path_config),
+        'path_exp': str(path_exp)        
         }
 
-with open(f'{path_config_summary}summary_{name_set}.json', 'w') as fp:
+with open(path_config_summary / f'summary_{name_set}.json', 'w') as fp:
     json.dump(info,fp)
