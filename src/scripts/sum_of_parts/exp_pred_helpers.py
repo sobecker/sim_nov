@@ -2,9 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
 
-import sys
-
 import models.snov.kernel_nov_vec as knov_vec
+import models.snov.kernel_nov as knov
 
 def get_random_seed(length,n,init_seed=None):
     if not init_seed: 

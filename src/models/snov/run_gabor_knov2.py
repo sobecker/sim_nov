@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy import ndimage as ndi
 from scipy.special import softmax
 import multiprocessing as mp
+import models.snov.kernel_nov as knov
 import models.snov.kernel_nov_vec as knov_vec  
 import models.snov.gabor_stimuli as gs
 

@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import sys
 
 import models.snov.gabor_stimuli as gs
 import models.snov.run_gabor_knov2 as gknov2
@@ -14,6 +13,7 @@ import scripts.sum_of_parts.test_parent_child_sim as tpcs
 import scripts.sum_of_parts.plot_similarity_modulation_homann as smh
 import scripts.sum_of_parts.exp_pred_helpers as eph
 
+##############################################################################################################################
 def run_perm_withalph(alph_k,rotate,unit_orient=0,plot_stim=False,permute_all=True,num_perm=20,seed_parent=12345,save_stats=True,save_path='',save_name='',exp_type='m',cell_type='simple'):
     # Set parameters according to experiment type
     if exp_type=='l': 
@@ -157,6 +157,7 @@ def run_perm_withalph(alph_k,rotate,unit_orient=0,plot_stim=False,permute_all=Tr
         
     return sim_data_raw, sim_stats_raw, sim_rotate, sim_perm_id, sim_oddsim, sim_oddsim_vec
 
+##############################################################################################################################
 def plot_m(load_path,load_name,save_path,save_name):
     exp_type = 'm'
 
@@ -225,15 +226,13 @@ def plot_m(load_path,load_name,save_path,save_name):
 
 
 if __name__=="__main__":
-    plt.style.use('/Users/sbecker/Projects/RL_reward_novelty/src/scripts/Figures_Paper/paper.mplstyle')
+    plt.style.use(sl.get_rootpath() / 'src' / 'utils' / 'paper.mplstyle')
 
     # Set paths
-    folder_name = '2025-01_exp-pred1-simple_sum-of-parts_robustness-m'
-
-    path_data = path_data = f'/Users/sbecker/Projects/RL_reward_novelty/data/{folder_name}/'
+    path_data = sl.get_rootpath() / f'data' / 'sum-of-parts_robustness'
     sl.make_long_dir(path_data)
 
-    path_fig = f'/Users/sbecker/Projects/RL_reward_novelty/output/{folder_name}/'
+    path_fig = sl.get_rootpath() / f'output' / 'figures_paper' / 'fig_sum-of-parts' 
     sl.make_long_dir(path_fig)
 
     ########################################################################################################################
@@ -246,15 +245,10 @@ if __name__=="__main__":
 
     for i_alph, alph in enumerate(test_alphas):
 
-        # name_data   = f'm_exp_seed-{seed_parent}_alph-{np.round(alph,6)}'.replace('.','-')
-        name_data   = f'm_exp_seed-{seed_parent}_alph-{alph}'.replace('.','-')
-        name_fig    = name_data 
-
-        # plot_protocol(rotate_plot,unit_orient=0,seed_parent=seed_parent,save_path=path_fig,save_name=name_fig,exp_type='m')
+        name_data   = f'm_exp_seed-{seed_parent}_alph-{np.round(alph, 6)}'.replace('.','-')
+        
         run_perm_withalph(alph,rotate,unit_orient=0,plot_stim=False,permute_all=True,seed_parent=seed_parent,save_stats=True,save_path=path_data,save_name=name_data,exp_type='m',cell_type='simple')
         print(f'Done simulating {alph} (value {i_alph+1}/{len(test_alphas)}).\n')
-
-        # plot_m(load_path=path_data,load_name=name_data,save_path=path_fig,save_name=name_fig)
 
     print('done')
 

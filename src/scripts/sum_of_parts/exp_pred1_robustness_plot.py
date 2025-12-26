@@ -3,23 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-import sys
-
 import utils.saveload as sl
 import utils.visualization as vis
 
 if __name__=="__main__":
-    plt.style.use('/Users/sbecker/Projects/RL_reward_novelty/src/scripts/Figures_Paper/paper.mplstyle')
+    plt.style.use(sl.get_rootpath() / 'src' / 'utils' / 'paper.mplstyle')
 
     # Set paths
-    # folder_name = '2024-11_exp-pred1_sum-of-parts_robustness-m' # simple cells (no permutations)
-    folder_name = '2025-01_exp-pred1-simple_sum-of-parts_robustness-m' # simple cells (with permutations)
-    # folder_name = '2025-01_exp-pred1-complex_sum-of-parts_robustness-m' # complex cells (no permutations)
-
-    path_data = path_data = f'/Users/sbecker/Projects/RL_reward_novelty/data/{folder_name}/'
+    path_data = sl.get_rootpath() / f'data' / 'sum-of-parts_robustness'
     sl.make_long_dir(path_data)
 
-    path_fig = f'/Users/sbecker/Projects/RL_reward_novelty/output/{folder_name}/'
+    path_fig = sl.get_rootpath() / f'output' / 'figures_paper' / 'fig_sum-of-parts'
     sl.make_long_dir(path_fig)
 
     ########################################################################################################################
@@ -36,8 +30,8 @@ if __name__=="__main__":
     rotate_plot = np.array([0,0.2])*np.pi
     seed_parent = 12345
 
-    name_fig1    = f'm_exp_seed-{seed_parent}_alph-up-to-05'.replace('.','-')
-    name_fig2    = f'm_exp_seed-{seed_parent}_alph-above-05'.replace('.','-')
+    name_fig1    = f'FIG-S6_upper_m_exp_seed-{seed_parent}_alph-up-to-05'.replace('.','-')
+    name_fig2    = f'FIG-S6_lower_m_exp_seed-{seed_parent}_alph-above-05'.replace('.','-')
 
     # Load all data
     sim_stats_raw = []
@@ -122,14 +116,11 @@ if __name__=="__main__":
             ax3.legend(loc='upper left',title='Leakiness $\\alpha$',frameon=False,handletextpad=0.1,bbox_to_anchor=(1.1,1))
 
     fig.tight_layout()
-    fig.savefig(os.path.join(path_fig,f'{name_fig1}.png'))
     fig.savefig(os.path.join(path_fig,f'{name_fig1}.svg'))
-    fig2.tight_layout()
-    fig2.savefig(os.path.join(path_fig,f'{name_fig1}_steady.png'))
-    fig2.savefig(os.path.join(path_fig,f'{name_fig1}_steady.svg'))
-    fig3.tight_layout()
-    fig3.savefig(os.path.join(path_fig,f'{name_fig1}_raw.png'))
-    fig3.savefig(os.path.join(path_fig,f'{name_fig1}_raw.svg'))
+    # fig2.tight_layout()
+    # fig2.savefig(os.path.join(path_fig,f'{name_fig1}_steady.svg'))
+    # fig3.tight_layout()
+    # fig3.savefig(os.path.join(path_fig,f'{name_fig1}_raw.svg'))
 
     # Plot all data (part 1)
     fig,axl   = plt.subplots(1,len(rotate),figsize=(8.3,2.5)) #,gridspec_kw={'width_ratios': [1,1,1,1,1,0.5]})
@@ -193,14 +184,11 @@ if __name__=="__main__":
             ax3.legend(loc='upper left',title='Leakiness $\\alpha$',frameon=False,handletextpad=0.1,bbox_to_anchor=(1.1,1))
 
     fig.tight_layout()
-    fig.savefig(os.path.join(path_fig,f'{name_fig2}.png'))
     fig.savefig(os.path.join(path_fig,f'{name_fig2}.svg'))
-    fig2.tight_layout()
-    fig2.savefig(os.path.join(path_fig,f'{name_fig2}_steady.png'))
-    fig2.savefig(os.path.join(path_fig,f'{name_fig2}_steady.svg'))
-    fig3.tight_layout()
-    fig3.savefig(os.path.join(path_fig,f'{name_fig2}_raw.png'))
-    fig3.savefig(os.path.join(path_fig,f'{name_fig2}_raw.svg'))
+    # fig2.tight_layout()
+    # fig2.savefig(os.path.join(path_fig,f'{name_fig2}_steady.svg'))
+    # fig3.tight_layout()
+    # fig3.savefig(os.path.join(path_fig,f'{name_fig2}_raw.svg'))
 
     print('done')
 
