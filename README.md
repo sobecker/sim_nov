@@ -38,7 +38,7 @@ sim_nov/
     1. Run grid search.
           - For count-based novelty: Run sim_nov/src/fitting_neural/grid_search_cnov.py
           - For similarity-based novelty: Run sim_nov/src/fitting_neural/grid_search_snov.py with config files. Config files created in: sim_nov/src/fitting_neural/make_configs_snov.py
-    2. Run fitting to neural data
+    2. Run fitting to neural data.
           - If grid search results for a given model were saved in separate folders (e.g. to simplify parallelization), combine data with sim_nov/src/fitting_neural/combine_data_snov.py as needed.
           - Run sim_nov/src/fitting_neural/run_fit_withconfig.py with config files. Config files created in sim_nov/src/fitting_neural/make_configs_fitting.py
     4. Create visualizations.
@@ -46,9 +46,11 @@ sim_nov/
   
 - Controls for V1 novelty responses (Figure S3-S4):
     - Parameter robustness (Fig. S3 A-E): Accesses same data as Figure 2. Run python notebook sim_nov/src/scripts/homann_analysis/plot_gridsearch_robustness.ipynb
-    - Component width variation (Fig. S3 F): Run grid search (sim_nov/src/fitting_neural/grid_search_snov.py) with config files created in sim_nov/src/fitting_neural/make_configs_robustness2.py
+    - Component width variation (Fig. S3 F): Run grid search (sim_nov/src/fitting_neural/grid_search_snov.py) with config files created in sim_nov/src/fitting_neural/make_configs_robustness.py. To create figures, run python notebook sim_nov/src/homann_analysis/plot_width_variation.ipynb.
     - Comparison with fixed-rate models: Run grid search, fitting and visualization as for Figure 2 but for fixed-rate count-based novelty and fixed-rate similarity-based novelty models.
  
 - Exploration behavior (Figure 3, Figure S5): 
 
 - Sum-of-parts protocol (Figure 4, Figure S6):
+     - To reproduce Figure 4, run python notebook sim_nov/src/scripts/sum_of_parts/exp_pred1.ipynb
+     - To reproduce Figure S6 (robustness under change of leakiness), run simulations using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_simulate.py; create plots using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_plot.py
