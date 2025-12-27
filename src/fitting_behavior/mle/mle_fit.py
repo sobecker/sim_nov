@@ -1,9 +1,11 @@
 from argparse import ArgumentParser
 import json
+from logging import debug
 import os
 import numpy as np
 import pandas as pd
 import timeit
+from pathlib import Path
 
 import utils.saveload as sl
 import fitting_behavior.optimization.base_params_opt as bpo
@@ -29,6 +31,7 @@ def run_mle_fit(config):
     verbose         = config['verbose']
     # Optional parameters
     rand_start      = config['rand_start'] if 'rand_start' in config.keys() else 0  # number of random starts of mle (with random initial values)
+    debug           = config['debug'] if 'debug' in config.keys() else False
     seed            = config['seed'] if 'seed' in config.keys() else 12345          # seed for random starts of mle (with random initial values)
     save_path       = config['save_path'] if 'save_path' in config.keys() else ''   # optional path to save mle results (e.g. used for parameter recovery)
     level           = config['level'] if 'level' in config.keys() else ''           # level of granularity/hierarchy (for hnor and hnac models)
@@ -41,15 +44,14 @@ def run_mle_fit(config):
     else:           mle_fun = mle_fit
 
     ## Set directory to save data #############################################################################################################
+    # Set overall path
+    base_path = sl.get_rootpath()
+
     # Set save folder
     if save_path=='': 
-        dir_save = f'MLE4_results/Fits/{"MultiStart/" if rand_start>0 else "SingleRun/"}{save_folder}/'
+        dir_save = sl.get_rootpath() / 'data' / 'mle_results' / f'fits_{"multi-start" if rand_start>0 else "single-run"}' / save_folder
     else:             
-        dir_save = f'{save_path}{"" if save_path[-1]=="/" else "/"}{save_folder}/'
-
-    # Set overall path
-    base_path = str(sl.get_rootpath())
-    dir_save = f'{base_path}/data/{dir_save}'
+        dir_save = Path(save_path) / save_folder
 
     ## Check whether file already exists and set bools (which cases to fit) ####################################################################
     fit_sep = True
@@ -157,7 +159,7 @@ def run_mle_fit(config):
             P = params['P']
             d = []
             for i in range(len(AllNames)):
-                dir     = base_path / 'ext_data' / 'Rosenberg2021'
+                dir     = base_path / 'ext_data' / 'Rosenberg2021' / f'{AllNames[i]}_data'
                 file    = f'{AllNames[i]}-stateseq_UntilG.pickle'
                 df_i    = preprocess_micedata(dir,file,P,subID=AllNames[i],epi=0)
                 d.append(df_i)
@@ -169,25 +171,16 @@ def run_mle_fit(config):
             else:                       
                 dir_data = data_folder
 
-            # if 'hnac' in alg_type_sim:
-            #     params = bpo.baseparams_h1nac_eps1([level])
-            #     params1 = sl.load_sim_params(dir_data)
-            #     params.update(params1)
-            # elif 'hybrid' in alg_type_sim:
-            #     params_mb = sl.load_sim_params(dir_data,file_params='mb_params.pickle')
-            #     params_mf = sl.load_sim_params(dir_data,file_params='mf_params.pickle')
-            #     params = bpo.comb_params(params_mb,params_mb,params_mf)
-            # else:
-            #     params      = sl.load_sim_params(dir_data)
-
             # Load simulation data (to be fitted)
             if 'hybrid' in alg_type_sim: 
                 all_data = sl.load_sim_data(dir_data,file_data='mf_data_basic.pickle') # note: only states and actions are used for fitting, these are the same for mf_data and mb_data
             else:                       
                 all_data = sl.load_sim_data(dir_data)
 
-        # subID_lim = 2                                       # only for testing; comment for real run
-        # all_data = all_data.loc[all_data.subID<subID_lim]   # only for testing; comment for real run
+        if debug: # only for testing: reduce data to first two subjects, restrict optimization to 10 iterations
+            subID_lim = 2                                       
+            all_data = all_data.loc[all_data.subID.isin(all_data.subID.unique()[:subID_lim])]   
+            kwargs['maxit'] = 10
 
         all_data = all_data.loc[all_data.epi==0]
         print(f'Number of data samples fitted: {len(all_data)}.')
@@ -292,15 +285,8 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        # config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nor-opt_Nelder-Mead-sep_local.json'))
-        # config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nor-opt_Nelder-Mead-app_local.json'))
-        # config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nor-mice_Nelder-Mead-sep_local.json'))
-        #config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nor-mice_Nelder-Mead-app_local.json'))
-        #config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nac-opt_Nelder-Mead-sep.json'))
-        # config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle_nac-mice_Nelder-Mead-app.json'))
-        #config = json.load(open('./src/scripts/MLE/mle_fit_configs/mle-maxit_hhybrid-l1-mice_Nelder-Mead.json'))
-        config = json.load(open('./src/fitting_behavior/mle/mle_fit_configs/mle_nor-mice_Nelder-Mead-app.json'))
-    print(type(config))
+        config = json.load(open(str(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs' / 'mle_leaky_hnor_notrace-l6-mice_Nelder-Mead-app_test.json')))
+
     print(config)
 
     run_mle_fit(config)

@@ -1,0 +1,11 @@
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: True. Number of iterations performed: 360.
+Estimated values for parameters:
+ ['lambda_N: -2.042208913984906', 'beta_1: 6.7970928903051195', 'epsilon: -13.337518332909681', 'k_leak: 6.116501396258727', 'alph_leak: -1.0865168156778104', 'eps_leak1: -0.6581564304567498', 'eps_leak2: 14.435301685009087', 'w_cnov: -12.938251208758986']
+LL value for estimated parameter values: -5954.360153350707.
+
+Optimization sucessful for all data samples: True. Time taken: 5846.025999167003 s. Number of iterations: 360.
+
+Finished running MLE fit (mice data) in 5846.417214231973 s.
+

@@ -17,18 +17,6 @@ l_var   = ['lambda_N',
            'beta_1',
            'epsilon',
            'k_leak']
-# l_x0        = [0.5,
-#                5,
-#                0.0002,
-#                0.5]
-# l_bounds    = [[0.,0.999],
-#                 [0.1,30],
-#                 [0.0001,1],
-#                 [0.001,0.999]]
-# l_transformed = [False,
-#                  False,
-#                  False,
-#                  False]
 l_x0        = [0.5,
                5,
                -8,
@@ -41,7 +29,23 @@ l_transformed = [False,
                  True,
                  True,
                  False]
-transfun = 'softplus' # softplus, log
+l_transfun      = ['sigmoid', 'softplus', 'softplus', 'sigmoid']
+l_transfun_inv  = ['logit', 'softplus_inv', 'softplus_inv', 'logit']
+
+# Non-transformed optimization (included for completeness / comparison)
+# l_x0        = [0.5,
+#                5,
+#                0.0002,
+#                0.5]
+# l_bounds    = [[0.,0.999],
+#                 [0.1,30],
+#                 [0.0001,1],
+#                 [0.001,0.999]]
+# l_transformed = [False,
+#                  False,
+#                  False,
+#                  False]
+# transfun = None # softplus, log
 
 if 'nonleaky_eps1' in alg_name:
     print('Using nonleaky_eps1 model')
@@ -53,29 +57,36 @@ elif 'leaky_eps1' in alg_name:
     l_transformed.append(False)
 
 elif 'nonleaky' in alg_name:
-    # l_var.append('eps_leak')
-    # l_x0.append(1)
-    # l_bounds.append([0.001,10])
-    # l_transformed.append(False)
+
     l_var.append('eps_leak')
     l_x0.append(0.5)
     l_bounds.append([-15,15])
     l_transformed.append(True)
 
-elif 'leaky' in alg_name:
-    l_var.append('alph_leak')
-    l_x0.append(0.5)
-    l_bounds.append([0.001,0.999])
-    l_transformed.append(False)
+    # Non-transformed version
     # l_var.append('eps_leak')
     # l_x0.append(1)
     # l_bounds.append([0.001,10])
     # l_transformed.append(False)
+
+elif 'leaky' in alg_name:
+
+    l_var.append('alph_leak')
+    l_x0.append(0.5)
+    l_bounds.append([0.001,0.999])
+    l_transformed.append(False)
+
     l_var.append('eps_leak')
     l_x0.append(0.5)
     l_bounds.append([-15,15])
     l_transformed.append(True)
-    
+
+    # Non-transformed version
+    # l_var.append('eps_leak')
+    # l_x0.append(1)
+    # l_bounds.append([0.001,10])
+    # l_transformed.append(False)
+
 elif 'fixed' in alg_name:
     l_var.append('k_alph')
     l_x0.append(0.5)
@@ -105,22 +116,11 @@ if randstart:
     params["rand_start"] = 10 
     name = name+'_multi'  
 
-if data_type=='naive':
-    params['data_folder']       = '2022_12_09_13-31-14_sim_nor-tree_naive-nov'
-    params['data_path_type']    = 'auto'
-elif data_type=='opt':
-    if local:
-        # params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r' 
-        params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/nor_tree/sim_opt/2023_01_11_16-59-13_sim_mbnor_tree-allparams'
-        params['data_path_type']    = 'manual'
-        name = name+'_local'
-    else:
-        #params['data_folder']       = 'nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r' 
-        params['data_folder']       = 'nor_tree/sim_opt/2023_01_11_16-59-13_sim_mbnor_tree-allparams'
-        params['data_path_type']    = 'auto'
-elif data_type=='mice':
-    params['data_folder']       = sl.get_datapath().replace('data','ext_data')+'Rosenberg2021/'    
+if data_type=='mice':
+    params['data_folder']       = str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021')    
     params['data_path_type']    = 'manual'
+else:
+    raise ValueError('data_type not recognized')
 
 with open(path / f'{name}.json', 'w') as fp:
     json.dump(params, fp)

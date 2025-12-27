@@ -13,12 +13,9 @@ alg_type       = [f'{leakiness_type}_hnor_notrace',
                     # f'{leakiness_type}_hnor_notrace_center-box',
                     # f'{leakiness_type}_hnor_notrace'
                     ] 
-levels         = [1,2,3,4,5,6] # level 0: component center is the first branching point, level 6: component centers are the leaf nodes
-single_run_id  = '_5' # '', '_1', '_2', ... to distinguish multiple single runs with different initial conditions
-
-transformed     = True # use transformed optimization (e.g. log, softplus) --> use version = 4!
-version         = 4 if transformed else 5 
-
+levels         = [1,2,3,4,5,6] # level 1: component center is the second branching point, level 6: component centers are the leaf nodes
+single_run_id  = '_5' # '', '_1', '_2', '_3', '_4', '_5' to distinguish the five different parameter initializations for the optimization 
+transformed = True # use transformed optimization (e.g. log, softplus) 
 data_type   = 'mice'        # 'mice', deprecated: 'naive', 'opt' 
 opt_method  = 'Nelder-Mead' # 'Nelder-Mead', 'L-BFGS-B', 'SLSQP'
 comb_type   = 'app'         # 'sep', 'app', '' (for '' both sep and app are computed)
@@ -82,11 +79,6 @@ for i in range(len(alg_type)):
         else:
             l_transfun.append('softplus')
             l_transfun_inv.append('softplus_inv')
-            
-        # l_var.append('eps_leak')
-        # l_x0.append(0.5)
-        # l_bounds.append([-15,15])
-        # l_transformed.append(True)
 
     elif 'leaky' in alg_type[i]:
         l_var.append('alph_leak')
@@ -119,11 +111,6 @@ for i in range(len(alg_type)):
             l_transfun.append('softplus')
             l_transfun_inv.append('softplus_inv')
         
-        # l_var.append('eps_leak')
-        # l_x0.append(0.5)
-        # l_bounds.append([-15,15])
-        # l_transformed.append(True)
-        
     elif 'fixed' in alg_type[i]:
         l_var.append('k_alph')
         l_x0.append(0.5)
@@ -143,25 +130,21 @@ for i in range(len(alg_type)):
         l_transfun_inv  = [None]*len(l_var)
 
     for j in range(len(levels)):
-        params = {'data_type':data_type,
-                    'data_folder':'',
-                    'data_path_type': '',
-                    'comb_type': comb_type,
-                    'var_name': l_var,
-                    'kwargs': {"x0":l_x0, "bounds":l_bounds, "transformed":l_transformed, "transfun":l_transfun, "transfun_inv":l_transfun_inv, "opt_method":opt_method},
-                    'alg_type': alg_type[i],
-                    'save_name': f'mle_{alg_type[i]}-l{levels[j]}-{data_type}',
-                    'verbose': True,
-                    'parallel': parallel,
-                    'local': local,
-                    'level':levels[j],
-                    'save_path':f'MLE{version}_results/Fits/{"MultiStart/" if randstart else "SingleRun/"}mle_{alg_type[i]}-{data_type}_{opt_method}{single_run_id}'}
+        params = {'data_type':          data_type,
+                    'data_folder':      str(sl.get_rootpath() / 'ext_data' / 'Rosenberg2021'),
+                    'data_path_type':   'manual',
+                    'comb_type':        comb_type,
+                    'var_name':         l_var,
+                    'kwargs':           {"x0":l_x0, "bounds":l_bounds, "transformed":l_transformed, "transfun":l_transfun, "transfun_inv":l_transfun_inv, "opt_method":opt_method},
+                    'alg_type':         alg_type[i],
+                    'save_name':        f'mle_{alg_type[i]}-l{levels[j]}-{data_type}',
+                    'verbose':          True,
+                    'debug':            False,
+                    'parallel':         parallel,
+                    'local':            local,
+                    'level':            levels[j],
+                    'save_path':        str(sl.get_rootpath() / 'data' / 'mle_results' / f'fits_{"multi-start/" if randstart else "single-run"}' / f'mle_{alg_type[i]}-{data_type}_{opt_method}')}
 
-        # path = './src/scripts/MLE4/mle_fit_configs/'
-        # if local:
-        #     path = f'/Users/sbecker/Projects/RL_reward_novelty/src/scripts/MLE{version}/mle_fit_configs/'
-        # else:
-        #     path = f'/Volumes/lcncluster/becker/RL_reward_novelty/src/scripts/MLE{version}/mle_fit_configs/'
         path = sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs'
         sl.make_long_dir(path)
         name = f'{params["save_name"]}_{opt_method}{("-" if len(comb_type)>0 else "")}{comb_type}'
@@ -170,28 +153,6 @@ for i in range(len(alg_type)):
             params["seed"] = 12345      
             params["rand_start"] = 10 
             name = name+'_multi'  
-
-        if data_type=='naive':
-            params['data_folder']       = '2022_12_09_13-31-14_sim_nor-tree_naive-nov'
-            params['data_path_type']    = 'auto'
-
-        elif data_type=='opt':
-            if local:
-                params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/data/nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r' 
-                params['data_path_type']    = 'manual'
-                name = name+'_local'
-            else:
-                params['data_folder']       = 'nor_tree/sim_opt/2022_10_07_19-46-06_sim_mbnor_tree-nov-beta1r' 
-                params['data_path_type']    = 'auto'
-
-        elif data_type=='mice':
-            if local:
-                params['data_folder']       = '/Volumes/lcncluster/becker/RL_reward_novelty/ext_data/Rosenberg2021/' 
-                params['data_path_type']    = 'manual'
-                params['save_path']         = f'/Users/sbecker/RL_reward_novelty/data/MLE2_results/Fits/{"MultiStart/" if randstart else "SingleRun/"}mle_{alg_type}-{data_type}_{opt_method}'
-            else:
-                params['data_folder']       = ''    
-                params['data_path_type']    = 'auto'
             
         with open(path / f'{name}.json', 'w') as fp:
             json.dump(params, fp)
