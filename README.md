@@ -49,7 +49,11 @@ sim_nov/
     - Component width variation (Fig. S3 F): Run grid search (sim_nov/src/fitting_neural/grid_search_snov.py) with config files created in sim_nov/src/fitting_neural/make_configs_robustness.py. To create figures, run python notebook sim_nov/src/homann_analysis/plot_width_variation.ipynb.
     - Comparison with fixed-rate models: Run grid search, fitting and visualization as for Figure 2 but for fixed-rate count-based novelty and fixed-rate similarity-based novelty models.
  
-- Exploration behavior (Figure 3, Figure S5): 
+- Exploration behavior (Figure 3, Figure S5):
+    1. Fit models to data: Run sim_nov/src/fitting_behavior/mle_fit.py with config files created with either sim_nov/src/fitting_behavior/make_configs_mlefit.py (single set of components) or sim_nov/src/fitting_behavior/make_configs_mlefit-multi.py (two sets of components). Run optimization with 5 initial conditions.
+    2. Compute model comparison: Run sim_nov/src/fitting_behavior/model_comparison/compute_bic.py for single-set and two-set component models.
+    3. Simulate winning model: 
+    4. Compare behavior statistics mice vs. model: 
 
 - Sum-of-parts protocol (Figure 4, Figure S6):
      - To reproduce Figure 4, run python notebook sim_nov/src/scripts/sum_of_parts/exp_pred1.ipynb
