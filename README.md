@@ -1,6 +1,6 @@
 # Code base: Similarity-based novelty
 
-This repo accompanies the preprint:
+This repo accompanies the published version of the following preprint:
 
 S. Becker, A. Modirshanechi, W. Gerstner (2024) *Representational similarity modulates neural and behavioral signatures of novelty.* bioRxiv 2024.05.01.592002; doi: https://doi.org/10.1101/2024.05.01.592002
 
@@ -50,12 +50,42 @@ sim_nov/
     - Comparison with fixed-rate models: Run grid search, fitting and visualization as for Figure 2 but for fixed-rate count-based novelty and fixed-rate similarity-based novelty models.
  
 - Exploration behavior (Figure 3, Figure S5):
-    1. Fit models to data: Run sim_nov/src/fitting_behavior/mle_fit.py with config files created with either sim_nov/src/fitting_behavior/make_configs_mlefit.py (single set of components) or sim_nov/src/fitting_behavior/make_configs_mlefit-multi.py (two sets of components). Run optimization with 5 initial conditions.
-    2. Compute crossvalidation of fitting results: Run sim_nov/src/fitting_behavior/LL_crossvalidation.py with config files created with make_configs_crossvalidation.py.
-    3. Compute + visualize model comparison (including crossvalidation): Run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb; visualization of novelty predictions along example path in sim_nov/src/scripts/rosenberg_analysis/plot_off_policy_traces.ipynb
-    4. Simulate winning models: Run sim_nov/fitting_behavior/ppc/sim_ppc.py with configs created with sim_nov/src/fitting_behavior/ppc/make_configs_ppc.py
-    5. Compare behavioral statistics of mice and winning models: Run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb
+    1. Fit models to data.
+         - Run sim_nov/src/fitting_behavior/mle_fit.py with config files created with either sim_nov/src/fitting_behavior/make_configs_mlefit.py (single set of components) or sim_nov/src/fitting_behavior/make_configs_mlefit-multi.py (two sets of components).
+         - Run optimization with 5 initial conditions.
+    3. Compute crossvalidation of fitting results.
+         - Run sim_nov/src/fitting_behavior/LL_crossvalidation.py with config files created with make_configs_crossvalidation.py.
+    4. Compute + visualize model comparison (including crossvalidation).
+         - Run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb
+         - Visualization of novelty predictions along example path in sim_nov/src/scripts/rosenberg_analysis/plot_off_policy_traces.ipynb
+    5. Simulate winning models and compare behavioral statistics of mice and winning models.
+         - To simulate, run sim_nov/fitting_behavior/ppc/sim_ppc.py with configs created with sim_nov/src/fitting_behavior/ppc/make_configs_ppc.py
+         - To create statistics plots, run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb
 
 - Sum-of-parts protocol (Figure 4, Figure S6):
      - To reproduce Figure 4, run python notebook sim_nov/src/scripts/sum_of_parts/exp_pred1.ipynb
      - To reproduce Figure S6 (robustness under change of leakiness), run simulations using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_simulate.py; create plots using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_plot.py
+
+## Downloading large simulation data
+
+The following simulated data sets are provided separately on Zenodo due to their size:
+- Grid search results when fitting similarity-based novelty to V1 novelty responses (including parameter robustness and width variation controls);
+- Simulations of winning novelty-RL agents for behavioral data.
+    
+## Software, installation and requirements
+
+Code should be run in a conda environment, specified in environment_sim_nov.yml. 
+
+To create the environment, run: 
+
+```
+conda env create -f environment_sim_nov.yml
+```
+
+or
+
+```
+conda create -n sim_nov python=3.9
+conda activate sim_nov
+pip install -r requirements.txt
+```
