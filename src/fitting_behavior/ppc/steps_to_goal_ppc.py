@@ -66,10 +66,11 @@ def plot_steps_to_goal_all(plot_type, path_data_save, path_fig_save, no_rew, pat
                     df['simID'] = [sim_id]*len(df)
                     df_ll.append(df)
                 df = pd.concat(df_ll)
-            df.to_csv(os.path.join(path_data_save,f'steps_to_goal_{s}.csv'))
-            df.to_pickle(os.path.join(path_data_save,f'steps_to_goal_{s}.pkl'))
+            df.to_csv(path_data_save / f'steps_to_goal_{s}.csv')
+            df.to_pickle(path_data_save / f'steps_to_goal_{s}.pkl')
             print(f"done computing steps to goal for model {i}")
         else:
+            print(f"loading precomputed steps to goal for model {i}")
             df = sl.load_sim_data(path_data_save,file_data=f'steps_to_goal_{s}.pkl')
 
         # Append datapoints, means and sems for each dataset

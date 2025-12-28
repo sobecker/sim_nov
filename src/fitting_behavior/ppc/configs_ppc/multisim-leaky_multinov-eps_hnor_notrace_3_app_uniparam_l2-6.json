@@ -1,0 +1,1 @@
+{"alg_type": "leaky_multinov-eps_hnor_notrace", "single_run_id": ["_3"], "levels": [[2, 6]], "kwargs": {"notrace": [true, true], "center": [false, false], "center_type": ["box", "box"]}, "comb_type": "app", "seed": null, "start_seed": 0, "startID": 0, "num_sim": 20, "agent_num": 20, "uniparam": true, "no_rew": true, "parallel": true, "run_local": false}

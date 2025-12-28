@@ -1,0 +1,1 @@
+{"alg_type": "leaky_hnor_notrace", "single_run_id": ["_5"], "levels": [[5]], "kwargs": {}, "comb_type": "app", "seed": null, "start_seed": 0, "startID": 0, "num_sim": 20, "agent_num": 20, "uniparam": true, "no_rew": true, "parallel": true, "run_local": false}
