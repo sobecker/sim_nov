@@ -1,36 +1,22 @@
 .DS_Store
 __pycache__/
 
-data/recovery/*
+data/mle_results/rename_files.sh
 
-output/*
-output/figures_paper/*
-output/figures_paper/fig_toy_example/*
+src/fitting_behavior/mle/qval_tests.py
 
 logs/*
 
 src/fitting_neural/make_configs_cluster_snov.py
-src/scripts/homann_analysis/plot_width_robustness_full.ipynb
 src/fitting_neural/make_configs_cluster_robustness.py
 src/fitting_neural/make_configs_cluster_robustness_refit.py
+
+src/scripts/homann_analysis/plot_width_robustness_full.ipynb
 
 src/scripts/sum_of_parts/exp_pred1_full.ipynb
 src/scripts/sum_of_parts/test_iterative_generation_sim.py
 src/scripts/sum_of_parts/test_single_traces_l_exp.py
 src/scripts/sum_of_parts/test_single_traces.ipynb
 
-src/fitting_behavior/mle/make_configs/make_config_mlefit-nor.py
-src/fitting_behavior/mle/make_configs/make_config_mlefit-nac.py
-src/fitting_behavior/mle/make_configs/make_config_mlefit-nac_all.py
-src/fitting_behavior/mle/make_configs/make_config_mlefit-hybrid.py
-src/fitting_behavior/mle/make_configs/make_config_mlefit-hnac.py
-src/fitting_behavior/mle/make_configs/make_config_mlefit-hhybrid.py
 
-src/fitting_behavior/mle/make_yamls/*
-src/fitting_behavior/mle/make_exps/*
-src/fitting_behavior/mle/make_configs/*
-src/fitting_behavior/LL_nAC.py
-src/fitting_behavior/LL_hybrid.py
-src/fitting_behavior/LL_hybrid2.py
 
-data/mle_results/rename_files.sh
