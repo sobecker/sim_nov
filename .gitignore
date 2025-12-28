@@ -1,6 +1,8 @@
 .DS_Store
 __pycache__/
 
+requirements_copy.txt
+
 data/mle_results/rename_files.sh
 
 src/fitting_behavior/mle/qval_tests.py
