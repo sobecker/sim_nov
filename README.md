@@ -53,8 +53,8 @@ sim_nov/
     1. Fit models to data: Run sim_nov/src/fitting_behavior/mle_fit.py with config files created with either sim_nov/src/fitting_behavior/make_configs_mlefit.py (single set of components) or sim_nov/src/fitting_behavior/make_configs_mlefit-multi.py (two sets of components). Run optimization with 5 initial conditions.
     2. Compute crossvalidation of fitting results: Run sim_nov/src/fitting_behavior/LL_crossvalidation.py with config files created with make_configs_crossvalidation.py.
     3. Compute + visualize model comparison (including crossvalidation): Run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb; visualization of novelty predictions along example path in sim_nov/src/scripts/rosenberg_analysis/plot_off_policy_traces.ipynb
-    4. Simulate winning models: 
-    5. Compare behavioral statistics of mice and winning models: 
+    4. Simulate winning models: Run sim_nov/fitting_behavior/ppc/sim_ppc.py with configs created with sim_nov/src/fitting_behavior/ppc/make_configs_ppc.py
+    5. Compare behavioral statistics of mice and winning models: Run python notebook sim_nov/src/scripts/rosenberg_analysis/plot_model_comparison.ipynb
 
 - Sum-of-parts protocol (Figure 4, Figure S6):
      - To reproduce Figure 4, run python notebook sim_nov/src/scripts/sum_of_parts/exp_pred1.ipynb
