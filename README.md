@@ -65,12 +65,6 @@ sim_nov/
 - Sum-of-parts protocol (Figure 4, Figure S6):
      - To reproduce Figure 4, run python notebook sim_nov/src/scripts/sum_of_parts/exp_pred1.ipynb
      - To reproduce Figure S6 (robustness under change of leakiness), run simulations using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_simulate.py; create plots using sim_nov/src/scripts/sum_of_parts/exp_pred1_robustness_plot.py
-
-## Downloading large simulation data
-
-The following simulated data sets are provided separately on Zenodo due to their size:
-- Grid search results when fitting similarity-based novelty to V1 novelty responses (including parameter robustness and width variation controls);
-- Simulations of winning novelty-RL agents for behavioral data.
     
 ## Software, installation and requirements
 
@@ -87,5 +81,5 @@ or
 ```
 conda create -n sim_nov python=3.9
 conda activate sim_nov
-pip install -r requirements.txt
+pip install -r requirements_sim_nov.txt
 ```
