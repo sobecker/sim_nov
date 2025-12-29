@@ -70,16 +70,17 @@ sim_nov/
 
 Code should be run in a conda environment, specified in environment_sim_nov.yml. 
 
-To create the environment, run: 
+To create the environment, navigate to the root folder sim_nov and run: 
 
 ```
 conda env create -f environment_sim_nov.yml
 ```
 
-or
+Alternatively, start by creating the conda environment and install requirement manually using
 
 ```
 conda create -n sim_nov python=3.9
 conda activate sim_nov
 pip install -r requirements_sim_nov.txt
 ```
+then run the python script sim_nov/src/setup_scripts/run_setup.py to install the custom-made packages contained in the repo. 
