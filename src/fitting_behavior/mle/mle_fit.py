@@ -254,8 +254,8 @@ def run_mle_fit(config):
 
             else: # with user-defined x0
                 res = mle_fun(all_data,params,var_name,alg_type_fit,comb_type,kwargs,verbose=verbose,log_file=log_file)
-            res.to_csv(dir_save / f'{save_name}_{comb_type}.csv')
-            res.to_pickle(dir_save / f'{save_name}_{comb_type}.pickle')
+            res.to_csv(dir_save / f'{save_folder}_{comb_type}.csv')
+            res.to_pickle(dir_save / f'{save_folder}_{comb_type}.pickle')
         
         # Stop timer and save log file
         end = timeit.default_timer()
@@ -285,8 +285,9 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        config = json.load(open(str(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs' / 'mle_leaky_hnor_notrace-l6-mice_Nelder-Mead-app_test.json')))
-
+        # config = json.load(open(str(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs' / 'mle_leaky_hnor_notrace-l6_app_test.json')))
+        config = json.load(open(str(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'mle' / 'mle_fit_configs' / 'mle_leaky_multinov-eps_hnor_notrace-l5-6_app_test.json')))
+        
     print(config)
 
     run_mle_fit(config)

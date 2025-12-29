@@ -22,8 +22,8 @@ def load_mouse_data(P, base_path):
     AllNames    = RewNames+UnrewNames
     d = []
     for i in range(len(AllNames)):
-        dir = f'{base_path}/ext_data/Rosenberg2021/'
-        file=f'{AllNames[i]}-stateseq.pickle'
+        dir = base_path / 'ext_data' / 'Rosenberg2021' / f'{AllNames[i]}_data'
+        file=f'{AllNames[i]}-stateseq_UntilG.pickle'
         df_i = preprocess_micedata(dir,file,P,subID=AllNames[i],epi=0)
         d.append(df_i)
     all_data = pd.concat(d,ignore_index=True)
@@ -74,7 +74,7 @@ def load_default_params(alg_type, level, base_path, kwargs=None):
             params = bpo.baseparams_h1mbnor_eps1(level,join_levels=join_levels,notrace=notrace,center=center,center_type=center_type,update_type=update_type,filter_duplicates=filter_duplicates,maze_norm=maze_norm,comp_norm=comp_norm)
         else:
             params = bpo.base_params_mbnortree_exp.copy()
-        params_surnor = import_params_surnor(path=f'{base_path}/src/mbnor/')
+        params_surnor = import_params_surnor(path = base_path / 'src' / 'models' / 'mb_agent')
         params.update(params_surnor)
         params['h']['update_type'] = update_type
         if 'eps1' in alg_type:
@@ -104,9 +104,9 @@ def load_default_params(alg_type, level, base_path, kwargs=None):
         if 'hhybrid' in alg_type:
             mb_type = 'hnor'
             mf_type = 'hnac-gn'
-            params = bpo.baseparams_all_hhybrid_comb(mb_type,mf_type,levels=[level],notrace=notrace,center=center,center_type=center_type,path_surnor=f'{base_path}/src/mbnor/',update_type=update_type)
+            params = bpo.baseparams_all_hhybrid_comb(mb_type,mf_type,levels=[level],notrace=notrace,center=center,center_type=center_type,path_surnor=base_path / 'src' / 'models' / 'mb_agent',update_type=update_type)
         else:
-            params = bpo.baseparams_hybrid_comb(path_surnor=f'{base_path}/src/mbnor/')
+            params = bpo.baseparams_hybrid_comb(path_surnor=base_path / 'src' / 'models' / 'mb_agent')
         params['mb_h']['update_type'] = update_type
         params['mf_h']['update_type'] = update_type
         if 'eps1' in alg_type:
@@ -296,6 +296,7 @@ def run_crossvalidation(config):
     kwargs          = config['kwargs'] 
     run_local       = config['run_local'] if 'run_local' in config else False
     parallel        = config['parallel'] if 'parallel' in config else False
+    debug           = config['debug'] if 'debug' in config else False
 
     # Define MLE function function 
     mle_fun         = mle_fit_parallel if parallel else mle_fit
@@ -311,7 +312,10 @@ def run_crossvalidation(config):
             level_str = '-'.join([str(l) for l in level])
         else:
             level_str = str(level)
-        dir_save  = base_path_data / alg_type_fit / f'{leakiness_type}_{model_type}_{kernel_type}-l{level_str}-{comb_type}{single_run_id}'
+        name_folder = f'{leakiness_type}_{model_type}_{kernel_type}-l{level_str}-{comb_type}{single_run_id}'
+        if debug:
+            name_folder += '_debug'
+        dir_save  = base_path_data / alg_type_fit / name_folder
     else:
         dir_save  = base_path_data / alg_type_fit
     sl.make_long_dir(dir_save)
@@ -370,7 +374,10 @@ def run_crossvalidation(config):
 
         kwargs['start_ll'] = start_ll
         kwargs['stop_ll']  = stop_ll
-        # kwargs['maxit'] = 2 # only for debugging!!
+
+        if debug:
+            print(f'DEBUG MODE: Running only 2 iterations of MLE fitting for train set {i}/{len(train_set)}')
+            kwargs['maxit'] = 2 # only for debugging!!
         res = mle_fun(train_data_i,default_params,var_name,alg_type_fit,comb_type,kwargs,verbose=True,log_file=log_file)
         res['cvID'] = [i]*len(res)
         info_set_i = info_set.loc[info_set.set_id==setid_i]
@@ -451,7 +458,8 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        config = json.load(open(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'crossvalidation' / 'configs_cv-mouseid' / 'leaky_multinov-eps_hnor_notrace-l5-6_app_1.json'))
+        # config = json.load(open(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'crossvalidation' / 'configs_cv-mouseid' / 'leaky_hnor_notrace-l6_app_2_test.json'))
+        config = json.load(open(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'crossvalidation' / 'configs_cv-mouseid' / 'leaky_multinov-eps_hnor_notrace-l5-6_app_1_test.json'))
 
     print(config)
 

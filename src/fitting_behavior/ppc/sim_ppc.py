@@ -80,7 +80,7 @@ def get_sim_setup(alg_type,level=0,no_rew=False,kwargs=None):
     maze_norm           = 'mazenorm' in alg_type
     comp_norm           = False if 'nocompnorm' in alg_type else True
 
-    base_path = str(sl.get_rootpath())
+    base_path = sl.get_rootpath()
     if 'nor' in alg_type.replace('mazenorm','').replace('nocompnorm',''): 
 
         # Set simulation functions + recording type
@@ -198,6 +198,7 @@ def run_multisim_range(config):
     startID     = config['startID'] if 'startID' in config.keys() else 0
     start_seed  = config['start_seed'] if 'start_seed' in config.keys() else 0
     seed        = config['seed'] if 'seed' in config.keys() else 12345
+    debug       = config['debug'] if 'debug' in config.keys() else False
 
     # Get model parameters from config
     version       = config['version'] if 'version' in config.keys() else 4  # 4 for transformed optimization
@@ -214,7 +215,10 @@ def run_multisim_range(config):
 
     # Prepare folder for saving
     base_path = sl.get_rootpath()
-    dir_save = base_path / 'data' / 'ppc' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}'
+    if debug:
+        dir_save = base_path / 'data' / 'ppc' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}_test'
+    else:
+        dir_save = base_path / 'data' / 'ppc' / f'{alg_type}_{comb_type}{"_norew" if no_rew else ""}'
     sl.make_long_dir(dir_save)
 
     # Get batch ID
@@ -291,7 +295,8 @@ if __name__=="__main__":
     if args.config_file:
         config = json.load(open(args.config_file))
     else: 
-        config = json.load(open('./src/scripts/ParameterRecovery4/configs_simulation/multisim-leaky_multinov-eps_hnor_notrace_1_app_uniparam_l5-6.json'))
+        # config = json.load(open(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'ppc' / 'configs_ppc' / 'multisim-leaky_hnor_notrace_2_app_uniparam_l6_test.json'))
+        config = json.load(open(sl.get_rootpath() / 'src' / 'fitting_behavior' / 'ppc' / 'configs_ppc' / 'multisim-leaky_multinov-eps_hnor_notrace_1_app_uniparam_l5-6_test.json'))
 
     print(config)
 

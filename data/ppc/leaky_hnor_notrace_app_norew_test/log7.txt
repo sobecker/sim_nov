@@ -1,0 +1,3 @@
+Starting 2 simulations for leaky_hnor_notrace, mode: sequential.
+Starting simulation with parameter set 1/1.
+Finished simulation of 1 parameter sets.

@@ -5,8 +5,6 @@ from matplotlib import colors
 from matplotlib import cm
 import os
 
-import sys
-
 import models.snov.gabor_stimuli as gs
 import models.snov.run_gabor_knov2 as gknov2
 

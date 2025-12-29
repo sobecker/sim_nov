@@ -1,0 +1,45 @@
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: False. Number of iterations performed: 2.
+Estimated values for parameters:
+ ['lambda_N: 0.8472978603872034', 'beta_1: 1.854586542131141', 'epsilon: -4.097106655757888', 'k_leak: 2.1972245773362196', 'alph_leak: 2.1972245773362196', 'eps_leak: -6.907255237315428']
+LL value for estimated parameter values: -5191.17651231354.
+
+Optimization sucessful for all data samples: False. Time taken: 437.024086015 s. Number of iterations: 2.
+
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: False. Number of iterations performed: 2.
+Estimated values for parameters:
+ ['lambda_N: 0.8472978603872034', 'beta_1: 1.854586542131141', 'epsilon: -4.097106655757888', 'k_leak: 2.1972245773362196', 'alph_leak: 2.1972245773362196', 'eps_leak: -6.907255237315428']
+LL value for estimated parameter values: -5786.226417051845.
+
+Optimization sucessful for all data samples: False. Time taken: 520.067844207 s. Number of iterations: 2.
+
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: False. Number of iterations performed: 2.
+Estimated values for parameters:
+ ['lambda_N: 0.8472978603872034', 'beta_1: 1.854586542131141', 'epsilon: -4.097106655757888', 'k_leak: 2.1972245773362196', 'alph_leak: 2.1972245773362196', 'eps_leak: -6.907255237315428']
+LL value for estimated parameter values: -3236.718507052555.
+
+Optimization sucessful for all data samples: False. Time taken: 399.383236712 s. Number of iterations: 2.
+
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: False. Number of iterations performed: 2.
+Estimated values for parameters:
+ ['lambda_N: 0.8472978603872034', 'beta_1: 1.854586542131141', 'epsilon: -4.097106655757888', 'k_leak: 2.1972245773362196', 'alph_leak: 2.1972245773362196', 'eps_leak: -6.907255237315428']
+LL value for estimated parameter values: -4766.669383696638.
+
+Optimization sucessful for all data samples: False. Time taken: 591.345725656 s. Number of iterations: 2.
+
+Computing MLE (Nelder-Mead) for combined data set.
+
+LL maximization successful: False. Number of iterations performed: 2.
+Estimated values for parameters:
+ ['lambda_N: 0.8472978603872034', 'beta_1: 1.854586542131141', 'epsilon: -4.097106655757888', 'k_leak: 2.1972245773362196', 'alph_leak: 2.1972245773362196', 'eps_leak: -6.907255237315428']
+LL value for estimated parameter values: -5793.382138087859.
+
+Optimization sucessful for all data samples: False. Time taken: 715.5858710389998 s. Number of iterations: 2.
+
