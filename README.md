@@ -1,6 +1,6 @@
 # Code base: Similarity-based novelty
 
-This repo accompanies the published version of the following preprint:
+This repo accompanies the following preprint:
 
 S. Becker, A. Modirshanechi, W. Gerstner (2024) *Representational similarity modulates neural and behavioral signatures of novelty.* bioRxiv 2024.05.01.592002; doi: https://doi.org/10.1101/2024.05.01.592002
 
