@@ -68,7 +68,7 @@ sim_nov/
  
 ## Downloading large simulation data
 
-The following simulated data sets are provided separately on Zenodo due to their size:
+The following [simulated data sets](https://zenodo.org/records/18117791) are provided separately on Zenodo due to their size (DOI: 10.5281/zenodo.18117791):
 - Grid search results when fitting similarity-based novelty to V1 novelty responses (including parameter robustness and width variation controls);
 - Simulations of winning novelty-RL agents for behavioral data.
 
