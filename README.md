@@ -1,8 +1,8 @@
 # Code base: Similarity-based novelty
 
-This repo accompanies the following preprint:
+This repo accompanies the following publication:
 
-S. Becker, A. Modirshanechi, W. Gerstner (2024) *Representational similarity modulates neural and behavioral signatures of novelty.* bioRxiv 2024.05.01.592002; doi: https://doi.org/10.1101/2024.05.01.592002
+S. Becker, A. Modirshanechi, W. Gerstner (2026) *Representational similarity modulates neural and behavioral signatures of novelty.* Neuron. doi: https://doi.org/10.1016/j.neuron.2026.01.007
 
 In this paper, we propose a computational model of novelty that accounts for the effect of stimulus similarities on novelty computation (`similarity-based novelty'). Using the similarity-based novelty framework on two open data sets, we show that
 - low-level feature similarity modulates V1 novelty responses in mice,
